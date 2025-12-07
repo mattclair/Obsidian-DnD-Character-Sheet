@@ -1,0 +1,96 @@
+{
+  "biggerIcons": "mobile",
+  "clickableIcons": "desktop",
+  "showAllFileIcons": false,
+  "showAllFolderIcons": false,
+  "minimalFolderIcons": false,
+  "showMarkdownTabIcons": true,
+  "showTitleIcons": true,
+  "showTagPillIcons": true,
+  "showMenuActions": true,
+  "showSuggestionIcons": true,
+  "showQuickSwitcherIcons": true,
+  "showMoveFileIcons": true,
+  "showItemName": "desktop",
+  "biggerSearchResults": "mobile",
+  "maxSearchResults": 50,
+  "colorPicker1": "list",
+  "colorPicker2": "rgb",
+  "uncolorHover": false,
+  "uncolorDrag": false,
+  "uncolorSelect": false,
+  "uncolorQuick": false,
+  "rememberDeletedItems": false,
+  "dialogState": {
+    "iconMode": true,
+    "emojiMode": true,
+    "rulePage": "file"
+  },
+  "appIcons": {},
+  "tabIcons": {},
+  "fileIcons": {
+    "0. DM Screen": {
+      "icon": "lucide-map",
+      "unsynced": [
+        "1d3a3aaa5a9f1b00",
+        "d29f7c9c6689ad57",
+        "884e77391e55fe48",
+        "96f0dd67f4a6169a"
+      ],
+      "color": "orange"
+    },
+    "0. Scratch Notes": {
+      "icon": "✏️",
+      "unsynced": [
+        "1d3a3aaa5a9f1b00",
+        "d29f7c9c6689ad57",
+        "884e77391e55fe48",
+        "96f0dd67f4a6169a"
+      ]
+    },
+    "1. The Party": {
+      "icon": "⚔️",
+      "unsynced": [
+        "1d3a3aaa5a9f1b00",
+        "d29f7c9c6689ad57",
+        "884e77391e55fe48",
+        "96f0dd67f4a6169a"
+      ]
+    },
+    "3. Mechanics": {
+      "icon": "⚙️",
+      "unsynced": [
+        "1d3a3aaa5a9f1b00",
+        "d29f7c9c6689ad57",
+        "884e77391e55fe48",
+        "96f0dd67f4a6169a"
+      ]
+    }
+  },
+  "bookmarkIcons": {},
+  "tagIcons": {},
+  "propertyIcons": {},
+  "ribbonIcons": {
+    "initiative-tracker:Initiative Tracker Encounter Builder": {
+      "icon": "lucide-sword"
+    },
+    "obsidian-git:Open Git source control": {
+      "icon": "lucide-github"
+    }
+  },
+  "fileRules": [
+    {
+      "id": "thapF",
+      "name": "Player's Handbook - Glossary",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "name",
+          "operator": "contains"
+        }
+      ],
+      "enabled": false
+    }
+  ],
+  "folderRules": []
+}

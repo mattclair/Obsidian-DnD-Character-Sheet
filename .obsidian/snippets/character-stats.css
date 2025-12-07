@@ -1,0 +1,229 @@
+.character-stats-container {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr 1fr; /* ← added third column for spell stats */
+  gap: 1rem;
+  align-items: streatch;
+  margin-top: 1rem;
+}
+
+.ability-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.ability-box {
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  padding: 0.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  margin-bottom: 0.1rem; /* space below so shadow isn’t cropped visually */
+  box-shadow: 2px 4px 8px rgba(0,0,0,0.25); /* subtle bottom-right bias */
+}
+
+.ability-box:hover {
+  transform: translateY(-6px);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.ability-name {
+  font-weight: bold;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  background: var(--background-primary-alt);
+  margin: -1.4rem -0.5rem 0.25rem -0.5rem; /* pull to edges & top */
+  padding: 0.25rem;
+  border-top-left-radius: 8px;  /* match parent rounding */
+  border-top-right-radius: 8px;
+}
+
+.ability-score {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-top: 0.25rem;
+  color: var(--interactive-accent);
+}
+
+.ability-mod {
+  font-size: 1rem;
+  margin-top: 0.25rem;
+  color: var(--text-accent);
+}
+
+.saving-throw {
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  color: var(--text-muted);
+}
+
+/* === Skills Box (center column) === */
+.skills-box {
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 0.4rem; /* space below so shadow isn’t cropped visually */
+  box-shadow: 2px 4px 8px rgba(0,0,0,0.25); /* subtle bottom-right bias */
+}
+
+.skills-header {
+  font-weight: bold;
+  font-size: 1.1rem;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--background-modifier-border);
+  padding-bottom: 0.25rem;
+}
+
+.skills-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.skill-line {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.1rem 0.25rem;
+}
+
+.skill-line:nth-child(even) {
+
+}
+
+.skill-line:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.08);
+  font-weight: bold;
+  color: red
+}
+
+.skill-line span:last-child {
+  font-weight: bold;
+  color: var(--text-accent);
+}
+
+/* === Spell Stats Grid === */
+.spell-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.spell-box {
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  padding: 0.5rem;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  margin-bottom: 0.5rem; /* space below so shadow isn’t cropped visually */
+  box-shadow: 2px 4px 8px rgba(0,0,0,0.25); /* subtle bottom-right bias */
+}
+
+.spell-box:hover {
+  transform: translateY(-6px);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.spell-name {
+  font-weight: bold;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  background: var(--background-primary-alt);
+  margin: 0rem -0.5rem 0.25rem -0.5rem; /* pull to edges & top */
+}
+
+.spell-value {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-top: 0.25rem;
+  color: var(--interactive-accent);
+}
+
+.save-proficient {
+  color: var(--interactive-accent);
+  font-weight: bold;
+}
+
+.skill-line.skill-proficient {
+ background: var(--background-primary-alt);
+}
+
+.skill-line.skill-proficient span:first-child,
+.skill-line.skill-proficient span:nth-child(2) {  
+  font-weight: bold;
+}
+
+.skill-line.skill-expertise {
+  background: var(--interactive-accent);
+}
+
+.skill-line.skill-expertise span:first-child,
+.skill-line.skill-expertise span:nth-child(2) {
+  font-weight: bold;
+}
+
+.bonus-table {
+  margin-top: 1em;
+  border-top: 1px solid var(--background-modifier-border);
+  padding-top: 0.5em;
+}
+
+.bonus-header {
+  font-weight: bold;
+  margin-bottom: 0.3em;
+}
+
+.bonus-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85em;
+}
+
+.bonus-table th,
+.bonus-table td {
+  text-align: left;
+  padding: 4px 6px;
+}
+
+.bonus-table th {
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.bonus-table td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.pb-box {
+  text-align: center
+}
+
+.skill-line {
+  display: grid;
+  grid-template-columns: 8ch 1fr auto;
+  gap: 0.5em;
+}
+.skill-ability {
+  opacity: 0.6;
+  font-weight: 600;
+}
+.skill-name {
+  text-align: left;
+}
+.skill-bonus {
+  text-align: right;
+}
+

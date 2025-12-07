@@ -1,0 +1,1172 @@
+{
+  "monsters": [
+    [
+      "Tough",
+      {
+        "statblock": true,
+        "name": "Tough",
+        "image": "tough.png",
+        "size": "Medium or Small",
+        "type": "Humanoid",
+        "alignment": "neutral",
+        "ac": 12,
+        "hp": "5d8+10",
+        "hit_dice": "5d8+10",
+        "speed": "30 ft.",
+        "stats": [
+          15,
+          12,
+          14,
+          10,
+          10,
+          11
+        ],
+        "saves": [],
+        "skillsaves": [],
+        "damage_vulnerabilities": null,
+        "damage_resistances": null,
+        "damage_immunities": null,
+        "condition_immunities": null,
+        "senses": "passive Perception 10",
+        "languages": "Common",
+        "cr": "1/2",
+        "spells": null,
+        "traits": [
+          {
+            "name": "Pack Tactics",
+            "desc": "The tough has Advantage on an attack roll against a creature if at least one of the tough's allies is within 5 feet of the crature and the ally doesn't have the incapacitated condition"
+          }
+        ],
+        "actions": [
+          {
+            "name": "Mace",
+            "desc": "Melee Weapon Attack: +4 to hit, reach 5 ft. Hit: 5 (1d6+2) bludgeoning damage."
+          },
+          {
+            "name": "Heavy Crossbow",
+            "desc": "Ranged Attack Roll: +3 to hit, range 100/400 ft. Hit: 6 (1d10+1) Piercing damage"
+          }
+        ],
+        "source": "Homebrew",
+        "layout": "Basic 5e Layout"
+      }
+    ],
+    [
+      "Tough Boss (Nat Wyler)",
+      {
+        "layout": "Basic 5e Layout",
+        "statblock": "inline",
+        "image": "Nat_Wyler.jpg",
+        "name": "Tough Boss (Nat Wyler)",
+        "size": "Small or Medium",
+        "type": "Humanoid",
+        "subtype": null,
+        "alignment": "Neutral",
+        "ac": 16,
+        "hp": 82,
+        "hit_dice": "11d8+33",
+        "speed": "30 ft.",
+        "stats": [
+          17,
+          14,
+          16,
+          11,
+          10,
+          11
+        ],
+        "saves": [],
+        "skillsaves": [],
+        "damage_vulnerabilities": null,
+        "damage_resistances": null,
+        "damage_immunities": null,
+        "condition_immunities": null,
+        "senses": "Passive Perception 10",
+        "languages": "Common plus one other language",
+        "cr": 4,
+        "spells": null,
+        "traits": [
+          {
+            "name": "Pack Tactics",
+            "desc": "The tough has Advantage on an attack roll against a creature if at least one of the tough's allies is within 5 feet of the crature and the ally doesn't have the incapacitated condition"
+          }
+        ],
+        "actions": [
+          {
+            "name": "Multiattack.",
+            "desc": "The tough makees two attacks, using Warhammer or Heavy Crossbow in any combination. (Nat uses a large bell)"
+          },
+          {
+            "name": "Warhmmer (or Nate's Bell)",
+            "desc": "Melee Attack Roll: +5 to hit, reach 5ft. Hit: 12 (2d8+3) Bludgeoning damage. If the target is a Large or smaller creature, the tough pushes the target up to 10 feet straight away from itself"
+          },
+          {
+            "name": "Heavy Crossbow",
+            "desc": "Ranged Attack Roll: +4, range 100/400 ft. Hit: 13 (2d10 + 2) Piercing damage"
+          }
+        ],
+        "source": "Homebrew"
+      }
+    ],
+    [
+      "Pirates",
+      {
+        "statblock": true,
+        "name": "Pirates",
+        "image": "pirates.jpg",
+        "size": "Medium or Small",
+        "type": "Humanoid",
+        "alignment": "neutral",
+        "ac": 14,
+        "hp": 33,
+        "hit_dice": "6d8+6",
+        "speed": "30 ft.",
+        "stats": [
+          10,
+          16,
+          12,
+          8,
+          12,
+          14
+        ],
+        "saves": [],
+        "skillsaves": [],
+        "damage_vulnerabilities": null,
+        "damage_resistances": null,
+        "damage_immunities": null,
+        "condition_immunities": null,
+        "senses": "passive Perception 11",
+        "languages": "Common plus one other language",
+        "cr": 1,
+        "spells": null,
+        "traits": [
+          {
+            "name": null,
+            "desc": null
+          }
+        ],
+        "actions": [
+          {
+            "name": "Multiattack.",
+            "desc": "The pirate makes two Dagger attacks. It can replace one attack with a use of Enthralling Panache."
+          },
+          {
+            "name": "Dagger.",
+            "desc": "Melee or Ranged Attack Roll: +5, reack 5ft. or range 20/60 ft. Hit: 5 (1d4+3) Piercing Damage"
+          },
+          {
+            "name": "Enthralling Panache.",
+            "desc": "Wisdom Saving Throw: DC 12, one creature the pirate can see within 30 feet. Failure: The target has the Charmed condition until the start of the pirate's next turn."
+          }
+        ],
+        "source": "Homebrew",
+        "layout": "Basic 5e Layout"
+      }
+    ],
+    [
+      "Pirate Captain",
+      {
+        "statblock": true,
+        "name": "Pirate Captain",
+        "image": "pirate_captain.jpg",
+        "size": "Medium or Small",
+        "type": "Humanoid",
+        "alignment": "neutral",
+        "ac": 17,
+        "hp": 84,
+        "hit_dice": "13d8+26",
+        "speed": "30 ft.",
+        "stats": [
+          10,
+          18,
+          14,
+          10,
+          14,
+          17
+        ],
+        "saves": [],
+        "skillsaves": "Acrobatics +7, Perception +5",
+        "damage_vulnerabilities": null,
+        "damage_resistances": null,
+        "damage_immunities": null,
+        "condition_immunities": null,
+        "senses": "passive Perception 15",
+        "languages": "Common plus one other language",
+        "cr": 6,
+        "spells": null,
+        "traits": [
+          {
+            "name": null,
+            "desc": null
+          }
+        ],
+        "actions": [
+          {
+            "name": "Multiattack.",
+            "desc": "The pirate makes three attacks, using Rapier or Pistol in any combination"
+          },
+          {
+            "name": "Rapier.",
+            "desc": "Melee Attack Roll: +7, reack 5ft. Hit: 13 (2d8+4) Piercing damage, and the pirate has Advantage on the next attack roll it makes before the end of this turn."
+          },
+          {
+            "name": "Pistol.",
+            "desc": "Ranged Attack Roll: +7, range 30/90 ft. Hit: 15 (2d10+4) Piercing damage."
+          }
+        ],
+        "bonus_actions": [
+          {
+            "name": "Captain's Charm.",
+            "desc": "Wisdom Saving Trhow: DC 14, one creature the pirate can see within 30 feet. Failure: The target has the <STATBLOCK-WIKI-LINK>Conditions#Charmed|Charmed<STATBLOCK-WIKI-LINK> condition until the start of the pirate's next turn."
+          }
+        ],
+        "reactions": [
+          {
+            "name": "Riposte.",
+            "desc": "Trigger: The pirate is hit by a melee attack roll while holding a weapon. Response: The pirate adds 3 to its AC against the attack, possibly causing it to miss. On a miss, the pirate makes one Rapier attack against the targeting creature if within range."
+          }
+        ],
+        "source": "Homebrew",
+        "layout": "Basic 5e Layout"
+      }
+    ],
+    [
+      "Kobold Warrior",
+      {
+        "layout": "Basic 5e Layout",
+        "statblock": "inline",
+        "image": "kobold.jpg",
+        "name": "Kobold Warrior",
+        "size": "Small",
+        "type": "Dragon",
+        "subtype": null,
+        "alignment": "Neutral",
+        "ac": 14,
+        "hp": 7,
+        "hit_dice": "3d6-3",
+        "speed": "30 ft.",
+        "stats": [
+          7,
+          15,
+          9,
+          8,
+          7,
+          8
+        ],
+        "saves": [],
+        "skillsaves": [],
+        "damage_vulnerabilities": null,
+        "damage_resistances": null,
+        "damage_immunities": null,
+        "condition_immunities": null,
+        "senses": "Darkvision 60 ft.; Passive perception 8",
+        "languages": "Common, Draconic",
+        "cr": "1/8",
+        "spells": null,
+        "traits": [
+          {
+            "name": "Pack Tacktics",
+            "desc": "The kobold has Advantage on an attack roll against a creature if at least one of the kobold's allies is within 5 feet of the creature and the ally doesn't have the <STATBLOCK-WIKI-LINK>Conditions#Incapacitated|Incapacitatd<STATBLOCK-WIKI-LINK> condition."
+          },
+          {
+            "name": "Sunlight Sensitivity",
+            "desc": "While in sunlight, the kobold has Disadvantage on abiltiy checks and attack rolls."
+          }
+        ],
+        "actions": [
+          {
+            "name": "Dagger",
+            "desc": "Melee or Ranged Attack Roll: +4, reach 5ft. or range 20/60 ft. Hit: 4(1d4+2) Piercing damage"
+          }
+        ],
+        "source": "Homebrew"
+      }
+    ],
+    [
+      "Goblin Warrior",
+      {
+        "layout": "Basic 5e Layout",
+        "statblock": "inline",
+        "image": "goblin.jpg",
+        "name": "Goblin Warrior",
+        "size": "Small",
+        "type": "Fey (Goblinoid)",
+        "alignment": "Chaotic Neutral",
+        "ac": 15,
+        "hp": 10,
+        "hit_dice": "3d6",
+        "speed": "30 ft.",
+        "stats": [
+          8,
+          15,
+          10,
+          10,
+          8,
+          8
+        ],
+        "skillsaves": [
+          {
+            "Stealth": 6
+          }
+        ],
+        "damage_vulnerabilities": null,
+        "damage_resistances": null,
+        "damage_immunities": null,
+        "condition_immunities": null,
+        "senses": "Darkvision 60 ft., Passive Perception 9",
+        "languages": "Common, Goblin",
+        "cr": "1/4",
+        "spells": null,
+        "traits": [
+          {
+            "name": null,
+            "desc": null
+          }
+        ],
+        "actions": [
+          {
+            "name": "Scimitar",
+            "desc": "Melee Attack Roll: +4, reach 5ft. Hit: 5 (1d6+2) Slashing damage if the attack roll had Advantage"
+          },
+          {
+            "name": "Shortbow.",
+            "desc": "Ranged Attack Roll: +4, range 80/320 ft. Hit: 5 (1d6+2) Piercing damage, plus 2 (1d4) Piercing damage if the attack roll had Advantage."
+          }
+        ],
+        "bonus_actions": [
+          {
+            "name": "Nimble Escape",
+            "desc": "The goblin takes the Disengage or Hide action."
+          }
+        ],
+        "source": "Homebrew"
+      }
+    ],
+    [
+      "Goblin Boss",
+      {
+        "layout": "Basic 5e Layout",
+        "statblock": "inline",
+        "image": "goblin.jpg",
+        "name": "Goblin Boss",
+        "size": "Small",
+        "type": "Fey (Goblinoid)",
+        "alignment": "Chaotic Neutral",
+        "ac": 17,
+        "hp": 21,
+        "hit_dice": "6d6",
+        "speed": "30 ft.",
+        "stats": [
+          10,
+          15,
+          10,
+          10,
+          8,
+          10
+        ],
+        "skillsaves": [
+          {
+            "Stealth": 6
+          }
+        ],
+        "damage_vulnerabilities": null,
+        "damage_resistances": null,
+        "damage_immunities": null,
+        "condition_immunities": null,
+        "senses": "Darkvision 60 ft., Passive Perception 9",
+        "languages": "Common, Goblin",
+        "cr": 1,
+        "spells": null,
+        "traits": [
+          {
+            "name": null,
+            "desc": null
+          }
+        ],
+        "actions": [
+          {
+            "name": "Scimitar",
+            "desc": "Melee Attack Roll: +4, reach 5ft. Hit: 5 (1d6+2) Slashing damage if the attack roll had Advantage"
+          },
+          {
+            "name": "Shortbow.",
+            "desc": "Ranged Attack Roll: +4, range 80/320 ft. Hit: 5 (1d6+2) Piercing damage, plus 2 (1d4) Piercing damage if the attack roll had Advantage."
+          }
+        ],
+        "bonus_actions": [
+          {
+            "name": "Nimble Escape",
+            "desc": "The goblin takes the Disengage or Hide action."
+          }
+        ],
+        "reactions": [
+          {
+            "name": "Redirect Attack.",
+            "desc": "Trigger: A creature the goblin can see makes an attack roll against it. Response: The goblin chooses a Small or Medium ally within 5 feet of itself. The goblin and that ally swap places, and the ally becomes the target of the attack instead."
+          }
+        ],
+        "source": "Homebrew"
+      }
+    ],
+    [
+      "Goblin Hexer",
+      {
+        "layout": "Basic 5e Layout",
+        "statblock": "inline",
+        "image": "goblin.jpg",
+        "name": "Goblin Hexer",
+        "size": "Small",
+        "type": "Fey (Goblinoid)",
+        "alignment": "Chaotic Neutral",
+        "ac": 13,
+        "hp": 45,
+        "hit_dice": "10d6+10",
+        "speed": "30 ft.",
+        "stats": [
+          8,
+          16,
+          12,
+          16,
+          10,
+          10
+        ],
+        "skillsaves": [
+          {
+            "Sleight of Hand": 5
+          },
+          {
+            "Stealth": 7
+          }
+        ],
+        "damage_vulnerabilities": null,
+        "damage_resistances": null,
+        "damage_immunities": null,
+        "condition_immunities": null,
+        "senses": "Darkvision 60 ft., Passive Perception 9",
+        "languages": "Common, Goblin",
+        "cr": 3,
+        "spells": [
+          "<STATBLOCK-WIKI-LINK>Minor Illusion<STATBLOCK-WIKI-LINK> (At Will)",
+          "1/Day Each",
+          "<STATBLOCK-WIKI-LINK>Blindness-Deafness<STATBLOCK-WIKI-LINK>",
+          "<STATBLOCK-WIKI-LINK>Faerie Fire<STATBLOCK-WIKI-LINK>",
+          "Grease"
+        ],
+        "traits": [
+          {
+            "name": null,
+            "desc": null
+          }
+        ],
+        "actions": [
+          {
+            "name": "Multiattack.",
+            "desc": "The goblin makes two Hex Stick attacks. It can replace one attack with a use of Spellcasting."
+          },
+          {
+            "name": "Hex Stick.",
+            "desc": "Melee or Ranged Attack Roll: +5, reach 5ft. or range 60 ft. Hit: 12 (2d8+3) Psycic damage."
+          },
+          {
+            "name": "Spellcasting.",
+            "desc": "The goblin casts one of the listed spells, using Intelligence as the spellcasting ability (spell save DC 13)"
+          }
+        ],
+        "reactions": [
+          {
+            "name": "Jinx.",
+            "desc": "Trigger: A creature the goblin can see hists it with an attack roll. Response - Wisdom Saving Throw: DC 13, the triggering creature. Failure: The attack misses instead."
+          }
+        ],
+        "source": "Homebrew"
+      }
+    ],
+    [
+      "Arch Hag",
+      {
+        "layout": "Basic 5e Layout",
+        "image": "<STATBLOCK-WIKI-LINK>arch_hag.webp<STATBLOCK-WIKI-LINK>",
+        "name": "Arch Hag",
+        "size": "Large",
+        "type": "Fey",
+        "subtype": "intitiative +16 (26)",
+        "alignment": "Neutral Evil",
+        "ac": 20,
+        "hp": 333,
+        "hit_dice": "21d10+174",
+        "speed": "40 ft.",
+        "stats": [
+          24,
+          15,
+          23,
+          19,
+          19,
+          25
+        ],
+        "initiative": 16,
+        "saves": [
+          {
+            "Str": 7
+          },
+          "Dex:9",
+          {
+            "Con": 14
+          },
+          "Int:4",
+          {
+            "Wis": 11
+          },
+          {
+            "cha": 7
+          }
+        ],
+        "skillsaves": [
+          {
+            "Deception": 14
+          },
+          {
+            "perception": 11
+          },
+          {
+            "Persuasion": 21
+          }
+        ],
+        "senses": "Truesight 60 ft.; Passive Perception 21",
+        "languages": "All",
+        "damage_resistances": "Cold, Fire, Psycic",
+        "damage_immunities": "",
+        "condition_immunities": "Charmed, Exhaustion, Frightened",
+        "cr": 21,
+        "traits": [
+          {
+            "name": "Coven Magic",
+            "desc": "While within 30 feet of at least two hag allies, the hag can cast one of the following spells, requiring no Material components, using the spell's normal casting time, and using Intelligence as the spellcasting ability (spell save DC 19): Augury, Find Familiar, Identify, Locate Object, Scrying, or Unseen Servant. The hag must finish a Long Rest before using this trait to cast that spell again."
+          },
+          {
+            "name": "Legendary Resistance (4/Day, or 5/Day in Lair)",
+            "desc": "If the hag fails a saving throw, it can choose to succeed instead."
+          },
+          {
+            "name": "Magic Resistance",
+            "desc": "The hag has Advantage on saving throws against spells and other magical effects."
+          },
+          {
+            "name": "Spiteful Escape.",
+            "desc": "When the hag drops to 0 Hit Points, it dies only if it is within 30 feet of its anathema (a thing the DM chooses as the hag's most hated thing). Otherwise, the hag drops to 1 Hit Point and teleports to a harmless demiplane, and it can't return to the plane it left for 2d6 days. When the hag teleports away, each creature within 60 feet of the space it left is cursed. Until the curse ends, a creature has Disadvantage on ability checks and saving throws, and the hag knows its location anywhere in the multiverse."
+          }
+        ],
+        "actions": [
+          {
+            "name": "Multiattack",
+            "desc": "The hag makes two Spectral Claw attacks and uses Crackling Wave."
+          },
+          {
+            "name": "Spectral Claw.",
+            "desc": "Melee or Ranged Attack Roll; +14, reach 10ft. or range 60ft. Hit: 17 (3d6+7) Force damage. If the target is a Large or smaller creature, it has the Prone condition."
+          },
+          {
+            "name": "Crackling Wave.",
+            "desc": "Dexterity Saving Trhow: DC22, each creature in a 60-foot Cone. Failure: 32 (5d12) Lightning damage. Success: Half damage. Failure or Success: The target is cursed until the end of the hag's next turn. The target can't take reactions until the curse ends."
+          },
+          {
+            "name": "Spellcasting.",
+            "desc": "The hag casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 22):"
+          },
+          {
+            "name": "At Will",
+            "desc": "Detect Thoughts, Dimension Door, Dispel Magic, Hypnotic Pttern"
+          },
+          {
+            "name": "2/Day Each",
+            "desc": "Mass Suggestion, Modify Memory, Plane Shift"
+          }
+        ],
+        "bonus_actions": [
+          {
+            "name": "Witch Strike.",
+            "desc": "Each creature cursed by the hag and within 60 feet of it takes 14 (4d6) Lightning damage."
+          }
+        ],
+        "reactions": [
+          {
+            "name": "Tongue Twister",
+            "desc": "The hag casts Counterspell in response to that spell's trigger, using the same spellcasting ability as Spellcasting. If the target fails its saving throw, it is cursed until the end of its next turn. Until the curse ends, the target can't cast spells with a Verbal component, and when it speaks, it says the opisite of what it means."
+          }
+        ],
+        "legendary_actions": [
+          {
+            "name": "",
+            "desc": "Legendary Action Uses: 3 (4 in Lair). Immediately after another creature's turn, the hag can expend a use to take one of the following actions. The hag regains all expended uses at the start of each of its turns."
+          },
+          {
+            "name": "Hag's Swipe",
+            "desc": "The hag makes one Spectral Claw attack."
+          },
+          {
+            "name": "Malicious Magic.",
+            "desc": "The hag uses Spellcasting to cast Dimension Door or Hypnotic Pattern. The hag can't take this action again until the start of its next turn."
+          }
+        ],
+        "lair_actions": [
+          {
+            "name": "Lapsus Linguae.",
+            "desc": "Creatures (excluding the hag and its allies) within 1 mile of the lair subtract 1d10 from any ability checks they make when they take the Influence action."
+          },
+          {
+            "name": "Meddlesome Magic",
+            "desc": "Whenever a creature other than the hag or its alies ifinses a Long Rest while within 1 mile of the lair, the next time that creature casts a spell using a spell slot, it also casts Confusion centered on itself. The spell uses the creature's spellcasting ability and doesn't require Concentration. If the arch-hag is destroyed or moves its lair elsewhere, these effects end immediatly."
+          }
+        ],
+        "source": "Homebrew"
+      }
+    ],
+    [
+      "Zombie",
+      {
+        "layout": "Basic 5e Layout",
+        "statblock": "inline",
+        "image": null,
+        "name": "Zombie",
+        "size": "Medium",
+        "type": "Undead",
+        "subtype": null,
+        "alignment": "Neutral Evil",
+        "ac": 8,
+        "hp": "15 (2d8 +6)",
+        "hit_dice": null,
+        "speed": "20 ft.",
+        "stats": [
+          13,
+          3,
+          6,
+          6,
+          16,
+          5
+        ],
+        "saves": [],
+        "skillsaves": [],
+        "damage_vulnerabilities": null,
+        "damage_resistances": null,
+        "damage_immunities": null,
+        "condition_immunities": "Poison, Exhaustion, Poisoned",
+        "senses": "Darkvision 60ft.; Passive Perception 8",
+        "languages": "Understans Common plus one other language but can't speak",
+        "cr": "1/4",
+        "spells": null,
+        "traits": [
+          {
+            "name": "Undead Fortitude",
+            "desc": "If damage reduces the zombie to 0 Hit Points, it makes a Constitution saving throw (DC 5 plus the damage taken) unless the damage is Radiant or from a Critical Hit. On a succesful save, the zombie drops to 1 Hit Point instead"
+          }
+        ],
+        "actions": [
+          {
+            "name": "Slam",
+            "desc": "Melee Attack Roll: +3, reach 5ft. Hit: 5 (1d8 +1) Bludgeoning damage"
+          }
+        ],
+        "bonus_actions": [
+          {
+            "name": null,
+            "desc": null
+          }
+        ],
+        "source": "Homebrew"
+      }
+    ],
+    [
+      "Veylin Mournshade",
+      {
+        "layout": "Basic 5e Layout",
+        "statblock": "inline",
+        "image": null,
+        "name": "Veylin Mournshade",
+        "size": "Medium",
+        "type": "Undead",
+        "subtype": null,
+        "alignment": "Chaotic Evil",
+        "ac": 12,
+        "hp": "66 (15d8)",
+        "hit_dice": null,
+        "speed": "30 ft. Fly 50 ft. (hover)",
+        "stats": [
+          1,
+          10,
+          14,
+          10,
+          11,
+          11
+        ],
+        "saves": [],
+        "skillsaves": [],
+        "damage_vulnerabilities": null,
+        "damage_resistances": "Acid, Bludgeoning, Cold, Fire, Lightning, Piercing, Slashing, Thunder",
+        "damage_immunities": "Necrotic",
+        "condition_immunities": "Poison, Charmed, Exhaustion, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained, Unconscious",
+        "senses": "Darkvision 60 ft. Passive Perception 10",
+        "languages": "Understands Common plus one other language, but can't speak",
+        "cr": 3,
+        "spells": "Mysty Step (3 times), Eldritch Blast",
+        "traits": [
+          {
+            "name": "Incorporeal Movement",
+            "desc": "The specter can move thorugh other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object"
+          },
+          {
+            "name": "Sunlight Sensitivity",
+            "desc": "While in sunlight, the specter has Disadvantage on abilty checks and attack rolls"
+          }
+        ],
+        "actions": [
+          {
+            "name": "Life Drain",
+            "desc": "Melee Attack Roll: +4, reach 5ft. Hit: 7 (2d6) Necrotic damage. If the target is a creature, its Hit Point maximum decreases by an amount equal to the damage taken"
+          }
+        ],
+        "bonus_actions": [
+          {
+            "name": null,
+            "desc": null
+          }
+        ],
+        "source": "Homebrew"
+      }
+    ],
+    [
+      "Specter",
+      {
+        "layout": "Basic 5e Layout",
+        "statblock": "inline",
+        "image": null,
+        "name": "Specter",
+        "size": "Medium",
+        "type": "Undead",
+        "subtype": null,
+        "alignment": "Chaotic Evil",
+        "ac": 12,
+        "hp": "22 (5d8)",
+        "hit_dice": null,
+        "speed": "30 ft. Fly 50 ft. (hover)",
+        "stats": [
+          1,
+          10,
+          14,
+          10,
+          11,
+          11
+        ],
+        "saves": [],
+        "skillsaves": [],
+        "damage_vulnerabilities": null,
+        "damage_resistances": "Acid, Bludgeoning, Cold, Fire, Lightning, Piercing, Slashing, Thunder",
+        "damage_immunities": "Necrotic",
+        "condition_immunities": "Poison, Charmed, Exhaustion, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained, Unconscious",
+        "senses": "Darkvision 60 ft. Passive Perception 10",
+        "languages": "Understands Common plus one other language, but can't speak",
+        "cr": 1,
+        "spells": null,
+        "traits": [
+          {
+            "name": "Incorporeal Movement",
+            "desc": "The specter can move thorugh other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object"
+          },
+          {
+            "name": "Sunlight Sensitivity",
+            "desc": "While in sunlight, the specter has Disadvantage on abilty checks and attack rolls"
+          }
+        ],
+        "actions": [
+          {
+            "name": "Life Drain",
+            "desc": "Melee Attack Roll: +4, reach 5ft. Hit: 7 (2d6) Necrotic damage. If the target is a creature, its Hit Point maximum decreases by an amount equal to the damage taken"
+          }
+        ],
+        "bonus_actions": [
+          {
+            "name": null,
+            "desc": null
+          }
+        ],
+        "source": "Homebrew"
+      }
+    ],
+    [
+      "Skeleton",
+      {
+        "layout": "Basic 5e Layout",
+        "statblock": "inline",
+        "image": null,
+        "name": "Skeleton",
+        "size": "Medium",
+        "type": "Undead",
+        "subtype": null,
+        "alignment": "Lawful Evil",
+        "ac": 14,
+        "hp": "13 (2d6+4)",
+        "hit_dice": null,
+        "speed": "30 ft.",
+        "stats": [
+          10,
+          6,
+          16,
+          8,
+          15,
+          5
+        ],
+        "saves": [],
+        "skillsaves": [],
+        "damage_vulnerabilities": "Bludgeoning",
+        "damage_resistances": null,
+        "damage_immunities": null,
+        "condition_immunities": "Poison, Exhaustion, Poisoned",
+        "senses": null,
+        "languages": null,
+        "cr": "1/4",
+        "spells": null,
+        "traits": [
+          {
+            "name": null,
+            "desc": null
+          }
+        ],
+        "actions": [
+          {
+            "name": "Shortsword",
+            "desc": "Melee Attack Roll: +5, reach 5ft. Hit: 6 (1d6+3) Piercing damage"
+          },
+          {
+            "name": "Shortbow",
+            "desc": "Ranged Attack Roll: +5, range 80/320 ft. Hit: 6 (1d6+3) Piercing damage"
+          }
+        ],
+        "bonus_actions": [
+          {
+            "name": null,
+            "desc": null
+          }
+        ],
+        "source": "Homebrew"
+      }
+    ],
+    [
+      "Shadow",
+      {
+        "layout": "Basic 5e Layout",
+        "statblock": "inline",
+        "image": null,
+        "name": "Shadow",
+        "size": "Medium",
+        "type": "Undead",
+        "subtype": null,
+        "alignment": "Chaotic Evil",
+        "ac": 12,
+        "hp": "27 (5d8+5)",
+        "hit_dice": null,
+        "speed": "40 ft.",
+        "stats": [
+          6,
+          6,
+          14,
+          10,
+          13,
+          8
+        ],
+        "saves": [],
+        "skillsaves": "Stealth +6",
+        "damage_vulnerabilities": null,
+        "damage_resistances": "Acid, Cold, Fire, Lightning, Thunder",
+        "damage_immunities": "Necrotic, Poison; Exhaustion, Frightened, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained, Unconcious",
+        "condition_immunities": null,
+        "senses": "Darkvision 60 ft.; Passive Perception 10",
+        "languages": null,
+        "cr": null,
+        "spells": null,
+        "traits": [
+          {
+            "name": "Amorphous",
+            "desc": "The shadow can move thorugh a space as narrow as 1 inch without expending extra movement to do so."
+          },
+          {
+            "name": "Sunlight Weakness",
+            "desc": "While in sunlight, the shadow has Disadvantage on D20 Tests."
+          }
+        ],
+        "actions": [
+          {
+            "name": "Draining Swipe",
+            "desc": "Melee Attack Roll +4, reach 5ft. Hit: 5 (1d6+2) Necrotic damage, and the target's Strength score decreases by 1d4. The target dies if this reduces that score to 0. If Humanoid is slain by this attack, a Shadow rises from the corpse 1d4 hours later."
+          }
+        ],
+        "bonus_actions": [
+          {
+            "name": "Shadow Stealth",
+            "desc": "While in Dim Light or Darkness, the shadow takes the Hide action"
+          }
+        ],
+        "source": "Homebrew"
+      }
+    ],
+    [
+      "Scout",
+      {
+        "layout": "Basic 5e Layout",
+        "statblock": "inline",
+        "image": null,
+        "name": "Scout",
+        "size": "Medium or Small",
+        "type": "Humanoid",
+        "subtype": null,
+        "alignment": "Neutral",
+        "ac": 13,
+        "hp": "16 (3d8+3)",
+        "hit_dice": null,
+        "speed": "30 ft",
+        "stats": [
+          111,
+          11,
+          14,
+          13,
+          12,
+          11
+        ],
+        "saves": [],
+        "skillsaves": "Nature +4, Perception +5, Stealth +6, Survival +5",
+        "damage_vulnerabilities": null,
+        "damage_resistances": null,
+        "damage_immunities": null,
+        "condition_immunities": null,
+        "senses": "Passive Perception 15",
+        "languages": null,
+        "cr": "1/2",
+        "spells": null,
+        "traits": [
+          {
+            "name": null,
+            "desc": null
+          }
+        ],
+        "actions": [
+          {
+            "name": "Multiattack",
+            "desc": "The scout makes two attacks, using Shortsword and Longbow in any combination"
+          },
+          {
+            "name": "Shortswaord",
+            "desc": "Melee Attack Roll: +4, reach 5ft. Hit: 5 (1d6+2) Piercing damage"
+          },
+          {
+            "name": "Longbow",
+            "desc": "Ranged Attack Roll: +4, range 150/600 ft. Hit: 6 (1d8+2) Piercing damage"
+          }
+        ],
+        "bonus_actions": [
+          {
+            "name": null,
+            "desc": null
+          }
+        ],
+        "source": "Homebrew"
+      }
+    ],
+    [
+      "Goblin Minion",
+      {
+        "layout": "Basic 5e Layout",
+        "statblock": "inline",
+        "image": "goblin.jpg",
+        "name": "Goblin Minion",
+        "size": "Small",
+        "type": "Fey (Goblinoid)",
+        "alignment": "Chaotic Neutral",
+        "ac": 12,
+        "hp": 7,
+        "hit_dice": "2d6",
+        "speed": "30 ft.",
+        "stats": [
+          8,
+          15,
+          10,
+          10,
+          8,
+          8
+        ],
+        "skillsaves": [
+          {
+            "Stealth": 6
+          }
+        ],
+        "damage_vulnerabilities": null,
+        "damage_resistances": null,
+        "damage_immunities": null,
+        "condition_immunities": null,
+        "senses": "Darkvision 60 ft., Passive Perception 9",
+        "languages": "Common, Goblin",
+        "cr": "1/8",
+        "spells": null,
+        "traits": [
+          {
+            "name": null,
+            "desc": null
+          }
+        ],
+        "actions": [
+          {
+            "name": "Dagger",
+            "desc": "Melee or Ranged Attack Roll: +4, reach 5ft. or range 20/60 ft. Hit: 4(1d4+2) Piercing damage"
+          }
+        ],
+        "bonus_actions": [
+          {
+            "name": "Nimble Escape",
+            "desc": "The goblin takes the Disengage or Hide action."
+          }
+        ],
+        "source": "Homebrew"
+      }
+    ],
+    [
+      "Bandit Captain",
+      {
+        "layout": "Basic 5e Layout",
+        "statblock": "inline",
+        "image": null,
+        "name": "Bandit Captain",
+        "size": "Medium",
+        "type": "Humanoid",
+        "subtype": "Any Race",
+        "alignment": "Chaotic Neutral",
+        "ac": "15 (Studded Leather)",
+        "hp": "52 (8d8+16)",
+        "hit_dice": "10d8+20",
+        "speed": "30ft",
+        "stats": [
+          15,
+          14,
+          16,
+          111,
+          14,
+          14
+        ],
+        "saves": [],
+        "skillsaves": "Athletics +4, Deception +4",
+        "damage_vulnerabilities": null,
+        "damage_resistances": null,
+        "damage_immunities": null,
+        "condition_immunities": null,
+        "senses": "passive Perception 12",
+        "languages": "Common, Thieves’ Cant",
+        "cr": 2,
+        "spells": null,
+        "traits": [
+          {
+            "name": null,
+            "desc": null
+          }
+        ],
+        "actions": [
+          {
+            "name": "Multiattack",
+            "desc": "The captain makes two melee attacks using Scimitar and Pistol in any combination"
+          },
+          {
+            "name": "Scimitar",
+            "desc": "Melee Attack Roll: +5, reach 5ft. Hit: 6 (1d6+3) slashing damage."
+          },
+          {
+            "name": "Pistol",
+            "desc": "Ranged Attack Roll: +5, range 30/90 ft. Hit: 8 (1d10+3) piercing damage."
+          }
+        ],
+        "reactions": [
+          {
+            "name": "Parry",
+            "desc": "Trigger: The bandit is hit by a melee attack roll while holding a weapon. Response: The bandit adds 2 to its AC against the attack, possibly causing it to miss."
+          }
+        ],
+        "source": "Homebrew"
+      }
+    ],
+    [
+      "Bandit",
+      {
+        "layout": "Basic 5e Layout",
+        "statblock": "inline",
+        "image": null,
+        "name": "Bandit",
+        "size": "Medium or Small",
+        "type": "Huminoid",
+        "subtype": "Small",
+        "alignment": "Neutral",
+        "ac": 12,
+        "hp": "11 (2d8+2)",
+        "hit_dice": null,
+        "speed": "30ft",
+        "stats": [
+          11,
+          10,
+          12,
+          10,
+          12,
+          10
+        ],
+        "saves": [],
+        "skillsaves": [],
+        "damage_vulnerabilities": null,
+        "damage_resistances": null,
+        "damage_immunities": null,
+        "condition_immunities": null,
+        "senses": null,
+        "languages": "Common, Theive's Cant",
+        "cr": "1/8",
+        "spells": null,
+        "traits": [
+          {
+            "name": null,
+            "desc": null
+          }
+        ],
+        "actions": [
+          {
+            "name": "Scimitar",
+            "desc": "Melee Attack Roll: +3, reach 5ft. Hit: 4 (1d6+1) Slashing damage"
+          },
+          {
+            "name": "Light Crossbow",
+            "desc": "Ranged Attack Roll: +3, range 80/320 ft. Hit: 5 (1d8) Piercing damage."
+          }
+        ],
+        "bonus_actions": [
+          {
+            "name": null,
+            "desc": null
+          }
+        ],
+        "source": "Homebrew"
+      }
+    ]
+  ],
+  "defaultLayouts": {},
+  "layouts": [],
+  "default": "basic-5e-layout",
+  "useDice": true,
+  "renderDice": true,
+  "export": true,
+  "showAdvanced": true,
+  "version": {
+    "major": 4,
+    "minor": 10,
+    "patch": 2
+  },
+  "paths": [
+    "3. Mechanics/CLI/bestiary",
+    "3. Mechanics/Beastiary"
+  ],
+  "autoParse": true,
+  "disableSRD": false,
+  "tryToRenderLinks": true,
+  "debug": true,
+  "notifiedOfFantasy": false,
+  "hideConditionHelp": false,
+  "alwaysImport": false,
+  "defaultLayoutsIntegrated": true,
+  "atomicWrite": false
+}

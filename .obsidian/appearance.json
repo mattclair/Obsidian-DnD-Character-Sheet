@@ -1,0 +1,27 @@
+{
+  "cssTheme": "ITS Theme",
+  "enabledCssSnippets": [
+    "Banner Customization",
+    "banner",
+    "Hide Properties in Reading View",
+    "supercharged-links-gen",
+    "two-columns",
+    "callout-icon-none",
+    "stealth-callouts",
+    "character-stats",
+    "character-sheet",
+    "MCL Multi Column",
+    "S - Encoded Icons",
+    "S - Encoded Fonts",
+    "dnd5e-compendium",
+    "dnd5e-float-images",
+    "dnd5e-only-admonitions",
+    "dnd5e-only-statblock"
+  ],
+  "theme": "obsidian",
+  "nativeMenus": false,
+  "showViewHeader": true,
+  "showRibbon": true,
+  "baseFontSizeAction": false,
+  "accentColor": "#c313ac"
+}

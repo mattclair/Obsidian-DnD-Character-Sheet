@@ -1,0 +1,15 @@
+{
+  "attachmentFolderPath": "z_Attachments",
+  "readableLineLength": false,
+  "livePreview": true,
+  "alwaysUpdateLinks": true,
+  "pdfExportSettings": {
+    "includeName": true,
+    "pageSize": "Letter",
+    "landscape": false,
+    "margin": "0",
+    "downscalePercent": 100
+  },
+  "showInlineTitle": false,
+  "showLineNumber": true
+}

@@ -1,0 +1,13 @@
+{
+  "types": {
+    "aliases": "aliases",
+    "cssclasses": "multitext",
+    "tags": "tags",
+    "Level": "number",
+    "dg-publish": "checkbox",
+    "dg-home": "checkbox",
+    "spellAttackBonusFromItem": "number",
+    "spellSaveBonusFromItem": "number",
+    "gold": "number"
+  }
+}

@@ -1,0 +1,5 @@
+/* hide properties view in reading view/mode */
+
+body {
+    --metadata-display-reading: none; 
+}
