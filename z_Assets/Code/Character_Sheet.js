@@ -2033,10 +2033,10 @@ setTimeout(() => {
 		        // If clicking the same spell, clear concentration.
 		        if (fm.conditions.concentration_spell === spellName) {
 		            fm.conditions.concentration_spell = "";
-		            fm.conditions.concentrating = "false";
+		            fm.conditions.concentrating = false;
 		        } else {
 		            fm.conditions.concentration_spell = spellName;
-		            fm.conditions.concentrating = "true";
+		            fm.conditions.concentrating = true;
 		        }
 		    });
 		

@@ -53,7 +53,7 @@ Stat_Bonus:
 conditions:
   blinded: false
   charmed: false
-  concentrating: false
+  concentrating: true
   deafened: false
   frightened: false
   grappled: false
@@ -71,16 +71,16 @@ conditions:
   exhaustion:
     count: 0
     Level: false
-  concentration_spell: ""
+  concentration_spell: Hunger Of Hadar
 health:
   max: 32
   current: 32
   temp: 0
-  maxTmp: 5
+  maxTmp: 9
 Luck:
   luck_point_1: true
   luck_point_2: true
-  luck_point_3: true
+  luck_point_3: false
 Hit_Dice:
   Warlock_d8-1: true
   Warlock_d8-2: true
@@ -169,7 +169,7 @@ Eldritch_Invocations:
   - Repelling Blast
   - Eldritch Mind
 mastery:
-purse: 636.29
+purse: 641.29
 BASE_FOLDER: 3. Mechanics/CLI
 ---
 ```dataviewjs
