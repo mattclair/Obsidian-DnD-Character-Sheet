@@ -41,13 +41,14 @@ BASE_FOLDER: 3. Mechanics/CLI
 - Copy CLI Content into `3. Mechanics\CLI` (There is a frontmatter variable `BASE_FOLDER` that can be set if your path varies.)
 
 ### Features
-|                                                                                               |                                                                        |                                                                              |
-| --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| <img src="z_Assets/Screenshots/Overview-Tab.png" width="350">                                 | <img src="z_Assets/Screenshots/Overview-Tab-DarkMode.png" width="350"> | <img src="z_Assets/Screenshots/Class-Features.png" width="350">              |
-| *Supports Light or Dark Mode*                                                                 | *Main Overview Tab, Showcasing Character Stats*                        | Class, Features are displayed according to chracter's level                  |
-|                                                                                               |                                                                        |                                                                              |
-| <img src="z_Assets/Screenshots/Spell-Tab.png" width="350">                                    | <img src="z_Assets/Screenshots/Weapons-Tab.png" width="350">           | <img src="z_Assets/Screenshots/Inventory-Tab.png" width="350">               |
-| Spell Tracking: Add Spells through the UI. Trigger concentration with the 'Cast Spell' Button | Track Weapon Attack Roll/Damage and Assign Weapon Mastery              | Track character's Inventory. Add/Remove items through the UI. Tracks weight. |
+|                                                                                                 |                                                                        |                                                                                |
+| ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| <img src="z_Assets/Screenshots/Overview-Tab.png" width="350">                                   | <img src="z_Assets/Screenshots/Overview-Tab-DarkMode.png" width="350"> | <img src="z_Assets/Screenshots/Class-Features.png" width="350">                |
+| *Supports Light or Dark Mode*                                                                   | *Main Overview Tab, Showcasing Character Stats*                        | *Class, Features are displayed according to chracter's level*                  |
+|                                                                                                 |                                                                        |                                                                                |
+| <img src="z_Assets/Screenshots/Spell-Tab.png" width="350">                                      | <img src="z_Assets/Screenshots/Weapons-Tab.png" width="350">           | <img src="z_Assets/Screenshots/Inventory-Tab.png" width="350">                 |
+| *Spell Tracking: Add Spells through the UI. Trigger concentration with the 'Cast Spell' Button* | *Track Weapon Attack Roll/Damage and Assign Weapon Mastery*            | *Track character's Inventory. Add/Remove items through the UI. Tracks weight.* |
+## ✏️Configuring Frontmatter
 ### Basic Info
 
 | Frontmatter Value       | Type     | Details                                                                |
