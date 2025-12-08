@@ -39,8 +39,21 @@ BASE_FOLDER: 3. Mechanics/CLI
 - Install Obsidian and the required plugins (Dataview, Meta Bind, ITS Theme)
 - Download Git repository and open it as a folder in Obsidian (You will be prompted to tell obsidian that you trust the content)
 - Copy CLI Content into `3. Mechanics\CLI` (There is a frontmatter variable `BASE_FOLDER` that can be set if your path varies.)
-- Configure frontmatter for your character
-- Edit Meta-Bind buttons for Short/Long Rest. These can be used to reset toggles for spell slots and abilities.
+
+### Features
+<div style="display: flex; gap: 20px; flex-wrap: wrap;">
+
+  <figure style="margin: 0;">
+    <img src="z_Assets/Screenshots/Overview-Tab.png" width="350">
+    <figcaption>Supports Light or Dark Mode</figcaption>
+  </figure>
+
+  <figure style="margin: 0;">
+    <img src="z_Assets/Screenshots/Overview-Tab-DarkMode.png" width="350">
+    <figcaption>Main Overview Tab, Showcasing Character Stats</figcaption>
+  </figure>
+
+</div>
 
 ### Basic Info
 
