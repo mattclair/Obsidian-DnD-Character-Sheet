@@ -23,7 +23,7 @@ This project supports:
 ## 📘 Documentation
 
 ### Preparation
-Obtain the required source material via the TTRPG-Convert-CLI 5e tool linked above. This content must reside in your Obsidian vault under '3. Mechanics/CLI'. If your path varies from this then there is a frontmatter value labeled 'BASE_FOLDER' that must be updated.
+Obtain the required source material via the TTRPG-Convert-CLI 5e tool linked above. This content must reside in your Obsidian vault under '3. Mechanics/CLI'. If your path varies from this then there is a frontmatter value labeled 'BASE_FOLDER' that must be updated. Tested with the 2024 source material (xphb, xdmg). This will not work with other content but could be added in the future.
 
 All of your character details need to be entered into the frontmatter. You will not need to modify any of the JavaScript code that makes up this character sheet.
 
