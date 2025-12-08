@@ -135,10 +135,6 @@ Spells:
       - Hunters Mark
       - Faerie Fire
       - Cure Wounds
-      - Entangle
-      - Hail Of Thorns
-      - Alarm
-      - Ensnaring Strike
   Always_Prepared:
     Cantrips:
       - Guidance
