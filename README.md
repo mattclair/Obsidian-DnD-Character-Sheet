@@ -41,19 +41,10 @@ BASE_FOLDER: 3. Mechanics/CLI
 - Copy CLI Content into `3. Mechanics\CLI` (There is a frontmatter variable `BASE_FOLDER` that can be set if your path varies.)
 
 ### Features
-<div style="display: flex; gap: 20px; flex-wrap: wrap;">
-
-  <figure style="margin: 0;">
-    <img src="z_Assets/Screenshots/Overview-Tab.png" width="350">
-    <figcaption>Supports Light or Dark Mode</figcaption>
-  </figure>
-
-  <figure style="margin: 0;">
-    <img src="z_Assets/Screenshots/Overview-Tab-DarkMode.png" width="350">
-    <figcaption>Main Overview Tab, Showcasing Character Stats</figcaption>
-  </figure>
-
-</div>
+|  |  |
+|---|---|
+| <img src="z_Assets/Screenshots/Overview-Tab.png" width="350"> | <img src="z_Assets/Screenshots/Overview-Tab-DarkMode.png" width="350"> |
+| *Supports Light or Dark Mode* | *Main Overview Tab, Showcasing Character Stats* |
 
 ### Basic Info
 
