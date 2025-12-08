@@ -41,10 +41,10 @@ BASE_FOLDER: 3. Mechanics/CLI
 - Copy CLI Content into `3. Mechanics\CLI` (There is a frontmatter variable `BASE_FOLDER` that can be set if your path varies.)
 
 ### Features
-|  |  |
-|---|---|
-| <img src="z_Assets/Screenshots/Overview-Tab.png" width="350"> | <img src="z_Assets/Screenshots/Overview-Tab-DarkMode.png" width="350"> |
-| *Supports Light or Dark Mode* | *Main Overview Tab, Showcasing Character Stats* |
+|                                                               |                                                                        |                                                                 |                                                            |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------------- |
+| <img src="z_Assets/Screenshots/Overview-Tab.png" width="350"> | <img src="z_Assets/Screenshots/Overview-Tab-DarkMode.png" width="350"> | <img src="z_Assets/Screenshots/Class-Features.png" width="350"> | <img src="z_Assets/Screenshots/Spell-Tab.png" width="350"> |
+| *Supports Light or Dark Mode*                                 | *Main Overview Tab, Showcasing Character Stats*                        | Class, Features are displayed according to chracter's level     | Track your spells. Add spells through the UI               |
 
 ### Basic Info
 
