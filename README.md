@@ -35,6 +35,13 @@ BASE_FOLDER: 3. Mechanics/CLI
 ```
 
 
+### Quick Start
+- Install Obsidian and the required plugins (Dataview, Meta Bind, ITS Theme)
+- Download Git repository and open it as a folder in Obsidian (You will be prompted to tell obsidian that you trust the content)
+- Copy CLI Content into `3. Mechanics\CLI` (There is a frontmatter variable `BASE_FOLDER` that can be set if your path varies.)
+- Configure frontmatter for your character
+- Edit Meta-Bind buttons for Short/Long Rest. These can be used to reset toggles for spell slots and abilities.
+
 ### Basic Info
 
 | Frontmatter Value       | Type     | Details                                                                |
@@ -157,7 +164,7 @@ feats:
   - Savage Attacker
 ```
 
-Magic Initiate is configured differently, but still under the feats object. This is done so the spell slots associated are tracked separately than other spell slots. This example tracks Lucky and Magic Initiate feats.
+Magic Initiate and Shadow Touched are configured differently, but still under the feats object. This is done so the spell slots associated are tracked separately than other spell slots. This example tracks Lucky, Magic Initiate, and Shadow Touched feats.
 ```yaml
 feats:
   - Lucky
@@ -167,6 +174,8 @@ feats:
       cantrips:
         - Guidance
         - Message
+  - Shadow Touched:
+      spell: Silent Image
 ```
 
 
@@ -207,19 +216,17 @@ Proficiencies:
 
 ### Inventory
 
-| Frontmatter Value | Type   | Details                                          |
-| ----------------- | ------ | ------------------------------------------------ |
-| `inventory:`      | Object | This item holds all of your characters inventory |
+| Frontmatter Value | Type   | Details                                           |
+| ----------------- | ------ | ------------------------------------------------- |
+| `inventory:`      | Object | This item holds all of your character's inventory |
 
 Text inside parentheses is ignored so you can add additional description there. In this example, 'Book (Occult Lore)' links to a note in the items folder called book-xphb
 
-If you use the inventory table UI to add an item to the table that cannot directly be linked to a note, a note in the items folder will be created with -homebrew appended. There you can add additional flavor text to the item.
+  - If you use the inventory table UI to add an item to the table that cannot directly be linked to a note, a note in the items folder will be created with -homebrew appended. There you can add additional flavor text to the item.
+  - If you use the UI to add an item that already exists in the table, then the count will increase.
+  - The table automatically tracks weight.
+  - If a note does not define a value, one is inferred based on the item's rarity..
 
-If you use the UI to add an item that already exists in the table, then the count will increase.
-
-The table tracks weight and calculates encumbrance.
-
-The table tracks the value of an object. If the note does not specifically list a value, then one is inferred based off of the items rarity.
 ```yaml
 inventory:
   Holy Water: 2
@@ -228,14 +235,14 @@ inventory:
   Quarterstaff: 1
   Bedroll: 1
   Book (Occult Lore): 1
-  sickle: 1
+  Sickle: 1
 ```
 
 ### Spell Slots
 
-| Frontmatter Value | Type      | Details                                                                                                                                                                                                                                                                                                         |
-| ----------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `spell_slot:`     | Object [] | The character sheet will generate the appropriate spell slots based on the current character Level, Class and Subclass. Initially, the spell slots will be shown as empty. As long as you have one spell slot configured, additional spell slots will populate in frontmatter once they have been toggled 'On'. |
+| Frontmatter Value | Type      | Details                                                                                                                                                                                                                                                                                                              |
+| ----------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `spell_slot:`     | Object [] | The Spell Slot Tracker will generate the appropriate spell slots based on the current character's Level, Class and Subclass. Initially, the spell slots will be shown as empty. As long as you have one spell slot configured, additional spell slots will populate in frontmatter once they have been toggled 'On'. |
 Example: Level 1 and 2 spell slots
 ```yaml
 spell_slot:
@@ -434,7 +441,7 @@ The weapon mastery table will allow you to select the weapon types that you want
 | Frontmatter Value | Type   | Details                                      |
 | ----------------- | ------ | -------------------------------------------- |
 | `mastery:`        | Object | List your weapons and their weapon masteries |
-Example: This is for a Soulknife Rogue that has a dagger, shortbow, shortsward, and Psychic Blades
+Example: This example is for a Soulknife Rogue who has a dagger, shortbow, shortsward, and Psychic Blades
 ```yaml
 mastery:
   Dagger: Nick
