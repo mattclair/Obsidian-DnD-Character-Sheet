@@ -16,10 +16,9 @@
     "dnd5e-compendium",
     "dnd5e-float-images",
     "dnd5e-only-admonitions",
-    "dnd5e-only-statblock",
-    "Theme - School Days"
+    "dnd5e-only-statblock"
   ],
-  "theme": "moonstone",
+  "theme": "obsidian",
   "nativeMenus": false,
   "showViewHeader": true,
   "showRibbon": true,
