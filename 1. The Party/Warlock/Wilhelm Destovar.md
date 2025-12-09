@@ -53,7 +53,7 @@ Stat_Bonus:
 conditions:
   blinded: false
   charmed: false
-  concentrating: true
+  concentrating: false
   deafened: false
   frightened: false
   grappled: false
@@ -71,7 +71,7 @@ conditions:
   exhaustion:
     count: 0
     Level: false
-  concentration_spell: Hunger Of Hadar
+  concentration_spell: ""
 health:
   max: 32
   current: 32
@@ -80,7 +80,7 @@ health:
 Luck:
   luck_point_1: true
   luck_point_2: true
-  luck_point_3: false
+  luck_point_3: true
 Hit_Dice:
   Warlock_d8-1: true
   Warlock_d8-2: true
@@ -168,6 +168,8 @@ Eldritch_Invocations:
   - Devil's Sight
   - Repelling Blast
   - Eldritch Mind
+Magical_Cunning:
+  magical_cunning-1: true
 mastery:
 purse: 641.29
 BASE_FOLDER: 3. Mechanics/CLI
@@ -335,6 +337,10 @@ class: temp
 hidden: true
 id: "long-rest"
 actions:
+  - type: updateMetadata
+    bindTarget: Magical_Cunning.magical_cunning-1
+    evaluate: true
+    value: true
   - type: updateMetadata
     bindTarget: spell_slot.pact1
     evaluate: true

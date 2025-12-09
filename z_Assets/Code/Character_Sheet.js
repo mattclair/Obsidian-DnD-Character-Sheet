@@ -676,7 +676,7 @@ if (subclass.includes("Soulknife" )) {
 if (hasSorcerer) {
 
   function spFromLevel(lvl) {
-    // monk gives 1 focus point per monk level starting level 2
+    // sorcerer gives 1 sorcery point per level starting level 2
     if (lvl >= 2) return sorcererLevel;
     return 0;
   }
@@ -687,6 +687,18 @@ if (hasSorcerer) {
 	  namespace: "Sorcery_Points",
 	  prefix: "sorcery_points-",
 	  count: spFromLevel(sorcererLevel)
+	});
+}
+
+// Only display Magical Cunning if character is a Warlock
+if (hasWarlock) {
+
+  addResourceToggles({
+	  parent: bottomBar,
+	  label: "Magical Cunning:",
+	  namespace: "Magical_Cunning",
+	  prefix: "magical_cunning-",
+	  count: 1
 	});
 }
 
