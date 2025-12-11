@@ -1466,6 +1466,24 @@ setTimeout(() => {
 		    );
 		}
 		
+		//==================================== Fey Touched
+		const ftObj = feats.find(f => typeof f === "object" && f["Fey Touched"]);
+
+		if (ftObj) {
+		    const ft = ftObj["Fey Touched"];
+		    const spellKey = ft.spell.replace(/\s+/g, "_").toLowerCase();  // safe key
+		
+		    addSpellLine(
+		        `\`INPUT[toggle(class(spell-toggle)):spell_slot.fey_touched_${spellKey}]\``,
+		        `Fey Touched - ${ft.spell} - Level 1`
+		    );
+		
+		    addSpellLine(
+		        `\`INPUT[toggle(class(spell-toggle)):spell_slot.fey_touched_misty_step]\``,
+		        `Fey Touched - Misty Step - Level 2`
+		    );
+		}
+
 		//==================================== Shadow Touched
 		const stObj = feats.find(f => typeof f === "object" && f["Shadow Touched"]);
 
@@ -2054,6 +2072,286 @@ setTimeout(() => {
 		
 		    app.commands.executeCommandById("dataview:refresh-views");
 		}
+
+
+		// Build a list of spell slot definitions (key, label, used)
+		function getSpellSlotDefs() {
+			const slotsObj = (dv.current().spell_slot) ?? {};
+
+			// Recreate full caster slots table (same as used for rendering)
+			const fullCasterSlotsTable = {
+			  1:  [2,0,0,0,0,0,0,0,0],
+			  2:  [3,0,0,0,0,0,0,0,0],
+			  3:  [4,2,0,0,0,0,0,0,0],
+			  4:  [4,3,0,0,0,0,0,0,0],
+			  5:  [4,3,2,0,0,0,0,0,0],
+			  6:  [4,3,3,0,0,0,0,0,0],
+			  7:  [4,3,3,1,0,0,0,0,0],
+			  8:  [4,3,3,2,0,0,0,0,0],
+			  9:  [4,3,3,3,1,0,0,0,0],
+			  10: [4,3,3,3,2,0,0,0,0],
+			  11: [4,3,3,3,2,1,0,0,0],
+			  12: [4,3,3,3,2,1,0,0,0],
+			  13: [4,3,3,3,2,1,1,0,0],
+			  14: [4,3,3,3,2,1,1,0,0],
+			  15: [4,3,3,3,2,1,1,1,0],
+			  16: [4,3,3,3,2,1,1,1,0],
+			  17: [4,3,3,3,2,1,1,1,1],
+			  18: [4,3,3,3,3,1,1,1,1],
+			  19: [4,3,3,3,3,2,1,1,1],
+			  20: [4,3,3,3,3,2,2,1,1]
+			};
+
+			// Calculate combined caster level same as render code
+			const spellcasterLevel =
+			    bardLevel +
+			    clericLevel +
+			    druidLevel +
+			    sorcererLevel +
+			    wizardLevel +
+			    Math.floor(paladinLevel / 2) +
+			    Math.floor(rangerLevel / 2) +
+			    Math.floor(eldritchKnightLevel / 3) +
+			    Math.floor(arcaneTricksterLevel / 3);
+
+			const fullCasterSlots = fullCasterSlotsTable[spellcasterLevel] ?? [0,0,0,0,0,0,0,0,0];
+
+			const defs = [];
+
+			for (let lvl = 1; lvl <= 9; lvl++) {
+				const cnt = fullCasterSlots[lvl - 1];
+				if (cnt === 0) continue;
+				for (let i = 1; i <= cnt; i++) {
+					const key = `level_${lvl}_${i}`;
+					// In frontmatter this project stores `true` for available slots.
+					// Treat explicit `false` as a spent/used slot.
+					defs.push({ key, label: `Level ${lvl} Slot ${i}`, used: (slotsObj[key] === false), slotLevel: lvl, isSpecific: false });
+				}
+			}
+
+			// Warlock pact slots
+			let maxPact = 0;
+			if (hasWarlock) {
+				if (warlockLevel >= 17) maxPact = 4;
+				else if (warlockLevel >= 11) maxPact = 3;
+				else if (warlockLevel >= 2) maxPact = 2;
+				else maxPact = 1;
+				// Determine pact slot "magical level" (mLevel) similar to rendering logic
+				let mLevel = 1;
+				if (warlockLevel >= 9) mLevel = 5;
+				else if (warlockLevel >= 7) mLevel = 4;
+				else if (warlockLevel >= 5) mLevel = 3;
+				else if (warlockLevel >= 2) mLevel = 2;
+				for (let i=1;i<=maxPact;i++) defs.push({ key: `pact${i}`, label: `Pact Slot (level ${mLevel}) ${i}`, used: (slotsObj[`pact${i}`] === false), isPact: true, slotLevel: mLevel });
+				// Mystic arcanum keys
+				if (warlockLevel >= 11) defs.push({ key: 'arcanum1', label: 'Mystic Arcanum (6th)', used: (slotsObj['arcanum1'] === false), slotLevel: 6 });
+				if (warlockLevel >= 13) defs.push({ key: 'arcanum2', label: 'Mystic Arcanum (7th)', used: (slotsObj['arcanum2'] === false), slotLevel: 7 });
+				if (warlockLevel >= 15) defs.push({ key: 'arcanum3', label: 'Mystic Arcanum (8th)', used: (slotsObj['arcanum3'] === false), slotLevel: 8 });
+				if (warlockLevel >= 17) defs.push({ key: 'arcanum4', label: 'Mystic Arcanum (9th)', used: (slotsObj['arcanum4'] === false), slotLevel: 9 });
+			}
+
+			// Include any custom keys present in frontmatter (helpful for Shadow Touched / Magic Initiate etc)
+			if (slotsObj && typeof slotsObj === 'object') {
+				const existing = new Set(defs.map(d => d.key));
+				// helper: nice label formatter
+				const minorWords = new Set(['of','the','a','an','in','on','to','for','and','or','with','at','by']);
+				function niceLabel(str) {
+					let s = String(str).replace(/_/g, ' ').trim();
+					return s.split(/\s+/).map((w,i)=>{
+						w = w.toLowerCase();
+						if (i===0 || !minorWords.has(w)) return w.charAt(0).toUpperCase()+w.slice(1);
+						return w;
+					}).join(' ');
+				}
+
+				// try to locate Magic Initiate spell if present in feats
+				let miSpell = null;
+				let miClass = null;
+				try {
+					const miObj = feats.find(f => typeof f === 'object' && f['Magic Initiate']);
+					if (miObj) {
+						const mi = miObj['Magic Initiate'];
+						miSpell = mi?.spell;
+						miClass = (mi?.class ?? '').toLowerCase();
+					}
+				} catch(e) { /* ignore */ }
+
+				// Collect grouped keys (base + index)
+				const groups = {};
+				for (const k of Object.keys(slotsObj)) {
+					if (existing.has(k)) continue;
+					const m = k.match(/^(.*?)(\d+)$/);
+					if (m) {
+						const base = m[1];
+						if (!groups[base]) groups[base] = { members: [] };
+						groups[base].members.push(k);
+					} else {
+						groups[k] = { members: [k] };
+					}
+				}
+
+				for (const base of Object.keys(groups)) {
+					const members = groups[base].members.sort();
+					const total = members.length;
+					let available = 0;
+					for (const m of members) if (slotsObj[m] !== false) available++;
+					let label = niceLabel(base);
+					// If this matches Magic Initiate class key (e.g., 'wizard') and we found miSpell, use that name
+					if (miSpell && miClass && base.toLowerCase() === miClass) {
+						label = miSpell || label;
+					}
+					if (total > 1) label = `${label} (${available} of ${total})`;
+					const used = available === 0;
+					if (total === 1) defs.push({ key: members[0], label, used, isSpecific: true, members });
+					else defs.push({ key: base, label, used, isSpecific: true, members });
+				}
+			}
+
+			return defs;
+		}
+
+		async function spendSpellSlot(key) {
+			const file = app.workspace.getActiveFile();
+			if (!file) return false;
+			let success = false;
+			await app.fileManager.processFrontMatter(file, fm => {
+				if (!fm.spell_slot) fm.spell_slot = {};
+				// Mark as spent -> set to false (project uses `true` for available)
+				let target = key;
+				if (!(target in fm.spell_slot)) {
+					// try to find a numbered member (e.g., misty_step1..misty_step4)
+					const candidates = Object.keys(fm.spell_slot).filter(k => k.startsWith(target) && /\d+$/.test(k) && fm.spell_slot[k] !== false);
+					if (candidates.length) target = candidates[0];
+				}
+				fm.spell_slot[target] = false;
+				success = true;
+			});
+			app.commands.executeCommandById("dataview:refresh-views");
+			return success;
+		}
+
+		function showSpellSlotPicker(spell) {
+			// Cantrips don't consume slots
+			if ((spell.LevelNum ?? 0) === 0) {
+				if (spell.IsConcentration) setConcentrationSpell(spell.Name);
+				new Notice(`Cast ${spell.Name} (cantrip)`);
+				return;
+			}
+
+			const defs = getSpellSlotDefs();
+			const available = defs.filter(d => !d.used);
+			if (!available.length) { new Notice('No available spell slots', 4000); return; }
+
+			// Build modal
+			const overlay = document.createElement('div');
+			overlay.style.position = 'fixed';
+			overlay.style.left = 0; overlay.style.top = 0; overlay.style.right = 0; overlay.style.bottom = 0;
+			overlay.style.background = 'rgba(0,0,0,0.5)';
+			overlay.style.zIndex = 9999;
+			overlay.style.display = 'flex';
+			overlay.style.alignItems = 'center';
+			overlay.style.justifyContent = 'center';
+
+			const box = document.createElement('div');
+			box.style.background = 'var(--background-secondary)';
+			box.style.color = 'var(--text)';
+			box.style.padding = '12px';
+			box.style.borderRadius = '6px';
+			box.style.minWidth = '320px';
+
+			const title = document.createElement('div');
+			title.textContent = `Choose a spell slot to expend for ${spell.Name}`;
+			title.style.marginBottom = '8px';
+			box.appendChild(title);
+
+			const list = document.createElement('div');
+			list.style.display = 'grid';
+			list.style.gridTemplateColumns = '1fr 1fr';
+			list.style.gap = '6px';
+
+			const spellLevel = spell.LevelNum ?? 0;
+			for (const d of defs) {
+				const btn = document.createElement('button');
+				let label = d.label + (d.used ? ' (used)' : '');
+				// Determine whether this slot can be used for the spell's level
+				let usable = !d.used;
+				if (usable) {
+					if (d.isSpecific) {
+						// Specific keyed slots (shadow_touched, misty_step1, etc.) should only be usable
+						// when they match the spell being cast (e.g., misty_step for Misty Step).
+						const spellKey = slugifyName(spell.Name).replace(/-/g,'_');
+						let matches = false;
+						// If this def has members (grouped numbered keys), check members
+						if (Array.isArray(d.members) && d.members.length) {
+							for (const m of d.members) {
+								if (!m) continue;
+								const low = String(m).toLowerCase();
+								if (low === spellKey) { matches = true; break; }
+								if (low.endsWith('_' + spellKey)) { matches = true; break; }
+								if (low.includes(spellKey)) { matches = true; break; }
+							}
+						} else {
+							const low = String(d.key || '').toLowerCase();
+							if (low === spellKey) matches = true;
+							if (low.endsWith('_' + spellKey)) matches = true;
+							if (low.includes(spellKey)) matches = true;
+						}
+						// Magic Initiate special-case: enable if the MI spell matches this spell
+						try {
+							const miObj = feats.find(f => typeof f === 'object' && f['Magic Initiate']);
+							if (miObj) {
+								const miSpell = miObj['Magic Initiate']?.spell;
+								const miClassLocal = (miObj['Magic Initiate']?.class ?? '').toLowerCase();
+								if (miSpell && slugifyName(miSpell).replace(/-/g,'_') === spellKey) {
+									// Only enable MI slot if this specific slot corresponds to the MI class key
+									const checkKeys = Array.isArray(d.members) && d.members.length ? d.members : [d.key];
+									for (const ck of checkKeys) {
+										if (String(ck || '').toLowerCase() === miClassLocal) { matches = true; break; }
+									}
+								}
+							}
+						} catch(e) { /* ignore */ }
+						usable = matches;
+					} else if (d.isPact) {
+						// Pact magic counts for levels 1-5
+						usable = spellLevel <= 5;
+						if (!usable) label += ' (pact ≤5)';
+					} else if (typeof d.slotLevel === 'number') {
+						// Only allow using a slot if the slot's level is >= spell level
+						usable = d.slotLevel >= spellLevel;
+						if (!usable) label += ` (requires ≥${spellLevel})`;
+					} else {
+						// Unknown slot: allow by default
+						usable = true;
+					}
+				}
+
+				btn.textContent = label;
+				btn.disabled = !usable;
+				btn.onclick = async () => {
+					overlay.remove();
+					const ok = await spendSpellSlot(d.key);
+					if (ok) {
+						if (spell.IsConcentration) await setConcentrationSpell(spell.Name);
+						new Notice(`Expended ${d.label} for ${spell.Name}`, 3000);
+					}
+				};
+				list.appendChild(btn);
+			}
+
+			box.appendChild(list);
+
+			const cancel = document.createElement('div');
+			cancel.style.marginTop = '8px';
+			const cancelBtn = document.createElement('button');
+			cancelBtn.textContent = 'Cancel';
+			cancelBtn.onclick = () => overlay.remove();
+			cancel.appendChild(cancelBtn);
+			box.appendChild(cancel);
+
+			overlay.appendChild(box);
+			document.body.appendChild(overlay);
+		}
 		
 		
 		// ==========================
@@ -2141,14 +2439,11 @@ setTimeout(() => {
 			    castBtn.classList.add("cast-btn");
 			    castBtn.textContent = "✨";
 			
-			    castBtn.onclick = async () => {
-			        if (spell.IsConcentration) {
-			            await setConcentrationSpell(spell.Name);
-			            new Notice(`Concentrating on ${spell.Name}`, 5000);
-			        } else {
-			            new Notice(`Cast ${spell.Name}`, 3000);
-			        }
-			    };
+				castBtn.onclick = async () => {
+					// Open the spell-slot picker. The picker will spend a slot
+					// and call `setConcentrationSpell` for concentration spells.
+					showSpellSlotPicker(spell);
+				};
 			
 			    tdCast.appendChild(castBtn);
 			}

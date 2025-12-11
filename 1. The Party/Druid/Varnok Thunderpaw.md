@@ -15,6 +15,7 @@ species_traits:
   - Giant Ancestry
   - Large Form
   - Powerful Build
+  - Cloud Giant
 alignment: Neutral-Good
 size: Medium
 senses:
@@ -55,7 +56,7 @@ Stat_Bonus:
 conditions:
   blinded: false
   charmed: false
-  concentrating: false
+  concentrating: true
   deafened: false
   frightened: false
   grappled: false
@@ -73,6 +74,7 @@ conditions:
   exhaustion:
     count: 0
     Level: false
+  concentration_spell: Spike Growth
 health:
   max: 35
   current: 35
@@ -85,6 +87,11 @@ Hit_Dice:
   Druid_d8-3: true
   Druid_d8-4: true
   Druid_d8-5: true
+  Ranger_d10-1: true
+  Ranger_d10-2: true
+  Ranger_d10-3: true
+  Ranger_d10-4: true
+  Ranger_d10-5: true
 inventory:
   Potion of Healing: 3
   Bag of Holding: 1
@@ -103,6 +110,26 @@ inventory:
 attuned:
 spell_slot:
   wizard: true
+  shadow_touched_invisibility: true
+  shadow_touched_silent_image: true
+  level_3_2: true
+  level_3_1: true
+  level_2_3: true
+  level_2_2: true
+  level_2_1: true
+  level_1_1: true
+  level_1_2: true
+  level_1_3: true
+  level_1_4: true
+  druid: true
+  hunters_mark1: true
+  hunters_mark2: true
+  hunters_mark3: true
+  hunters_mark4: true
+  hunters_mark5: true
+  misty_step1: true
+  misty_step2: true
+  misty_step3: true
 feats:
   - Shadow Touched:
       spell: Silent Image
@@ -119,11 +146,11 @@ Spells:
       - Message
     Spells:
       - Thunderwave
-      - Spike Growth
       - Pass Without Trace
       - Hold Person
       - Heat Metal
       - Fog Cloud
+      - Spike Growth
   Always_Prepared:
     Cantrips:
       - Minor Illusion
@@ -140,6 +167,7 @@ Spells:
       - Silent Image
       - Entangle
       - Conjure Animals
+      - Misty Step
   Known:
     Cantrips: []
     Spells:
@@ -193,6 +221,9 @@ Spells:
 mastery:
 purse: 213.5
 BASE_FOLDER: 3. Mechanics/CLI
+Wild_Shape:
+  wild_shape-1: true
+  wild_shape-2: true
 ---
 ```dataviewjs
 // Load full cahracter sheet

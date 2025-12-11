@@ -174,7 +174,7 @@ feats:
   - Savage Attacker
 ```
 
-Magic Initiate and Shadow Touched are configured differently, but still under the feats object. This is done so the spell slots associated are tracked separately than other spell slots. This example tracks Lucky, Magic Initiate, and Shadow Touched feats.
+Magic Initiate, Fey Touched, and Shadow Touched are configured differently, but still under the feats object. This is done so the spell slots associated are tracked separately than other spell slots. This example tracks Lucky, Magic Initiate, and Shadow Touched feats.
 ```yaml
 feats:
   - Lucky
@@ -186,6 +186,8 @@ feats:
         - Message
   - Shadow Touched:
       spell: Silent Image
+  - Fey Touched:
+      spell: Detect Magic
 ```
 
 

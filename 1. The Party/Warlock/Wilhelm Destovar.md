@@ -53,7 +53,7 @@ Stat_Bonus:
 conditions:
   blinded: false
   charmed: false
-  concentrating: false
+  concentrating: true
   deafened: false
   frightened: false
   grappled: false
@@ -71,7 +71,7 @@ conditions:
   exhaustion:
     count: 0
     Level: false
-  concentration_spell: ""
+  concentration_spell: Witch Bolt
 health:
   max: 32
   current: 32
@@ -108,20 +108,13 @@ attuned:
   - 1 Rod of the Pact Keeper
 spell_slot:
   druid: true
-  pact1: true
+  pact1: false
   pact2: true
-  misty_step1: true
+  misty_step1: false
   misty_step2: true
   misty_step3: true
   misty_step4: true
   misty_step5: true
-  pact3: true
-  pact4: true
-  arcanum1: true
-  arcanum2: true
-  arcanum3: true
-  arcanum4: true
-  misty_step6: true
 feats:
   - Lucky
   - Spell Sniper
