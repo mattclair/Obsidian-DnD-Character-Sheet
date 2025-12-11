@@ -53,7 +53,7 @@ Stat_Bonus:
 conditions:
   blinded: false
   charmed: false
-  concentrating: true
+  concentrating: false
   deafened: false
   frightened: false
   grappled: false
@@ -71,7 +71,6 @@ conditions:
   exhaustion:
     count: 0
     Level: false
-  concentration_spell: Witch Bolt
 health:
   max: 32
   current: 32
