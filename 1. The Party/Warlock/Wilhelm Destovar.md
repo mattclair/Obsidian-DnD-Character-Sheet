@@ -108,13 +108,14 @@ attuned:
   - 1 Rod of the Pact Keeper
 spell_slot:
   druid: true
-  pact1: false
+  pact1: true
   pact2: true
-  misty_step1: false
+  misty_step1: true
   misty_step2: true
   misty_step3: true
   misty_step4: true
   misty_step5: true
+  misty_step6: true
 feats:
   - Lucky
   - Spell Sniper
@@ -343,27 +344,7 @@ actions:
     evaluate: true
     value: true
   - type: updateMetadata
-    bindTarget: spell_slot.pact3
-    evaluate: true
-    value: true
-  - type: updateMetadata
     bindTarget: spell_slot.pact4
-    evaluate: true
-    value: true
-  - type: updateMetadata
-    bindTarget: spell_slot.arcanum1
-    evaluate: true
-    value: true
-  - type: updateMetadata
-    bindTarget: spell_slot.arcanum2
-    evaluate: true
-    value: true
-  - type: updateMetadata
-    bindTarget: spell_slot.arcanum3
-    evaluate: true
-    value: true
-  - type: updateMetadata
-    bindTarget: spell_slot.arcanum4
     evaluate: true
     value: true
   - type: updateMetadata
