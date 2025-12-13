@@ -39,10 +39,14 @@
 }
 
 .char-details {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(160px, 1fr));
-  gap: 0.2rem 1rem;
+  column-count: 2;
+  column-gap: 1.5rem;
   font-size: 0.9rem;
+}
+
+.char-details > div {
+  break-inside: avoid;
+  margin-bottom: 0.2rem;
 }
 
 .char-portrait img {
