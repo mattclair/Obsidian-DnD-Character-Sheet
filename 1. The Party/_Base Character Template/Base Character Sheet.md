@@ -1,5 +1,5 @@
 ---
-Level: 6
+Level: 1
 STR: 9
 DEX: 12
 CON: 14
@@ -45,8 +45,6 @@ attuned:
 spell_slot:
   level1_2: true
   level1_1: true
-  level2_1: true
-  level3_1: true
 feats:
 Spells:
   Prepared:
@@ -91,7 +89,8 @@ await dv.view("z_Assets/Code/Character_Sheet");
 >>"[[" + file.path + "#" + replace(trait, "'", "") + "|" + trait + "]]"
 >>FROM ""
 >>FLATTEN this.species_traits AS trait
->>WHERE lower(file.name) = lower(this.species) + "-xphb"
+>>FLATTEN file.frontmatter.aliases AS alias
+>>WHERE lower(alias) = lower(this.species)
 >>SORT trait
 >>```
 >>
