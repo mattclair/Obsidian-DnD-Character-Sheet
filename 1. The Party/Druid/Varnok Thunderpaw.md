@@ -253,7 +253,8 @@ await dv.view("z_Assets/Code/Character_Sheet");
 >>"[[" + file.path + "#" + replace(trait, "'", "") + "|" + trait + "]]"
 >>FROM ""
 >>FLATTEN this.species_traits AS trait
->>WHERE lower(file.name) = lower(this.species) + "-xphb"
+>>FLATTEN file.frontmatter.aliases AS alias
+>>WHERE lower(alias) = lower(this.species)
 >>SORT trait
 >>```
 >>

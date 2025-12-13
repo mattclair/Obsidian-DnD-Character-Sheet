@@ -2360,10 +2360,30 @@ setTimeout(() => {
 		    const wrapper = document.createElement("div");
 		    wrapper.classList.add("spell-section");
 		
-		    const header = document.createElement("h3");
-		    header.textContent = title;
-		    header.classList.add("phb-heading");
-		    wrapper.appendChild(header);
+			const header = document.createElement("h3");
+			header.textContent = title;
+			header.classList.add("phb-heading");
+
+			// Header row with inline search box
+			const headerRow = document.createElement('div');
+			headerRow.style.display = 'flex';
+			headerRow.style.alignItems = 'center';
+			headerRow.style.justifyContent = 'space-between';
+
+			const headerLeft = document.createElement('div');
+			headerLeft.appendChild(header);
+
+			const searchInput = document.createElement('input');
+			searchInput.type = 'search';
+			searchInput.placeholder = 'Search spells...';
+			searchInput.style.padding = '6px';
+			searchInput.style.marginLeft = '8px';
+			searchInput.style.minWidth = '480px';
+			searchInput.style.maxWidth = '820px';
+
+			headerRow.appendChild(headerLeft);
+			headerRow.appendChild(searchInput);
+			wrapper.appendChild(headerRow);
 		
 		    const table = document.createElement("table");
 		    table.classList.add("dataview", "table-view-table");
@@ -2386,8 +2406,10 @@ setTimeout(() => {
 		
 		    const tbody = document.createElement("tbody");
 		
-		    for (const spell of rows) {
-		    const tr = document.createElement("tr");
+			for (const spell of rows) {
+			const tr = document.createElement("tr");
+			// attach searchable name for quick filtering
+			tr.dataset.spellName = (spell.Name || '').toLowerCase();
 		
 		    // Spell Name Cell
 			const tdName = document.createElement("td");
@@ -2457,6 +2479,16 @@ setTimeout(() => {
 		
 		table.appendChild(tbody);
 		wrapper.appendChild(table);
+
+		// Wire search input to filter this table
+		searchInput.addEventListener('input', (ev) => {
+			const q = String(searchInput.value || '').trim().toLowerCase();
+			for (const r of tbody.children) {
+				const name = (r.dataset.spellName || '').toLowerCase();
+				if (!q || name.includes(q)) r.style.display = '';
+				else r.style.display = 'none';
+			}
+		});
 		return wrapper;
 		}  
 		// ==========================
