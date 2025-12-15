@@ -542,6 +542,19 @@ if (hasFighter) {
 	  prefix: "second_wind-",
 	  count: swFromLevel(fighterLevel)
 	});
+
+    if( fighterLevel >= 2 ) {
+		let ammount = 1;
+		if (fighterLevel >= 17) { ammount = 2; }
+		addResourceToggles({
+		parent: bottomBar,
+		label: "Action Surge:",
+		namespace: "Action_Surge",
+		prefix: "action_surge-",
+		count: swFromLevel(ammount)
+		});
+	}
+	
 }
 
 // Only  Superiority Die if character is a Champion Fighter
@@ -806,32 +819,548 @@ dv.el("span",
 	)
 );
 
-// === Character Header & Meta Bind Buttons ===
+// === Health tracking buttons ===
+
+let hpChangeValue = 0;
+
+async function updateHealth(updater, afterNotice) {
+  const file = app.workspace.getActiveFile();
+  if (!file) return;
+
+  await app.fileManager.processFrontMatter(file, fm => {
+    fm.health ??= {};
+    updater(fm);
+  });
+
+  if (afterNotice) afterNotice();
+}
+
+function resetHpInput() {
+  hpChangeValue = 0;
+  hpInput.value = "";
+}
+
+async function dealDamage() {
+  const delta = hpChangeValue;
+  if (!delta) return; // early return if nothing to deal
+
+  await updateHealth(fm => {
+    fm.health ??= {};
+    const temp = Number(fm.health.temp ?? 0);
+    const current = Number(fm.health.current ?? 0);
+
+    if (temp === 0) {
+      fm.health.current = Math.max(0, current - delta);
+    } else {
+      fm.health.temp = temp - delta;
+      if (fm.health.temp < 0) {
+        fm.health.current = Math.max(0, current + fm.health.temp);
+        fm.health.temp = 0;
+      }
+    }
+  }, async () => {
+    const file = app.workspace.getActiveFile();
+    const content = await app.vault.read(file);
+    const rollMod = CON_MOD + pb;
+
+    if (/concentrating:\s*true/.test(content)) {
+      let conTest = Math.floor(delta / 2);
+      if (conTest > 30) conTest = 30;
+      if (conTest < 10) conTest = 10;
+
+      new Notice(`Roll a DC ${conTest} Concentration Check! Add ${rollMod} to the D20 Test`, 5000);
+    } else {
+      new Notice(`Dealing ${delta} hp of damage`, 5000);
+    }
+  });
+}
+
+
+
+async function healHitPoints() {
+  await updateHealth(fm => {
+    const delta = hpChangeValue;
+    if (!delta) return;
+
+    const max = Number(fm.health.max ?? 0);
+    const current = Number(fm.health.current ?? 0);
+
+    fm.health.current = Math.min(
+      Math.max(0, current + delta),
+      max
+    );
+	new Notice("Healing " + `${hpChangeValue}` + " hp of damage", 5000);
+  });
+}
+
+async function applyTempHP() {
+  await updateHealth(fm => {
+    const delta = hpChangeValue;
+    if (!delta) return;
+
+    const currentTemp = Number(fm.health.temp ?? 0);
+
+    fm.health.temp = Math.max(currentTemp, delta);
+    fm.health.maxTmp = delta;
+	new Notice("Adding " + `${hpChangeValue}` + " Temperary Hit Points", 5000);
+  });
+}
+
+async function resetHP() {
+  await updateHealth(fm => {
+    fm.health.current = Number(fm.health.max ?? 0);
+    fm.health.temp = 0;
+  });
+}
+
+let dealDamageBtn, healBtn, tempBtn, resetBtn;
+
+
+
+
 
 // Wrapper div for health controls
 const hpWrapper = dv.container.createEl("div", { cls: "hp-controls-wrapper" });
 
-// Render first health paragraph
-dv.paragraph(`**Add Health Or Deal Damage:** \`INPUT[number(class(cssnumber)):memory^health_change]\`  \`BUTTON[deal-damage,heal-hitpoints,temp-hitpoints,Reset]\``);
+/* === Row 1: HP change + buttons === */
+const row1 = hpWrapper.createEl("div", { cls: "hp-controls-flex" });
 
-// Capture paragraph 1
-const p1 = dv.container.lastElementChild;
+// Label
+row1.createEl("strong", { text: "Add Health Or Deal Damage:" });
 
-// Render short/long rest paragraph
-dv.paragraph(`\`BUTTON[short-rest,long-rest]\``);
+// Number input
+const hpInput = row1.createEl("input", {
+  type: "number",
+  cls: "hp-change-input"
+});
 
-// Capture paragraph 2
-const p2 = dv.container.lastElementChild;
+hpInput.value = 0;
 
-// Apply shared flex class
-p1.classList.add("hp-controls-flex");
-p2.classList.add("hp-controls-flex");
+hpInput.addEventListener("input", () => {
+  hpChangeValue = Number(hpInput.value || 0);
+});
 
-// Move both paragraphs into the wrapper
-hpWrapper.appendChild(p1);
-hpWrapper.appendChild(p2);
+hpInput.addEventListener("input", () => {
+  hpChangeValue = Number(hpInput.value || 0);
+  updateHpButtons();
+});
+
+async function resetHpInput() {
+  const delta = hpChangeValue; 
+  hpChangeValue = 0;
+  hpInput.value = "";
+  updateHpButtons();
+
+  await updateHealth(fm => {
+    fm.health ??= {};
+    fm.health.current = Number(fm.health.max ?? 0);
+    fm.health.temp = 0;
+  });
+
+  new Notice("Health values reset to default", 5000);
+}
+
+// Buttons
+const buttonsRow1 = [
+  { id: "deal-damage", label: "🗡️ Deal Damage" },
+  { id: "heal-hitpoints", label: " 🧡 Heal HP" },
+  { id: "temp-hitpoints", label: " 💙 Temp HP" },
+  { id: "reset-hp-input", label: "↺ Reset" }
+];
 
 
+function updateHpButtons() {
+  const hasValue = hpChangeValue !== null && hpChangeValue !== 0 && hpChangeValue !== "";
+
+  dealDamageBtn.disabled = !hasValue;
+  healBtn.disabled = !hasValue;
+  tempBtn.disabled = !hasValue;
+}
+
+
+buttonsRow1.forEach(btn => {
+  const el = row1.createEl("button", {
+    text: btn.label,
+    cls: "hp-btn",
+    attr: { "data-action": btn.id }
+  });
+
+  switch (btn.id) {
+    case "deal-damage":
+      dealDamageBtn = el;
+      el.onclick = dealDamage;
+      break;
+
+    case "heal-hitpoints":
+      healBtn = el;
+      el.onclick = healHitPoints;
+      break;
+
+    case "temp-hitpoints":
+      tempBtn = el;
+      el.onclick = applyTempHP;
+      break;
+
+    case "reset-hp-input":
+      resetBtn = el;
+      el.onclick = resetHpInput;
+      break;
+  }
+});
+
+/* === Row 2: Rest buttons === */
+const row2 = hpWrapper.createEl("div", { cls: "hp-controls-flex" });
+
+let shortRestBtn, longRestBtn;
+
+[
+  { id: "short-rest", label: "Short Rest" },
+  { id: "long-rest", label: "Long Rest" }
+].forEach(btn => {
+  const el = row2.createEl("button", {
+    text: btn.label,
+    cls: "hp-btn rest-btn",
+    attr: { "data-action": btn.id }
+  });
+
+  // Capture the buttons in variables
+  if (btn.id === "short-rest") shortRestBtn = el;
+  if (btn.id === "long-rest") longRestBtn = el;
+});
+
+// onclick functions
+shortRestBtn.onclick = async () => {
+  const file = app.workspace.getActiveFile();
+  if (!file) return;
+
+  await app.fileManager.processFrontMatter(file, fm => {
+
+	
+    
+	// Cleric Channel Divinity recovery
+	if( hasCleric ) {
+		fm.Channel_Divinity ??= {};
+
+		// Get keys like ["divinity-1", "divinity-2"]
+		const divinityKeys = Object.keys(fm.Channel_Divinity ?? {})
+			.filter(k => k.startsWith("divinity-"))
+			.sort((a, b) => {
+				const na = Number(a.split("-")[1]);
+				const nb = Number(b.split("-")[1]);
+				return na - nb;
+			});
+
+			// Recover exactly ONE spent use
+			for (const key of divinityKeys) {
+			if (fm.Channel_Divinity[key] === false) {
+				fm.Channel_Divinity[key] = true;
+				break; // stop after recovering one
+			}
+		}
+	}
+	
+
+	// Druid Wild Shape recovery
+	if (hasDruid ) {
+		const wildShapeKeys = Object.keys(fm.Wild_Shape ?? {})
+			.filter(k => k.startsWith("wild_shape-"))
+			.sort((a, b) => {
+				const na = Number(a.split("-")[1]);
+				const nb = Number(b.split("-")[1]);
+				return na - nb;
+			});
+
+			// Recover exactly ONE spent use
+			for (const key of wildShapeKeys) {
+			if (fm.Wild_Shape[key] === false) {
+				fm.Wild_Shape[key] = true;
+				break; // stop after recovering one
+			}
+		}
+	}
+	
+	if (hasFighter ) {
+		// Fighter Action Surge recovery
+		fm.Action_Surge ??= {};
+
+		Object.keys(fm.Action_Surge).forEach(key => {
+			if (key.startsWith("action_surge-")) {
+				fm.Action_Surge[key] = true;
+			}
+		});
+
+		// Fighter Second Wind recovery
+		const secondWindKeys = Object.keys(fm.Second_Wind ?? {})
+			.filter(k => k.startsWith("wild_shape-"))
+			.sort((a, b) => {
+				const na = Number(a.split("-")[1]);
+				const nb = Number(b.split("-")[1]);
+				return na - nb;
+			});
+
+			// Recover exactly ONE spent use
+			for (const key of secondWindKeys) {
+			if (fm.Second_Wind[key] === false) {
+				fm.Second_Wind[key] = true;
+				break; // stop after recovering one
+			}
+		}
+	}
+
+	// Monk Focus Point recovery
+	if( hasMonk ) {
+		fm.Focus_Points ??= {};
+		
+		// Reset only pact slots to true
+		Object.keys(fm.Focus_Points).forEach(key => {
+		if (key.startsWith("focus_points-")) {
+			fm.Focus_Points[key] = true;
+		}
+		});
+	}
+
+	// Paladin Channel Divinity recovery
+	if( hasPaladin ) {
+		fm.Channel_Divinity ??= {};
+
+		// Get keys like ["divinity-1", "divinity-2"]
+		const divinityKeys = Object.keys(fm.Channel_Divinity ?? {})
+			.filter(k => k.startsWith("divinity-"))
+			.sort((a, b) => {
+				const na = Number(a.split("-")[1]);
+				const nb = Number(b.split("-")[1]);
+				return na - nb;
+			});
+
+			// Recover exactly ONE spent use
+			for (const key of divinityKeys) {
+			if (fm.Channel_Divinity[key] === false) {
+				fm.Channel_Divinity[key] = true;
+				break; // stop after recovering one
+			}
+		}
+	}
+
+	if (subclass.includes("Soulknife" )) {
+		fm.energy_dice ??= {};
+
+		// Get keys like ["divinity-1", "divinity-2"]
+		const energyDiceKeys = Object.keys(fm.energy_dice ?? {})
+			.filter(k => k.startsWith("energy_die_"))
+			.sort((a, b) => {
+				const na = Number(a.split("-")[1]);
+				const nb = Number(b.split("-")[1]);
+				return na - nb;
+			});
+
+			// Recover exactly ONE spent use
+			for (const key of energyDiceKeys) {
+			if (fm.energy_dice[key] === false) {
+				fm.energy_dice[key] = true;
+				break; // stop after recovering one
+			}
+		}
+	}
+	
+	// Warlock Pact Magic recovery
+	if ( hasWarlock ) {
+		fm.spell_slot ??= {};
+		
+		// Reset only pact slots to true
+		Object.keys(fm.spell_slot).forEach(key => {
+		if (key.startsWith("pact")) {
+			fm.spell_slot[key] = true;
+		}
+		});
+	}	
+
+  });  
+
+  new Notice(
+    "Short Reset Completed. \nRemember to: \n  -Track spent Hit Dice\n  -Track Recovered HP",
+    5000
+  );
+};
+
+longRestBtn.onclick = async () => {
+  const file = app.workspace.getActiveFile();
+  if (!file) return;
+
+  // Reset HP via your existing logic
+  await resetHP();
+
+  await app.fileManager.processFrontMatter(file, fm => {
+    fm.spell_slot ??= {};
+
+    // Restore ALL spell slots
+    Object.keys(fm.spell_slot).forEach(key => {
+      fm.spell_slot[key] = true;
+    });
+
+    fm.Hit_Dice ??= {};
+
+    // Restore ALL Hit Dice
+    Object.keys(fm.Hit_Dice).forEach(key => {
+      fm.Hit_Dice[key] = true;
+    });
+
+	// Reset Class Specific Resources
+
+	if (hasBarbarian) {
+		Object.keys(fm.Rage).forEach(key => {
+			if (key.startsWith("rage-")) {
+				fm.Rage[key] = true;
+			}
+		});
+	}
+
+	if (hasBard) {
+		Object.keys(fm["Bardic-Insp"]).forEach(key => {
+			if (key.startsWith("bardic_insp_die_")) {
+				fm["Bardic-Insp"][key] = true;
+			}
+		});
+	}
+
+	if (hasCleric) {
+		Object.keys(fm.Channel_Divinity).forEach(key => {
+			if (key.startsWith("divinity-")) {
+				fm.Channel_Divinity[key] = true;
+			}
+		});
+	}
+
+	if (hasDruid) {
+		Object.keys(fm.Wild_Shape).forEach(key => {
+			if (key.startsWith("wild_shape-")) {
+				fm.Wild_Shape[key] = true;
+			}
+		});
+	}
+
+	if (hasFighter) {
+		Object.keys(fm.Second_Wind).forEach(key => {
+			if (key.startsWith("second_wind-")) {
+				fm.Second_Wind[key] = true;
+			}
+		});
+
+		Object.keys(fm.Action_Surge).forEach(key => {
+			if (key.startsWith("action_surge-")) {
+				fm.Action_Surge[key] = true;
+			}
+		});
+	}
+
+	if (hasMonk) {
+		Object.keys(fm.Focus_Points).forEach(key => {
+			if (key.startsWith("focus_points-")) {
+				fm.Focus_Points[key] = true;
+			}
+		});
+	}
+
+	if (hasPaladin) {
+		Object.keys(fm.Channel_Divinity).forEach(key => {
+			if (key.startsWith("divinity-")) {
+				fm.Channel_Divinity[key] = true;
+			}
+		});
+	}
+
+	if (subclass.includes("Gloom Stalker" )) {
+		Object.keys(fm.Dreadful_Strike).forEach(key => {
+			if (key.startsWith("dreadful_strike-")) {	
+				fm.Dreadful_Strike[key] = true;
+			}
+		});
+	}
+
+	if (subclass.includes("Soulknife" )) {
+		Object.keys(fm.energy_dice).forEach(key => {
+			if (key.startsWith("energy_die_")) {
+				fm.energy_dice[key] = true;
+			}
+		});
+	}
+
+	if (hasSorcerer) {
+		Object.keys(fm.Sorcery_Points).forEach(key => {
+			if (key.startsWith("sorcery_points-")) {
+				fm.Sorcery_Points[key] = true;
+			}
+		});
+	}
+
+	if (hasWarlock) {
+		Object.keys(fm.Magical_Cunning).forEach(key => {
+			if (key.startsWith("magical_cunning-")) {
+				fm.Magical_Cunning[key] = true;
+			}
+		});
+	}
+
+
+	// Reset Feat Specific Resources
+	fm.Luck ??= {};
+	fm.Mage_Slayer ??= {};
+	fm.Ritual_Caster ??= {};
+
+	if (feats.includes("Lucky")) {
+		Object.keys(fm.Luck).forEach(key => {
+			if (key.startsWith("luck_point_")) {
+				fm.Luck[key] = true;
+			}
+		});
+	}
+
+	if (feats.includes("Mage Slayer")) {
+		Object.keys(fm.Mage_Slayer).forEach(key => {
+			if (key.startsWith("guarded_mind_")) {
+				fm.Mage_Slayer[key] = true;
+			}
+		});
+	}
+
+	if (feats.includes("Ritual Caster")) {
+		Object.keys(fm.Ritual_Caster).forEach(key => {
+			if (key.startsWith("quick_ritual_")) {
+				fm.Ritual_Caster[key] = true;
+			}
+		});
+	}
+
+
+	// Reset Species Specific Resources
+
+	if (c.species === "Orc") {
+		Object.keys(fm.Adrenaline_Rush).forEach(key => {
+			if (key.startsWith("adrenaline_rush-")) {
+				fm.Adrenaline_Rush[key] = true;
+			}
+		});
+		Object.keys(fm.Relentless_Endurance).forEach(key => {
+			if (key.startsWith("relentless_endurance-")) {
+				fm.Relentless_Endurance[key] = true;
+			}
+		});
+	}
+
+	if (c.species === "Human") {
+		Object.keys(fm.conditions).forEach(key => {
+			if (key.startsWith("heroic_inspiration")) {
+				fm.conditions[key] = true;
+			}
+		});
+	}
+	
+
+  });
+
+  new Notice("Long Rest Completed!", 3000);
+};
+
+updateHpButtons();
 
 //=====================================================================
 // ==================================TABBED DASHBOARD BELOW ===========
@@ -1432,10 +1961,10 @@ setTimeout(() => {
 		        druidLevel +
 		        sorcererLevel +
 		        wizardLevel +
-		        Math.floor(paladinLevel / 2) +
-		        Math.floor(rangerLevel / 2) +
-		        Math.floor(eldritchKnightLevel / 3) +
-		        Math.floor(arcaneTricksterLevel / 3);
+		        Math.ceil(paladinLevel / 2) +
+		        Math.ceil(rangerLevel / 2) +
+		        Math.ceil(eldritchKnightLevel / 3) +
+		        Math.ceil(arcaneTricksterLevel / 3);
 		        
 			// spellcasting level computed (debug suppressed)
 		
@@ -1453,85 +1982,7 @@ setTimeout(() => {
 		        addSpellLine(toggles, `Level ${lvl}`);
 		    }
 		}
-		
-		
-		//=================================== Magic Initiate
-		const miObj = feats.find(f => typeof f === "object" && f["Magic Initiate"]);
-		
-		if (miObj) {
-		    const mi = miObj["Magic Initiate"];
-		    addSpellLine(
-		        `\`INPUT[toggle(class(spell-toggle)):spell_slot.${mi.class.toLowerCase()}]\``,
-		        `Magic Initiate (${mi.class}) - ${mi.spell} - Level 1`
-		    );
-		}
-		
-		//==================================== Fey Touched
-		const ftObj = feats.find(f => typeof f === "object" && f["Fey Touched"]);
 
-		if (ftObj) {
-		    const ft = ftObj["Fey Touched"];
-		    const spellKey = ft.spell.replace(/\s+/g, "_").toLowerCase();  // safe key
-		
-		    addSpellLine(
-		        `\`INPUT[toggle(class(spell-toggle)):spell_slot.fey_touched_${spellKey}]\``,
-		        `Fey Touched - ${ft.spell} - Level 1`
-		    );
-		
-		    addSpellLine(
-		        `\`INPUT[toggle(class(spell-toggle)):spell_slot.fey_touched_misty_step]\``,
-		        `Fey Touched - Misty Step - Level 2`
-		    );
-		}
-
-		//==================================== Shadow Touched
-		const stObj = feats.find(f => typeof f === "object" && f["Shadow Touched"]);
-
-		if (stObj) {
-		    const st = stObj["Shadow Touched"];
-		    const spellKey = st.spell.replace(/\s+/g, "_").toLowerCase();  // safe key
-		
-		    addSpellLine(
-		        `\`INPUT[toggle(class(spell-toggle)):spell_slot.shadow_touched_${spellKey}]\``,
-		        `Shadow Touched - ${st.spell} - Level 1`
-		    );
-		
-		    addSpellLine(
-		        `\`INPUT[toggle(class(spell-toggle)):spell_slot.shadow_touched_invisibility]\``,
-		        `Shadow Touched - Invisibility - Level 2`
-		    );
-		}
-		
-		//==================================== Favored Enemy (Hunter's Mark)
-		if (hasRanger) {
-			function favEnemyFromLevel(lvl) {
-			    if (lvl >= 17) return 6;
-			    if (lvl >= 13) return 5;
-			    if (lvl >= 9) return 4;
-			    if (lvl >= 5) return 3;
-			    return 2;
-			}
-			const toggles = [...Array(favEnemyFromLevel(rangerLevel)).keys()]
-		        .map(i => `\`INPUT[toggle(class(spell-toggle)):spell_slot.hunters_mark${i+1}]\``)
-		        .join(" ");
-		    addSpellLine(toggles, "Favored Enemy (Hunter's Mark)");
-		}
-		//=================================== Misty Step (Warlock Archfey) CHA_MOD Times/day
-		if (hasWarlock && hasArchfey) {
-		    const toggles = [...Array(CHA_MOD).keys()]
-		        .map(i => `\`INPUT[toggle(class(spell-toggle)):spell_slot.misty_step${i+1}]\``)
-		        .join(" ");
-		    addSpellLine(toggles, "Steps of the Fey (Misty Step)");
-		}
-		
-		const invocations = c.Eldritch_Invocations
-		if (hasWarlock && invocations.includes("Gift of the Depths")) {
-		    const toggles = [...Array(1).keys()]
-		        .map(i => `\`INPUT[toggle(class(spell-toggle)):spell_slot.water_breathing${i+1}]\``)
-		        .join(" ");
-		    addSpellLine(toggles, "Gift of the Depths (Water Brathing)");
-		}
-		
 		//=================================== Pact Magic + Mystic Arcanum (Warlock)
 		if (hasWarlock) {
 			let maxSlots = 1;
@@ -1554,7 +2005,8 @@ setTimeout(() => {
 		    if (warlockLevel >= 15) addSpellLine("`INPUT[toggle(class(pact-toggle)):spell_slot.arcanum3]`", "Mystic Arcanum Spell Slot - Level 8");
 		    if (warlockLevel >= 17) addSpellLine("`INPUT[toggle(class(pact-toggle)):spell_slot.arcanum4]`", "Mystic Arcanum Spell Slot - Level 9");
 		}
-		
+
+
 		//========================== Species Based Spell Slots
 		const elfSpellTable = {
 		    Drow: [
@@ -1634,6 +2086,95 @@ setTimeout(() => {
 		        }
 		    });
 		}
+
+		//======================================================= Class and Feat Based Spell Slots
+
+		//==================================== Favored Enemy (Hunter's Mark)
+		if (hasRanger) {
+			function favEnemyFromLevel(lvl) {
+			    if (lvl >= 17) return 6;
+			    if (lvl >= 13) return 5;
+			    if (lvl >= 9) return 4;
+			    if (lvl >= 5) return 3;
+			    return 2;
+			}
+			const toggles = [...Array(favEnemyFromLevel(rangerLevel)).keys()]
+		        .map(i => `\`INPUT[toggle(class(spell-toggle)):spell_slot.hunters_mark${i+1}]\``)
+		        .join(" ");
+		    addSpellLine(toggles, "Favored Enemy (Hunter's Mark)");
+		}
+		
+
+		//==================================== Fey Touched
+		const ftObj = feats.find(f => typeof f === "object" && f["Fey Touched"]);
+
+		if (ftObj) {
+		    const ft = ftObj["Fey Touched"];
+		    const spellKey = ft.spell.replace(/\s+/g, "_").toLowerCase();  // safe key
+		
+		    addSpellLine(
+		        `\`INPUT[toggle(class(spell-toggle)):spell_slot.fey_touched_${spellKey}]\``,
+		        `Fey Touched - ${ft.spell} - Level 1`
+		    );
+		
+		    addSpellLine(
+		        `\`INPUT[toggle(class(spell-toggle)):spell_slot.fey_touched_misty_step]\``,
+		        `Fey Touched - Misty Step - Level 2`
+		    );
+		}
+		
+		//=================================== Magic Initiate
+		const miObj = feats.find(f => typeof f === "object" && f["Magic Initiate"]);
+		
+		if (miObj) {
+		    const mi = miObj["Magic Initiate"];
+		    addSpellLine(
+		        `\`INPUT[toggle(class(spell-toggle)):spell_slot.${mi.class.toLowerCase()}]\``,
+		        `Magic Initiate (${mi.class}) - ${mi.spell} - Level 1`
+		    );
+		}
+
+			
+		
+
+		//==================================== Shadow Touched
+		const stObj = feats.find(f => typeof f === "object" && f["Shadow Touched"]);
+
+		if (stObj) {
+		    const st = stObj["Shadow Touched"];
+		    const spellKey = st.spell.replace(/\s+/g, "_").toLowerCase();  // safe key
+		
+		    addSpellLine(
+		        `\`INPUT[toggle(class(spell-toggle)):spell_slot.shadow_touched_${spellKey}]\``,
+		        `Shadow Touched - ${st.spell} - Level 1`
+		    );
+		
+		    addSpellLine(
+		        `\`INPUT[toggle(class(spell-toggle)):spell_slot.shadow_touched_invisibility]\``,
+		        `Shadow Touched - Invisibility - Level 2`
+		    );
+		}
+		
+		//=================================== Steps of the Fey (Misty Step) CHA_MOD Times/day
+		if (hasWarlock && hasArchfey) {
+		    const toggles = [...Array(CHA_MOD).keys()]
+		        .map(i => `\`INPUT[toggle(class(spell-toggle)):spell_slot.misty_step${i+1}]\``)
+		        .join(" ");
+		    addSpellLine(toggles, "Steps of the Fey (Misty Step)");
+		}
+		
+		const invocations = c.Eldritch_Invocations
+		if (hasWarlock && invocations.includes("Gift of the Depths")) {
+		    const toggles = [...Array(1).keys()]
+		        .map(i => `\`INPUT[toggle(class(spell-toggle)):spell_slot.water_breathing${i+1}]\``)
+		        .join(" ");
+		    addSpellLine(toggles, "Gift of the Depths (Water Brathing)");
+		}
+		
+		
+		
+		
+		
 		
 		// Render SpellSlotsWrapper
 		spellsPanel.prepend(spellSlotsWrapper);

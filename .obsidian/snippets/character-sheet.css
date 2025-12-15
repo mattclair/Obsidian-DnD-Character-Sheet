@@ -171,9 +171,10 @@
 
 
 .hp-controls-wrapper {
-  margin-bottom: 1.5rem; /* room for tabs below */
+  margin-top: 1rem;        /* ← separation from header */
+  margin-bottom: 1.5rem;  /* room for tabs below */
   display: flex;
-  justify-content: flex-end;  /* push content to the right */
+  justify-content: flex-end;
 }
 
 .hp-controls-flex {
@@ -207,7 +208,30 @@
 }
 
 
+.hp-change-input {
+  width: 80px;
+}
 
+.hp-btn {
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  cursor: pointer;
+}
+
+.hp-btn:hover {
+  background: var(--background-secondary-alt);
+}
+
+
+
+
+.hp-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(0.6);
+}
 
 
 
