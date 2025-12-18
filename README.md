@@ -250,6 +250,13 @@ inventory:
   Sickle: 1
 ```
 
+#### Magic Weapons
+Magic Weapons add +1 or +2 to the attack roll and damage. Append (+1), or (+2) to the weapon. This will allow the inventory to link to the original note (In this example, GreatAxe) and it will add the extra attack and damage to the calculations in the Weapons Tab.
+```yaml
+inventory:
+  GreatAxe (+1): 1
+```
+
 ### Spell Slots
 
 | Frontmatter Value | Type      | Details                                                                                                                                                                                                                                                                                                              |

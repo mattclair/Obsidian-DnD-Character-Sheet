@@ -2295,11 +2295,12 @@ setTimeout(() => {
 			}
 		    
 		    // get spellcasting ability
-		    const spellAbility = c.Spellcasting_Ability
+		    const spellAbility = c.Spellcasting_Ability ?? [];
 		    let spellAttackStat = ""
 		    if( spellAbility === "CHA" ) {spellAttackStat = CHA_MOD}
 		    if( spellAbility === "INT" ) {spellAttackStat = INT_MOD}
 		    if( spellAbility === "WIS" ) {spellAttackStat = WIS_MOD}
+			if( spellAbility === "" || spellAbility == null ) {spellAttackStat = 0}
 		
 		    const attackValue = pb + spellAttackStat + spellAttackExtra;
 		    const displayAttack = attackValue >= 0 ? `+${attackValue}` : `${attackValue}`;
@@ -3206,6 +3207,15 @@ setTimeout(() => {
 		// -----------------------------
 		const INVENTORY = dv.current().inventory ?? {};
 
+		function parseWeaponName(name) {
+		// Matches: (+1), (+2), (+3)
+		const match = name.match(/\(\s*\+([1-3])\s*\)/);
+
+		return {
+			baseName: name.replace(/\s*\(\s*\+[1-3]\s*\)/, "").trim(),
+			enhancement: match ? Number(match[1]) : 0
+		};
+		}
 
 
 		// Map friendly names → slugs
@@ -3216,10 +3226,16 @@ setTimeout(() => {
 				.replace(/^-+|-+$/g, "");
 		}
 
-		const inventoryEntries = Object.keys(INVENTORY).map(name => ({
-			friendly: name,
-			slug: slugify(name)
-		}));
+		const inventoryEntries = Object.keys(INVENTORY).map(name => {
+		const parsed = parseWeaponName(name);
+		return {
+			friendly: name,               // "Greataxe (+1)"
+			baseName: parsed.baseName,    // "Greataxe"
+			enhancement: parsed.enhancement,
+			slug: slugify(parsed.baseName)
+		};
+		});
+
 
 		// -----------------------------
 		// LOAD COMPENDIUM WEAPONS
@@ -3261,7 +3277,8 @@ setTimeout(() => {
 				.filter(p => matchesInventoryWeapon(p.file.name.toLowerCase(), entry.slug))
 				.map(p => ({
 					friendly: entry.friendly,
-					page: p
+					page: p,
+					enhancement: entry.enhancement
 				}));
 
 			matchedWeapons.push(...matches);
@@ -3318,6 +3335,12 @@ setTimeout(() => {
 			}
 			// ------------------------------------------------
 
+			// ---------- Magic Weapon Enhancement ----------
+			if (w.enhancement > 0) {
+			modifier += w.enhancement;
+			}
+			// --------------------------------------------
+
 			return (modifier >= 0 ? "+" : "") + modifier;
 		}
 
@@ -3350,6 +3373,27 @@ setTimeout(() => {
 					modifier = DEX_MOD;
 				}
 			}
+
+
+
+			// Add proficiency for heavy weapons with great weapon feat		
+
+			// ---------- NEW: Great Weapon Master Damage Bonus ----------
+			const isHeavy = /\[Heavy\]/i.test(properties);
+			const hasGreatWeaponFeat = featsList?.some(
+			f => f.toLowerCase() === "great weapon master"
+			);
+
+			if (isHeavy && hasGreatWeaponFeat) {
+			modifier += pb;
+			}
+			// ---------------------------------------------------------
+
+			// ---------- Magic Weapon Enhancement ----------
+			if (w.enhancement > 0) {
+			modifier += w.enhancement;
+			}
+			// --------------------------------------------
 
 			//modifier += pb;
 			//Removed due to incorreclty adding prof bonus to damage

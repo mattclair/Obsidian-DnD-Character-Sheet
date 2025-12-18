@@ -53,6 +53,9 @@ Stat_Bonus:
   Nature:
     value: 4
     source: "Primal Order: Magician"
+  Armor_Class:
+    value: 2
+    source: Shield
 conditions:
   blinded: false
   charmed: false
@@ -221,7 +224,7 @@ Wild_Shape:
   wild_shape-1: true
   wild_shape-2: true
 mastery:
-purse: 213.5
+purse: 1215.5
 BASE_FOLDER: 3. Mechanics/CLI
 Mage_Slayer: {}
 Ritual_Caster: {}

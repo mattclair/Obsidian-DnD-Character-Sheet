@@ -74,7 +74,7 @@ conditions:
   concentration_spell: Sleep
 health:
   max: 39
-  current: 39
+  current: 25
   temp: 0
   maxTmp: 15
 Luck:
@@ -104,6 +104,14 @@ inventory:
   Dagger: 2
   Bedroll: 1
   Pouch: 2
+  Tent: 1
+  Shovel: 1
+  Torch: 1
+  Pole: 1
+  Waterskin: 1
+  Riding Horse: 1
+  Rations: 14
+  Riding Saddle: 1
 attuned:
   - 1 Rod of the Pact Keeper
 spell_slot:
@@ -165,7 +173,7 @@ Eldritch_Invocations:
 Magical_Cunning:
   magical_cunning-1: true
 mastery:
-purse: 641.29
+purse: 905.29
 BASE_FOLDER: 3. Mechanics/CLI
 Mage_Slayer: {}
 Ritual_Caster: {}
