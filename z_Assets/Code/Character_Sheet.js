@@ -1755,7 +1755,7 @@ setTimeout(() => {
 		const spellSaveDC = 8 + pb + spellMod + (statBonus.Spell_Save_DC ?? 0);
 		const spellAttack = pb + spellMod + (statBonus.Spell_Attack ?? 0);
 		const passivePerception = 10 + WIS_MOD + (pb * (profs.Perception ?? 0)) + (statBonus.Perception ?? 0);
-		const speedDisplay = (dv.current().Speed ?? 30) + (statBonus.Speed ?? 0);
+		const speedDisplay = (dv.current().speed ?? 30) + (statBonus.Speed ?? 0);
 		
 		// === Render Statblock ===
 		let charStatHtml = `<div class="character-stats-container">`;

@@ -2,7 +2,7 @@
 Level: 5
 STR: 19
 DEX: 15
-CON: 15 
+CON: 15
 INT: 14
 WIS: 12
 CHA: 22
@@ -27,8 +27,8 @@ tools:
   - Gaming Set
 instruments:
 image:
-  - z_Assets/Misc/ImagePlaceholder.png
-Spellcasting_Ability: CHA
+  - z_Assets/Misc/Carmac.jpg
+Spellcasting_Ability:
 speed: 30
 Base_AC: 10
 armor_training:
@@ -68,7 +68,7 @@ inventory:
   Light Crossbow: 1
   GreatAxe (+1): 1
 attuned:
-spell_slot:
+spell_slot: {}
 feats:
   - Alert
   - Great Weapon Master
@@ -89,6 +89,14 @@ mastery:
   Light Crossbow: Slow
 purse: 0
 BASE_FOLDER: 3. Mechanics/CLI
+Rage:
+  rage-1: true
+  rage-2: true
+  rage-3: true
+  rage-4: true
+Luck: {}
+Mage_Slayer: {}
+Ritual_Caster: {}
 ---
 ```dataviewjs
 // Load full cahracter sheet
