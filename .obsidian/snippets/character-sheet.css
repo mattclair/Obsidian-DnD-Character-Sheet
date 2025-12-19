@@ -765,3 +765,20 @@ background-color: #000;
     background-color: var(--interactive-accent-hover);
 }
 
+
+
+
+.wild-shape-row {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.wild-shape-slot {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 45%;
+}
+
+

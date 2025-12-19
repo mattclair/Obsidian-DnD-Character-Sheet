@@ -16,7 +16,7 @@ const BASE_FOLDER = c.BASE_FOLDER;
 const ITEMS_FOLDER = `${BASE_FOLDER}/items`;
 const RULES_FOLDER = `${BASE_FOLDER}/rules`;
 const SPELLS_FOLDER = `${BASE_FOLDER}/spells`;
-
+const WSHAPE_FOLDER =  `${BASE_FOLDER}/bestiary/beast`;
 
 	  
 	  
@@ -4828,4 +4828,130 @@ console.log("Rendering TAB: Session Notes");
     }
 })();
 
+
+// ======================================================================================
+//=============================================================         Wild Shape Helper
+// ======================================================================================
+console.log("Rendering: Wild Shape Helper");
+if (hasDruid && druidLevel >= 2) {
+	function getWildShapeRules(druidLevel) {
+		if (druidLevel >= 8) {
+			return { known: 8, maxCR: 1, allowFly: true };
+		}
+		if (druidLevel >= 4) {
+			return { known: 6, maxCR: 0.5, allowFly: false };
+		}
+		if (druidLevel >= 2) {
+			return { known: 4, maxCR: 0.25, allowFly: false };
+		}
+		return { known: 0, maxCR: 0, allowFly: false };
+	}
+
+	const rules = getWildShapeRules(druidLevel);
+	
+
+	const beasts = dv.pages(`"${WSHAPE_FOLDER}"`)
+		.where(p => p.tags?.some(t => t.includes("monster/type/beast")))
+		.map(p => {
+			const crTag = p.tags.find(t => t.includes("monster/cr/"));
+			let cr = 0;
+
+			if (crTag) {
+			const raw = crTag.split("/").pop();
+			if (raw.includes("-")) {
+				const [num, den] = raw.split("-").map(Number);
+				cr = num / den;
+			} else {
+				cr = Number(raw);
+			}
+			}
+
+			const statblock = p.statblock ?? {};
+			const speed = String(statblock.speed ?? "");
+			const hasFly = /\bfly\s*\d+/i.test(speed);
+
+			return {
+			name: p.aliases?.[0] ?? p.file.name.replace(/-x\w+$/, ""),
+			page: p,
+			cr,
+			hasFly
+			};
+		})
+		.where(b =>
+			b.cr <= rules.maxCR &&
+			(rules.allowFly || !b.hasFly)
+		)
+		.sort(b => b.name);
+
+
+	const file = app.workspace.getActiveFile();
+	const savedWS = Array.isArray(dv.current()["wild-shape-options"])
+	? dv.current()["wild-shape-options"]
+	: [];
+
+	const wrapper = dv.el("div", "", { cls: "wild-shape-wrapper" });
+
+	wrapper.createEl("h4", { text: "Wild Shape Options" });
+	wrapper.createEl("p", {
+	text: `Choose ${rules.known} beast forms (Max CR ${rules.maxCR}${rules.allowFly ? ", Fly allowed" : ""})`
+	});
+
+	for (let i = 0; i < rules.known; i += 2) {
+	const row = wrapper.createEl("div", { cls: "wild-shape-row" });
+
+	renderWildShapeSlot(row, i);
+	renderWildShapeSlot(row, i + 1);
+	}
+	function renderWildShapeSlot(row, index) {
+		if (index >= rules.known) return;
+
+		const slot = row.createEl("div", { cls: "wild-shape-slot" });
+
+		const select = slot.createEl("select");
+		select.createEl("option", { text: "-- Select Beast --", value: "" });
+
+		beasts.forEach(b => {
+			select.createEl("option", {
+			text: `${b.name} (CR ${b.cr})`,
+			value: b.name.toLowerCase()
+			});
+		});
+
+		const link = slot.createEl("a", {
+			cls: "internal-link",
+			text: "—",
+			href: "#"
+		});
+
+		// Restore saved choice
+		if (savedWS[index]) {
+			select.value = savedWS[index].toLowerCase();
+			const found = beasts.find(b => b.name.toLowerCase() === savedWS[index].toLowerCase());
+			if (found) {
+			link.textContent = found.name;
+			link.href = found.page.file.path;
+			}
+		}
+
+		select.addEventListener("change", async e => {
+			const value = e.target.value;
+			const next = [...savedWS];
+			next[index] = value || null;
+
+			await app.fileManager.processFrontMatter(file, fm => {
+			fm["wild-shape-options"] = next.filter(Boolean);
+			});
+
+			const beast = beasts.find(b => b.name.toLowerCase() === value);
+			if (beast) {
+			link.textContent = beast.name;
+			link.href = beast.page.file.path;
+			} else {
+			link.textContent = "—";
+			link.href = "#";
+			}
+		});
+		}
+
+}
 
