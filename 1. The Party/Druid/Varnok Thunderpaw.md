@@ -54,8 +54,8 @@ Stat_Bonus:
     value: 4
     source: "Primal Order: Magician"
   Armor_Class:
-    value: 2
-    source: Shield
+    value: 2 + 2
+    source: Shield and Studded Leather Armor
 conditions:
   blinded: false
   charmed: false
@@ -109,6 +109,7 @@ inventory:
   Tinderbox: 1
   Torch: 1
   Waterskin: 1
+  studded leather armor: 1
 attuned:
 spell_slot:
   wizard: true
