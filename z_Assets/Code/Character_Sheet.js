@@ -4624,6 +4624,66 @@ console.log("Rendering TAB: Conditions");
 		conditionsHeading.textContent = "Active Conditions";
 		conditionsHeading.classList.add("phb-heading");
 		panel.appendChild(conditionsHeading);
+
+		// 👇 Dataview will render INTO this
+		const activeConditionsContainer = document.createElement("div");
+		panel.appendChild(activeConditionsContainer);
+
+		renderActiveConditions(activeConditionsContainer);
+
+		function renderActiveConditions(container) {
+			const conditions = dv.current().conditions ?? {};
+
+			const active = Object.entries(conditions)
+				.filter(([_, val]) => val === true)
+				.map(([key]) => key);
+
+			if (active.length === 0) return;
+
+			const items = active.map(key => {
+				// Human-readable label
+				const label = key
+					.replace(/_/g, " ")
+					.replace(/\b\w/g, c => c.toUpperCase());
+
+				// CLI-style slug (mage-armor)
+				const slug = key
+					.toLowerCase()
+					.replace(/_/g, "-");
+
+				let target;
+
+				switch (key) {
+					case "bless":
+						target = `${BASE_FOLDER}/spells/${slug}-xphb`;
+						break;	
+					case "concentrating":
+						target = `${BASE_FOLDER}/rules/conditions#concentration`;
+						break;								
+					case "haste":
+						target = `${BASE_FOLDER}/spells/${slug}-xphb`;
+						break;
+					case "heroic_inspiration":
+						target = `${BASE_FOLDER}/rules/variant-rules/${slug}-xphb`;
+						break;
+					case "mage_armor":
+						target = `${BASE_FOLDER}/spells/${slug}-xphb`;
+						break;
+					case "rage":
+						target = `${BASE_FOLDER}/classes/barbarian-xphb#${slug} (Level 1)`;
+						break;
+					default:
+						target = `${BASE_FOLDER}/rules/conditions#${slug}`;
+				}
+
+				return dv.fileLink(target, false, label);
+			});
+
+			dv.el("ul", items, { container });
+		}
+
+
+		
 		
 		// Create a container for buttons
 		const buttonContainer = document.createElement("div");

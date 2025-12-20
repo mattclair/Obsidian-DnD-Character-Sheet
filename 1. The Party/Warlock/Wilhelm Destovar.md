@@ -53,7 +53,7 @@ Stat_Bonus:
 conditions:
   blinded: false
   charmed: false
-  concentrating: false
+  concentrating: true
   deafened: false
   frightened: false
   grappled: false
@@ -71,7 +71,7 @@ conditions:
   exhaustion:
     count: 0
     Level: false
-  concentration_spell: Sleep
+  concentration_spell: Hex
 health:
   max: 39
   current: 25

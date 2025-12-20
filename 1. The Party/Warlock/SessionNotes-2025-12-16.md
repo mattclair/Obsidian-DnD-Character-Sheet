@@ -5,6 +5,6 @@
 Party at the bastion to celebrate the opening
 Talked to Gerome about removing the curse from Varnok's coin
 
-Cleric talked to Propherious Cordonia and received payment for library job
+Cleric talked to Propherious Cordonia and received payment for lib
 
-
+3. Mechanics/CLI/rules/variant-rules/heroic-inspiration-xphb.md
