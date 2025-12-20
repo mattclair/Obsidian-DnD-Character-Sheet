@@ -1346,13 +1346,33 @@ longRestBtn.onclick = async () => {
 		});
 	}
 
-	if (c.species === "Human") {
-		Object.keys(fm.conditions).forEach(key => {
-			if (key.startsWith("heroic_inspiration")) {
-				fm.conditions[key] = true;
-			}
-		});
+	// Reset Conditions
+
+	// === 1. HANDLE EXHAUSTION (LONG REST) ===
+	if (fm.conditions.exhaustion?.Level === true) {
+		const ex = fm.conditions.exhaustion;
+
+		ex.count = Math.max(0, (ex.count ?? 0) - 1);
+
+		if (ex.count === 0) {
+			ex.Level = false;
+		}
 	}
+
+	// === 2. RESET ALL OTHER CONDITIONS ===
+	Object.entries(fm.conditions).forEach(([key, value]) => {
+		if (key === "exhaustion") return;
+
+		if (key.startsWith("heroic_inspiration")) {
+			fm.conditions[key] = (c.species === "Human");
+		} else if (key.startsWith("concentration_spell")) {
+			fm.conditions[key] = "";
+		} else {
+			fm.conditions[key] = false;
+		}
+	});
+
+	
 	
 
   });
@@ -4635,16 +4655,33 @@ console.log("Rendering TAB: Conditions");
 			const conditions = dv.current().conditions ?? {};
 
 			const active = Object.entries(conditions)
-				.filter(([_, val]) => val === true)
+				.filter(([key, val]) => {
+					// Normal boolean conditions
+					if (val === true) return true;
+
+					// Exhaustion object
+					if (
+						key === "exhaustion" &&
+						typeof val === "object" &&
+						val.Level === true &&
+						(val.count ?? 0) > 0
+					) return true;
+
+					return false;
+				})
 				.map(([key]) => key);
 
 			if (active.length === 0) return;
 
 			const items = active.map(key => {
 				// Human-readable label
-				const label = key
+				let label = key
 					.replace(/_/g, " ")
 					.replace(/\b\w/g, c => c.toUpperCase());
+
+				if (key === "concentrating") {
+					label = "Concentration";
+				}
 
 				// CLI-style slug (mage-armor)
 				const slug = key

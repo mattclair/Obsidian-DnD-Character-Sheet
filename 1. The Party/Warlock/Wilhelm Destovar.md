@@ -53,14 +53,14 @@ Stat_Bonus:
 conditions:
   blinded: false
   charmed: false
-  concentrating: true
+  concentrating: false
   deafened: false
   frightened: false
   grappled: false
   heroic_inspiration: true
   incapacitated: false
   invisible: false
-  mage_armor: true
+  mage_armor: false
   paralyzed: false
   petrified: false
   poisoned: false
@@ -71,10 +71,10 @@ conditions:
   exhaustion:
     count: 0
     Level: false
-  concentration_spell: Hex
+  concentration_spell: ""
 health:
   max: 39
-  current: 25
+  current: 39
   temp: 0
   maxTmp: 15
 Luck:

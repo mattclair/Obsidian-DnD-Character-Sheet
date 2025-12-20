@@ -52,6 +52,14 @@ Stat_Bonus:
     source: Unarmored Defense
 conditions:
   rage: false
+  bless: false
+  prone: false
+  paralyzed: false
+  frightened: false
+  haste: false
+  exhaustion:
+    count: 0
+    Level: false
 health:
   max: 57
   current: 57
