@@ -53,7 +53,7 @@ Stat_Bonus:
 conditions:
   blinded: false
   charmed: false
-  concentrating: true
+  concentrating: false
   deafened: false
   frightened: false
   grappled: false

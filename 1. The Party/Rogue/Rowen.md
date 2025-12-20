@@ -59,7 +59,7 @@ Stat_Bonus:
 conditions:
   heroic_inspiration: true
   exhaustion:
-    count:
+    count: 0
     Level: false
 resistances:
   - Advantage when rolling saving throws against the Charmed condition
@@ -69,7 +69,7 @@ health:
   current: 34
   temp: 0
   maxTmp: 10
-Luck:
+Luck: {}
 Hit_Dice:
   Rogue_d8-1: true
   Rogue_d8-2: true
@@ -131,7 +131,7 @@ energy_dice:
   energy_die_3: true
   energy_die_4: true
   energy_die_5: true
-  energy_die_6: false
+  energy_die_6: true
   energy_die_7: true
   energy_die_8: true
   energy_die_9: true
@@ -143,6 +143,8 @@ spell_slot:
   elf_faerie_fire: true
   elf_darkness: true
 BASE_FOLDER: 3. Mechanics/CLI
+Mage_Slayer: {}
+Ritual_Caster: {}
 ---
 ```dataviewjs
 // Load full cahracter sheet

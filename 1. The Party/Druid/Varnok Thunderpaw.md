@@ -225,13 +225,7 @@ Wild_Shape:
   wild_shape-1: true
   wild_shape-2: true
 mastery:
-wild-shape-options:
-  - frog
-  - raven
-  - constrictor snake
-  - bat
-  - ape
-  - black bear
+wild-shape-options: []
 purse: 1215.5
 BASE_FOLDER: 3. Mechanics/CLI
 ---

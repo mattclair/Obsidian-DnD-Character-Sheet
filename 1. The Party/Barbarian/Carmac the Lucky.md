@@ -51,6 +51,7 @@ Stat_Bonus:
     value: CON_MOD
     source: Unarmored Defense
 conditions:
+  rage: false
 health:
   max: 57
   current: 57

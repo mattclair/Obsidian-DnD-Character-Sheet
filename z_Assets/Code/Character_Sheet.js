@@ -4635,165 +4635,183 @@ console.log("Rendering TAB: Conditions");
 		
 		// === BOOLEAN CONDITIONS ===
 		const booleanConditions = [
-		    "blinded", "charmed", "concentrating", "deafened",
-		    "frightened", "grappled", "incapacitated", "invisible",
-		    "paralyzed", "petrified", "poisoned", "prone",
-		    "restrained", "stunned", "unconscious", "mage_armor"
+			{key: "blinded", label: "Blinded"},
+			{key: "charmed", label: "Charmed"},
+			{key: "concentrating", label: "Concentrating"},
+			{key: "deafened", label: "Deafened"},
+			{key: "frightened", label: "Frightened"},
+			{key: "grappled", label: "Grappled"},
+			{key: "incapacitated", label: "Incapacitated"},
+			{key: "invisible", label: "Invisible"},
+			{key: "paralyzed", label: "Paralyzed"},
+			{key: "petrified", label: "Petrified"},
+			{key: "poisoned", label: "Poisoned"},
+			{key: "prone", label: "Prone"},
+			{key: "restrained", label: "Restrained"},
+			{key: "stunned", label: "Stunned"},
+			{key: "unconscious", label: "Unconscious"},
+			{key: "mage_armor", label: "Mage Armor"},
+			{key: "rage", label: "Rage", requires: "barbarian"},
+			{key: "bless", label: "Bless"},
+			{key: "haste", label: "Haste"}
 		];
+
+
+		async function consumeRageUse(file) {
+			await app.fileManager.processFrontMatter(file, fm => {
+				fm.Rage ??= {};
+
+				const entry = Object.entries(fm.Rage)
+				.find(([_, available]) => available === true);
+
+				if (!entry) {
+				new Notice("No Rage uses remaining!", 3000);
+				throw new Error("No Rage uses left");
+				}
+
+				const [key] = entry;
+				fm.Rage[key] = false;
+			});
+		}
+
+		
 		
 		// Helper to create a condition button
 		function createConditionButton(cond) {
-		    const btn = document.createElement("button");
-		    const currentVal = dv.current().conditions?.[cond] ?? false;
-		    btn.textContent = cond.replace(/_/g," ").replace(/\b\w/g, c => c.toUpperCase());
-		    btn.style.backgroundColor = currentVal ? "var(--interactive-accent)" : "var(--background-modifier-border)";
-		    btn.style.color = "var(--text-on-accent)";
-		    btn.style.padding = "4px 8px";
-		    btn.style.borderRadius = "6px";
-		    btn.style.border = "none";
-		    btn.style.cursor = "pointer";
-		    btn.onclick = async () => {
-		    const filePath = dv.current().file.path;
-		    const file = app.vault.getAbstractFileByPath(filePath);
-		    if (!file) return;
-		    const content = await app.vault.read(file);
-		    const yamlRegex = /^---\n([\s\S]*?)\n---/;
-		    const match = content.match(yamlRegex);
-		    if (!match) return;
-		    let yaml = match[1].split("\n");
-		    
-		    let condIndex = yaml.findIndex(line => line.trim().startsWith("conditions:"));
-		    if (condIndex === -1) {
-		        yaml.push("conditions:");
-		        yaml.push(`  ${cond}: true`);
-		    } else {
-		        let lineIndex = yaml.findIndex((line,i) => i > condIndex && /^\s{2}[^\s]+:/.test(line) && line.trim().startsWith(cond + ":"));
-		        if (lineIndex === -1) {
-		            yaml.splice(condIndex + 1, 0, `  ${cond}: true`);
-		        } else {
-		            const current = yaml[lineIndex].split(":")[1].trim() === "true";
-		            const newVal = !current;
-		            yaml[lineIndex] = `  ${cond}: ${newVal}`;
-		            
-		            // If turning off Concentration, also remove concentration_spell
-					if (cond === "concentrating" && !newVal) {
-					    const spellIndex = yaml.findIndex((line,i) =>
-					        i > condIndex && /^\s{2}concentration_spell:/.test(line)
-					    );
-					    if (spellIndex !== -1) yaml.splice(spellIndex, 1);
+			const key = cond.key.toLowerCase();
+			const label = cond.label;
+
+			const btn = document.createElement("button");
+
+			const currentVal = dv.current().conditions?.[key] ?? false;
+
+			btn.textContent = label;
+			btn.style.backgroundColor = currentVal
+				? "var(--interactive-accent)"
+				: "var(--background-modifier-border)";
+			btn.style.color = "var(--text-on-accent)";
+			btn.style.padding = "4px 8px";
+			btn.style.borderRadius = "6px";
+			btn.style.border = "none";
+			btn.style.cursor = "pointer";
+
+			btn.onclick = async () => {
+				const file = app.vault.getAbstractFileByPath(dv.current().file.path);
+				if (!file) return;
+
+				let togglingOn = false;
+
+				// === UPDATE CONDITIONS SAFELY ===
+				await app.fileManager.processFrontMatter(file, async fm => {
+					fm.conditions ??= {};
+
+					const current = fm.conditions[key] ?? false;
+					const next = !current;
+					fm.conditions[key] = next;
+					togglingOn = next;
+
+					// === RAGE SPECIAL HANDLING ===
+					if (key === "rage") {
+						if (next) {
+							const entry = Object.entries(fm.Rage ?? {})
+								.find(([_, v]) => v === true);
+							if (!entry) {
+								new Notice("No Rage uses remaining!", 3000);
+								fm.conditions[key] = false;
+								return;
+							}
+							fm.Rage[entry[0]] = false;
+						} 
 					}
-		
-		            // If turning off Concentration, also remove concentration_spell
-		            if (cond === "concentrating" && !newVal) {
-		                const spellIndex = yaml.findIndex((line,i) => i > condIndex && /^\s{2}concentration_spell:/.test(line));
-		                if (spellIndex !== -1) yaml.splice(spellIndex, 1);
-		            }
-		        }
-		    }
-		
-		    const newYaml = yaml.join("\n");
-		    const updatedContent = content.replace(yamlRegex, `---\n${newYaml}\n---`);
-		    await app.vault.modify(file, updatedContent);
-		
-		    // Update button color
-		    btn.style.backgroundColor = btn.style.backgroundColor === "var(--interactive-accent)" ? "var(--background-modifier-border)" : "var(--interactive-accent)";
-		};
-		    return btn;
+
+					// === CONCENTRATION CLEANUP ===
+					if (key === "concentrating" && !next) {
+						delete fm.concentration_spell;
+					}
+				});
+
+				// === VISUAL UPDATE ===
+				btn.style.backgroundColor = togglingOn
+					? "var(--interactive-accent)"
+					: "var(--background-modifier-border)";
+			};
+
+			return btn;
 		}
+
 		
 		// Render boolean condition buttons
-		booleanConditions.forEach(cond => buttonContainer.appendChild(createConditionButton(cond)));
+		booleanConditions.forEach(cond => {
+			if (cond.requires === "barbarian" && !hasBarbarian) return;
+			buttonContainer.appendChild(createConditionButton(cond));
+		});
 		
 		// === EXHAUSTION ===
 		const exContainer = document.createElement("div");
 		exContainer.style.display = "flex";
 		exContainer.style.alignItems = "center";
 		exContainer.style.gap = "0.3rem";
-		
+
 		const exButton = document.createElement("button");
 		exButton.textContent = "Exhaustion";
 		exButton.style.flex = "1";
-		
+
 		const exInc = document.createElement("button");
 		exInc.textContent = "+";
-		
+
 		const exDec = document.createElement("button");
 		exDec.textContent = "-";
-		
-		// Helpers for exhaustion
+
+		// === Helpers ===
 		async function toggleExhaustion() {
-		    const filePath = dv.current().file.path;
-		    const file = app.vault.getAbstractFileByPath(filePath);
-		    if (!file) return;
-		    const content = await app.vault.read(file);
-		    const yamlRegex = /^---\n([\s\S]*?)\n---/;
-		    const match = content.match(yamlRegex);
-		    if (!match) return;
-		    let yaml = match[1].split("\n");
-		    let condIndex = yaml.findIndex(line => line.trim().startsWith("conditions:"));
-		    if (condIndex === -1) {
-		        yaml.push("conditions:");
-		        yaml.push("  exhaustion:");
-		        yaml.push("    count: 1");
-		        yaml.push("    Level: true");
-		    } else {
-		        let exIndex = yaml.findIndex((line,i) => i>condIndex && /^\s{2}exhaustion:/.test(line));
-		        if (exIndex === -1) {
-		            yaml.splice(condIndex + 1, 0, "  exhaustion:", "    count: 1", "    Level: true");
-		        } else {
-		            let levelIndex = yaml.findIndex((line,i) => i>exIndex && /^\s{4}Level:/.test(line));
-		            let countIndex = yaml.findIndex((line,i) => i>exIndex && /^\s{4}count:/.test(line));
-		            let levelVal = yaml[levelIndex].split(":")[1].trim() === "true";
-		            if (!levelVal) {
-		                yaml[levelIndex] = "    Level: true";
-		                yaml[countIndex] = "    count: 1";
-		            } else {
-		                yaml[levelIndex] = "    Level: false";
-		                yaml[countIndex] = "    count: 0";
-		            }
-		        }
-		    }
-		    const updatedContent = content.replace(yamlRegex, `---\n${yaml.join("\n")}\n---`);
-		    await app.vault.modify(file, updatedContent);
+			const file = app.vault.getAbstractFileByPath(dv.current().file.path);
+			if (!file) return;
+
+			await app.fileManager.processFrontMatter(file, fm => {
+				fm.conditions ??= {};
+				fm.conditions.exhaustion ??= { count: 0, Level: false };
+
+				if (fm.conditions.exhaustion.Level) {
+					fm.conditions.exhaustion.count = 0;
+					fm.conditions.exhaustion.Level = false;
+				} else {
+					fm.conditions.exhaustion.count = 1;
+					fm.conditions.exhaustion.Level = true;
+				}
+			});
 		}
-		
+
 		async function changeExhaustion(delta) {
-		    const filePath = dv.current().file.path;
-		    const file = app.vault.getAbstractFileByPath(filePath);
-		    if (!file) return;
-		    const content = await app.vault.read(file);
-		    const yamlRegex = /^---\n([\s\S]*?)\n---/;
-		    const match = content.match(yamlRegex);
-		    if (!match) return;
-		    let yaml = match[1].split("\n");
-		    let condIndex = yaml.findIndex(line => line.trim().startsWith("conditions:"));
-		    if (condIndex === -1) return;
-		    let exIndex = yaml.findIndex((line,i) => i>condIndex && /^\s{2}exhaustion:/.test(line));
-		    if (exIndex === -1) return;
-		    let countIndex = yaml.findIndex((line,i) => i>exIndex && /^\s{4}count:/.test(line));
-		    let levelIndex = yaml.findIndex((line,i) => i>exIndex && /^\s{4}Level:/.test(line));
-		    let countVal = parseInt(yaml[countIndex].split(":")[1].trim());
-		    countVal += delta;
-		    if (countVal <= 0) {
-		        yaml[countIndex] = "    count: 0";
-		        yaml[levelIndex] = "    Level: false";
-		    } else {
-		        yaml[countIndex] = `    count: ${countVal}`;
-		        yaml[levelIndex] = "    Level: true";
-		    }
-		    const updatedContent = content.replace(yamlRegex, `---\n${yaml.join("\n")}\n---`);
-		    await app.vault.modify(file, updatedContent);
+			const file = app.vault.getAbstractFileByPath(dv.current().file.path);
+			if (!file) return;
+
+			await app.fileManager.processFrontMatter(file, fm => {
+				fm.conditions ??= {};
+				fm.conditions.exhaustion ??= { count: 0, Level: false };
+
+				let count = fm.conditions.exhaustion.count ?? 0;
+				count += delta;
+
+				if (count <= 0) {
+					fm.conditions.exhaustion.count = 0;
+					fm.conditions.exhaustion.Level = false;
+				} else {
+					fm.conditions.exhaustion.count = count;
+					fm.conditions.exhaustion.Level = true;
+				}
+			});
 		}
-		
-		// Attach events
+
+		// === Attach events ===
 		exButton.onclick = toggleExhaustion;
 		exInc.onclick = () => changeExhaustion(1);
 		exDec.onclick = () => changeExhaustion(-1);
-		
+
 		exContainer.appendChild(exButton);
 		exContainer.appendChild(exInc);
 		exContainer.appendChild(exDec);
 		buttonContainer.appendChild(exContainer);
+
 
 		// Mark panel as rendered (non-fatal)
 		try { panel.dataset.conditionsRendered = "true"; } catch (e) {}
