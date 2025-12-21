@@ -20,29 +20,125 @@ const cp = Math.round(remaining / 0.01);
 // Format display with icons or simple labels
 dv.el("div", `
 <div class="money-summary">
-  <div class="coin-box">
+
+  <div class="coin-box" data-coin="pp" data-multiplier="10">
     <div class="coin-label">Platinum</div>
+    <div class="coin-controls">
+      <input type="number" class="coin-input" placeholder="±" />
+      <button class="coin-btn apply">Apply</button>
+    </div>
     <div class="coin-value">${pp}</div>
   </div>
-  <div class="coin-box">
+
+  <div class="coin-box" data-coin="gp" data-multiplier="1">
     <div class="coin-label">Gold</div>
+    <div class="coin-controls">
+      <input type="number" class="coin-input" placeholder="±" />
+      <button class="coin-btn apply">Apply</button>
+    </div>
     <div class="coin-value">${gp}</div>
   </div>
-  <div class="coin-box">
+
+  <div class="coin-box" data-coin="ep" data-multiplier="0.5">
     <div class="coin-label">Electrum</div>
+    <div class="coin-controls">
+      <input type="number" class="coin-input" placeholder="±" />
+      <button class="coin-btn apply">Apply</button>
+    </div>
     <div class="coin-value">${ep}</div>
   </div>
-  <div class="coin-box">
+
+  <div class="coin-box" data-coin="sp" data-multiplier="0.1">
     <div class="coin-label">Silver</div>
+    <div class="coin-controls">
+      <input type="number" class="coin-input" placeholder="±" />
+      <button class="coin-btn apply">Apply</button>
+    </div>
     <div class="coin-value">${sp}</div>
   </div>
-  <div class="coin-box">
+
+  <div class="coin-box" data-coin="cp" data-multiplier="0.01">
     <div class="coin-label">Copper</div>
+    <div class="coin-controls">
+      <input type="number" class="coin-input" placeholder="±" />
+      <button class="coin-btn apply">Apply</button>
+    </div>
     <div class="coin-value">${cp}</div>
   </div>
+
   <img src="z_Assets/Misc/goldPurse2.png" class="gold-purse-bg" />
 </div>
 `, { cls: "money-summary-block" });
+
+let inputValue = 0;
+let multiplier = 1;
+const deltaGp = inputValue * multiplier;
+
+dv.el("div", `
+<div class="money-quick-actions">
+  <button class="quick-btn" data-gp="-10">-10 gp</button>
+  <button class="quick-btn" data-gp="-25">-25 gp</button>
+  <button class="quick-btn" data-gp="-50">-50 gp</button>
+  <button class="quick-btn" data-gp="-100">-100 gp</button>
+  <button class="quick-btn" data-gp="+10">+10 gp</button>
+  <button class="quick-btn" data-gp="+25">+25 gp</button>
+  <button class="quick-btn" data-gp="+50">+50 gp</button>
+  <button class="quick-btn" data-gp="+100">+100 gp</button>
+</div>
+`);
+
+// ===============================
+// Gold Adjustment Wiring
+// ===============================
+
+const file = app.workspace.getActiveFile();
+
+// Helper: safely update purse
+async function updatePurse(deltaGp) {
+  const page = dv.current();
+  const current = page.purse ?? 0;
+  const updated = Math.max(0, +(current + deltaGp).toFixed(2));
+
+  const content = await app.vault.read(file);
+
+  const newContent = content.replace(
+    /purse:\s*[0-9.]+/,
+    `purse: ${updated}`
+  );
+
+  await app.vault.modify(file, newContent);
+}
+
+// Delegate clicks
+document.addEventListener("click", async (e) => {
+  const applyBtn = e.target.closest(".coin-btn.apply");
+  const quickBtn = e.target.closest(".quick-btn");
+
+  // --- Per-coin Apply ---
+  if (applyBtn) {
+    const box = applyBtn.closest(".coin-box");
+    const input = box.querySelector(".coin-input");
+
+    const amount = parseFloat(input.value);
+    if (isNaN(amount) || amount === 0) return;
+
+    const multiplier = parseFloat(box.dataset.multiplier);
+    const deltaGp = amount * multiplier;
+
+    await updatePurse(deltaGp);
+
+    input.value = "";
+    return;
+  }
+
+  // --- Quick Actions ---
+  if (quickBtn) {
+    const deltaGp = parseFloat(quickBtn.dataset.gp);
+    if (isNaN(deltaGp) || deltaGp === 0) return;
+
+    await updatePurse(deltaGp);
+  }
+});
 
 
 // --- Gold Comment Logic ---

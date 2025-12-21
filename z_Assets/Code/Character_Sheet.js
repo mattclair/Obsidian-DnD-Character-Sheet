@@ -1909,7 +1909,11 @@ setTimeout(() => {
 	try {
 		// Rendering Spells (diagnostics suppressed)
 
-
+		if (c.Spellcasting_Ability == "None" || !c.Spellcasting_Ability) {
+			const spellsPanel = container.querySelector("#spells .panel");
+			spellsPanel.innerHTML = "<p>This character does not have spellcasting ability.</p>";
+			return;
+		}
 
 		// ======================================================================================
 		//=============================================================         Wild Shape Helper

@@ -1,32 +1,30 @@
 ---
 Level: 1
-STR: 9
-DEX: 12
-CON: 14
-INT: 9
-WIS: 10
-CHA: 20
-name: Wilhelm Destovar
-dndClass: Wizard
+STR: 
+DEX: 
+CON: 
+INT: 
+WIS: 
+CHA: 
+name: 
+dndClass: Barbarian
 subclass:
 background: Wayfarer
 species: Human
 species_traits:
-  - Resourceful
-  - Skillful
-  - Versatile
+  - Trait 1
+  - Trait 2
+  - Trait 3
 alignment: Chaotic-Good
 size: Medium
 senses:
 languages:
   - Common
-  - Giant
-  - Dwarvish
 tools:
 instruments:
 image:
   - z_Assets/Misc/ImagePlaceholder.png
-Spellcasting_Ability: CHA
+Spellcasting_Ability: None
 speed: 30
 Base_AC: 10
 armor_training:
@@ -121,47 +119,8 @@ await dv.view("z_Assets/Code/Character_Sheet");
 
 
 
-### Money Tracking
-Current Value: `VIEW[round({purse}, 2)]` gp
-`INPUT[inlineSelect(option(Copper), option(Silver), option(Electrum), option(Gold), option(Platinum)):memory^money_type]` `INPUT[number(class(cssnumber)):memory^money_to_add]` `BUTTON[add_money]` `BUTTON[subtract_money]`
+### 💰Money Tracking `VIEW[{purse}]`gp
 
 ```dataviewjs
 await dv.view("z_Assets/Code/Character_Purse_Tracking");
-```
-
-<!-- buttons for money tracking -->
-```meta-bind-button
-label: "Add"
-style: primary
-class: money
-hidden: true
-cssStyle: "background-color: #2e7d32"
-icon: circle-dollar-sign
-id: "add_money"
-actions:
-  - type: updateMetadata
-    bindTarget: purse
-    evaluate: true
-    value: "getMetadata('memory^money_type') == 'Copper' ? getMetadata('purse') + (getMetadata('memory^money_to_add') * 0.01) : getMetadata('memory^money_type') == 'Silver' ? getMetadata('purse') + (getMetadata('memory^money_to_add') * 0.1) : getMetadata('memory^money_type') == 'Electrum' ? getMetadata('purse') + (getMetadata('memory^money_to_add') * 0.5) : getMetadata('memory^money_type') == 'Gold' ? getMetadata('purse') + getMetadata('memory^money_to_add') : getMetadata('memory^money_type') == 'Platinum' ? getMetadata('purse') + (getMetadata('memory^money_to_add') * 10) : getMetadata('purse')"
-  - type: updateMetadata
-    bindTarget: memory^money_to_add
-    evaluate: true
-    value: 0 
-```
-```meta-bind-button
-label: "Withdraw"
-style: primary
-class: money
-hidden: true
-icon: circle-dollar-sign
-id: "subtract_money"
-actions:
-  - type: updateMetadata
-    bindTarget: purse
-    evaluate: true
-    value: "getMetadata('memory^money_type') == 'Copper' ? getMetadata('purse') - (getMetadata('memory^money_to_add') * 0.01) : getMetadata('memory^money_type') == 'Silver' ? getMetadata('purse') - (getMetadata('memory^money_to_add') * 0.1) : getMetadata('memory^money_type') == 'Electrum' ? getMetadata('purse') - (getMetadata('memory^money_to_add') * 0.5) : getMetadata('memory^money_type') == 'Gold' ? getMetadata('purse') - getMetadata('memory^money_to_add') : getMetadata('memory^money_type') == 'Platinum' ? getMetadata('purse') - (getMetadata('memory^money_to_add') * 10) :   getMetadata('purse')"
-  - type: updateMetadata
-    bindTarget: memory^money_to_add
-    evaluate: true
-    value: 0 
 ```
