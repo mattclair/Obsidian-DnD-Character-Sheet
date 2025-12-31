@@ -138,13 +138,11 @@ energy_dice:
   energy_die_10: true
   energy_die_11: true
   energy_die_12: true
-purse: 590.8
+purse: 990.8
 spell_slot:
   elf_faerie_fire: true
   elf_darkness: true
 BASE_FOLDER: 3. Mechanics/CLI
-Mage_Slayer: {}
-Ritual_Caster: {}
 ---
 ```dataviewjs
 // Load full cahracter sheet

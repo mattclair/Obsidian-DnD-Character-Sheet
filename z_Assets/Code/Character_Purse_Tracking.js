@@ -109,12 +109,16 @@ async function updatePurse(deltaGp) {
   await app.vault.modify(file, newContent);
 }
 
-// Delegate clicks
-document.addEventListener("click", async (e) => {
+// Remove any existing handler
+if (window._moneyClickHandler) {
+  document.removeEventListener("click", window._moneyClickHandler);
+}
+
+// Define handler ONCE
+window._moneyClickHandler = async function (e) {
   const applyBtn = e.target.closest(".coin-btn.apply");
   const quickBtn = e.target.closest(".quick-btn");
 
-  // --- Per-coin Apply ---
   if (applyBtn) {
     const box = applyBtn.closest(".coin-box");
     const input = box.querySelector(".coin-input");
@@ -125,20 +129,27 @@ document.addEventListener("click", async (e) => {
     const multiplier = parseFloat(box.dataset.multiplier);
     const deltaGp = amount * multiplier;
 
-    await updatePurse(deltaGp);
+    const verb = deltaGp < 0 ? "Spent" : "Gained";
+    new window.Notice(`${verb} ${Math.abs(deltaGp)} gp`);
 
+    await updatePurse(deltaGp);
     input.value = "";
     return;
   }
 
-  // --- Quick Actions ---
   if (quickBtn) {
     const deltaGp = parseFloat(quickBtn.dataset.gp);
     if (isNaN(deltaGp) || deltaGp === 0) return;
 
+    const verb = deltaGp < 0 ? "Spent" : "Gained";
+    new window.Notice(`${verb} ${Math.abs(deltaGp)} gp`);
+
     await updatePurse(deltaGp);
   }
-});
+};
+
+// Attach fresh
+document.addEventListener("click", window._moneyClickHandler);
 
 
 // --- Gold Comment Logic ---

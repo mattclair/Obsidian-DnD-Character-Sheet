@@ -76,7 +76,7 @@ Spells:
     Spells: []
 Eldritch_Invocations:
 mastery:
-purse: 0
+purse: 20
 BASE_FOLDER: 3. Mechanics/CLI
 ---
 ```dataviewjs

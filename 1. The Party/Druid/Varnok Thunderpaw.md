@@ -110,6 +110,7 @@ inventory:
   Torch: 1
   Waterskin: 1
   studded leather armor: 1
+  The Drowned Favor: 1
 attuned:
 spell_slot:
   wizard: true
@@ -226,7 +227,7 @@ Wild_Shape:
   wild_shape-2: true
 mastery:
 wild-shape-options: []
-purse: 1215.5
+purse: 1615.5
 BASE_FOLDER: 3. Mechanics/CLI
 ---
 ```dataviewjs

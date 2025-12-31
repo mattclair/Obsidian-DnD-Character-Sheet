@@ -1302,9 +1302,9 @@ longRestBtn.onclick = async () => {
 
 
 	// Reset Feat Specific Resources
-	fm.Luck ??= {};
-	fm.Mage_Slayer ??= {};
-	fm.Ritual_Caster ??= {};
+	//fm.Luck ??= {};
+	//fm.Mage_Slayer ??= {};
+	//fm.Ritual_Caster ??= {};
 
 	if (feats.includes("Lucky")) {
 		Object.keys(fm.Luck).forEach(key => {

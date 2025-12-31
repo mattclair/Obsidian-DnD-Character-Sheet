@@ -173,9 +173,8 @@ Eldritch_Invocations:
 Magical_Cunning:
   magical_cunning-1: true
 mastery:
-purse: 905
+purse: 1897
 BASE_FOLDER: 3. Mechanics/CLI
-
 ---
 ```dataviewjs
 // Load full cahracter sheet
