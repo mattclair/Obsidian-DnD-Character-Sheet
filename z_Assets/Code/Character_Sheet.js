@@ -5015,6 +5015,71 @@ console.log("Rendering TAB: Bastions");
 		}, 0);
 	}
 
+
+	function showNumberPicker({ title, confirmText = "Confirm", onConfirm }) {
+		const overlay = document.createElement("div");
+		overlay.style.position = "fixed";
+		overlay.style.left = 0;
+		overlay.style.top = 0;
+		overlay.style.right = 0;
+		overlay.style.bottom = 0;
+		overlay.style.background = "rgba(0,0,0,0.5)";
+		overlay.style.zIndex = 9999;
+		overlay.style.display = "flex";
+		overlay.style.alignItems = "center";
+		overlay.style.justifyContent = "center";
+
+		const box = document.createElement("div");
+		box.style.background = "var(--background-secondary)";
+		box.style.color = "var(--text)";
+		box.style.padding = "12px";
+		box.style.borderRadius = "6px";
+		box.style.minWidth = "280px";
+
+		const titleEl = document.createElement("div");
+		titleEl.textContent = title;
+		titleEl.style.marginBottom = "8px";
+		box.appendChild(titleEl);
+
+		const input = document.createElement("input");
+		input.type = "number";
+		input.min = "0";
+		input.step = "1";
+		input.style.width = "100%";
+		input.style.marginBottom = "10px";
+		input.focus();
+		box.appendChild(input);
+
+		const btnRow = document.createElement("div");
+		btnRow.style.display = "flex";
+		btnRow.style.justifyContent = "space-between";
+
+		const confirm = document.createElement("button");
+		confirm.textContent = confirmText;
+		confirm.className = "mod-cta";
+
+		const cancel = document.createElement("button");
+		cancel.textContent = "Cancel";
+
+		confirm.onclick = () => {
+			const val = Number(input.value);
+			if (!Number.isNaN(val)) {
+				overlay.remove();
+				onConfirm(val);
+			}
+		};
+
+		cancel.onclick = () => overlay.remove();
+
+		btnRow.appendChild(confirm);
+		btnRow.appendChild(cancel);
+		box.appendChild(btnRow);
+
+		overlay.appendChild(box);
+		document.body.appendChild(overlay);
+	}
+
+
 	async function resolveBastionAttack(losses) {
 		const file = app.vault.getAbstractFileByPath(dv.current().file.path);
 		const bastion = structuredClone(dv.current().Bastion);
@@ -5828,10 +5893,14 @@ console.log("Rendering TAB: Bastions");
 		cls: "facility-btn danger"
 	});
 
-	attackBtn.addEventListener("click", async () => {
-		const losses = Number(prompt("How many defenders were lost?"));
-		if (Number.isNaN(losses)) return;
-		await resolveBastionAttack(losses);
+	attackBtn.addEventListener("click", () => {
+		showNumberPicker({
+			title: "Defenders Lost",
+			confirmText: "Resolve Attack",
+			onConfirm: async (losses) => {
+				await resolveBastionAttack(losses);
+			}
+		});
 	});
 
 

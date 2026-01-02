@@ -163,7 +163,7 @@ Dreadful_Strike:
 Bastion:
   name: Ivy Lane
   current_day: 14
-  defenders: 4
+  defenders: 0
   facilities:
     - name: Bedroom
       type: basic
