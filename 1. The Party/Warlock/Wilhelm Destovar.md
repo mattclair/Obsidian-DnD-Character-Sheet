@@ -186,7 +186,6 @@ Bastion:
       order: None
       status: operational
       level: 5
-      upgrade_cost: 250
     - name: Storage
       type: basic
       size: roomy
@@ -194,7 +193,6 @@ Bastion:
       order: None
       status: operational
       level: 5
-      upgrade_cost: 250
     - name: Library
       type: special
       size: roomy
@@ -202,7 +200,6 @@ Bastion:
       order: None
       status: operational
       level: 5
-      upgrade_cost: 250
     - name: Arcane Study
       type: special
       size: roomy
@@ -210,7 +207,6 @@ Bastion:
       order: None
       status: operational
       level: 5
-      upgrade_cost: 250
 BASE_FOLDER: 3. Mechanics/CLI
 ---
 ```dataviewjs

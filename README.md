@@ -468,3 +468,49 @@ mastery:
   Shortbow: Vex
   Shortsword: Nick
 ```
+
+### Bastions
+The Bastion Tab will allow you to name your bastion, track facilities and issue orders to your bastion hirelings.
+
+
+| Frontmatter Value    | Type   | Details                                            |
+| -------------------- | ------ | -------------------------------------------------- |
+| `Bastion:`           | Object | All bastion facilities tracked under here          |
+| `Bastion.name:`      | String | Your bastions name                                 |
+| `Bastion.defenders`  | Number | The number of defenders (requires barrack)         |
+| `Bastion.facilities` | Object | Your basic and special facilities are tracked here |
+```yaml
+Bastion:
+  name: Ivy Lane
+  current_day: 1
+  defenders: 0
+  facilities:
+    - name: Bedroom
+      type: basic
+      size: cramped
+      hirelings: 0
+      order: None
+      status: operational
+      level: 1
+    - name: Storage
+      type: basic
+      size: roomy
+      hirelings: 0
+      order: None
+      status: operational
+      level: 1
+    - name: Library
+      type: special
+      size: roomy
+      hirelings: 1
+      order: None
+      status: operational
+      level: 1
+    - name: Arcane Study
+      type: special
+      size: roomy
+      hirelings: 1
+      order: None
+      status: operational
+      level: 1
+```
