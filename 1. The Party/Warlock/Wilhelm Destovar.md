@@ -174,6 +174,43 @@ Magical_Cunning:
   magical_cunning-1: true
 mastery:
 purse: 1897
+Bastion:
+  name: Ivy Lane
+  current_day: 1
+  defenders: 0
+  facilities:
+    - name: Bedroom
+      type: basic
+      size: cramped
+      hirelings: 0
+      order: None
+      status: operational
+      level: 5
+      upgrade_cost: 250
+    - name: Storage
+      type: basic
+      size: roomy
+      hirelings: 0
+      order: None
+      status: operational
+      level: 5
+      upgrade_cost: 250
+    - name: Library
+      type: special
+      size: roomy
+      hirelings: 1
+      order: None
+      status: operational
+      level: 5
+      upgrade_cost: 250
+    - name: Arcane Study
+      type: special
+      size: roomy
+      hirelings: 1
+      order: None
+      status: operational
+      level: 5
+      upgrade_cost: 250
 BASE_FOLDER: 3. Mechanics/CLI
 ---
 ```dataviewjs

@@ -160,6 +160,47 @@ Dreadful_Strike:
   dreadful_strike-1: true
   dreadful_strike-2: true
   dreadful_strike-3: true
+Bastion:
+  name: Ivy Lane
+  current_day: 14
+  defenders: 8
+  facilities:
+    - name: Bedroom
+      type: basic
+      size: cramped
+      hirelings: 0
+      order: None
+      status: operational
+      level: 5
+      upgrade_cost: 250
+    - name: Parlor
+      type: basic
+      size: roomy
+      hirelings: 0
+      order: None
+      status: operational
+      level: 5
+      upgrade_cost: 250
+    - name: Library
+      type: special
+      size: roomy
+      hirelings: 1
+      order: None
+      status: operational
+      level: 5
+      upgrade_cost: 250
+      last_result: Success
+      last_result_note: A valuable reference is added to your growing archives.
+    - name: Barrack
+      type: special
+      size: roomy
+      hirelings: 1
+      order: None
+      status: operational
+      level: 1
+      upgrade_cost: 250
+      last_result: Completed
+      last_result_note: Four new defenders have been recruited to protect the bastion.
 BASE_FOLDER: 3. Mechanics/CLI
 ---
 

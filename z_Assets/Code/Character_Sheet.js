@@ -17,6 +17,7 @@ const ITEMS_FOLDER = `${BASE_FOLDER}/items`;
 const RULES_FOLDER = `${BASE_FOLDER}/rules`;
 const SPELLS_FOLDER = `${BASE_FOLDER}/spells`;
 const WSHAPE_FOLDER =  `${BASE_FOLDER}/bestiary/beast`;
+const BASTIONS_FOLDER = `${BASE_FOLDER}/bastions`;
 
 	  
 	  
@@ -1473,6 +1474,7 @@ container.innerHTML = `
   <div class="tab" id="tab-weapons" data-tab="weapons">Weapons</div>
   <div class="tab" id="tab-inventory" data-tab="inventory">Inventory</div>
   <div class="tab" id="tab-conditions" data-tab="conditions">Conditions</div>
+  <div class="tab" id="tab-bastions" data-tab="bastions">Bastions</div>
   <div class="tab" id="tab-session" data-tab="session">Session Notes</div>
 </div>
 
@@ -1502,6 +1504,11 @@ container.innerHTML = `
 </div>
 
 <div class="tab-content" id="conditions">
+  <div class="panel">
+  </div>
+</div>
+
+<div class="tab-content" id="bastions">
   <div class="panel">
   </div>
 </div>
@@ -4935,8 +4942,830 @@ console.log("Rendering TAB: Conditions");
 
 
 
+// ======================================================================================
+//==============================================================   Bastions Container Tab
+// ======================================================================================
+
+console.log("Rendering TAB: Bastions");
+
+(async function renderBastionsTab() {
+  try {
+    await waitForElement("#bastions .panel");
+
+    const bastionTab = tabContainer.querySelector("#bastions");
+    if (!bastionTab) return console.error("Bastions tab not found");
+
+    const bastionPanel = bastionTab.querySelector(".panel");
+    if (!bastionPanel) return console.error("Bastions panel not found");
+
+    // Clear panel if rerendered
+    bastionPanel.innerHTML = "";
+
+    const page = dv.current();
+    const bastion = page.Bastion;
+    if (!bastion) {
+      bastionPanel.createEl("p", { text: "No Bastion data found." });
+      return;
+    }
+
+	function getMaxDefenders(bastion) {
+		const barracks = (bastion.facilities ?? []).filter(f =>
+			f.name === "Barrack" && f.status === "operational"
+		);
+
+		return barracks.reduce((sum, b) => {
+			return sum + (b.level >= 2 ? 25 : 12);
+		}, 0);
+	}
+
+	async function resolveBastionAttack(losses) {
+		const file = app.vault.getAbstractFileByPath(dv.current().file.path);
+		const bastion = structuredClone(dv.current().Bastion);
+
+		bastion.defenders = Math.max((bastion.defenders ?? 0) - losses, 0);
+
+		if (bastion.defenders === 0) {
+			bastion.facilities.forEach(f => {
+				f.status = "inactive";
+			});
+		}
+
+		await app.fileManager.processFrontMatter(file, fm => {
+			fm.Bastion = bastion;
+		});
+
+		new Notice(`Bastion attacked! ${losses} defenders lost.`);
+		renderBastionsTab();
+	}
+
+	async function toggleFacilityStatus(facilityName) {
+		const file = app.vault.getAbstractFileByPath(dv.current().file.path);
+		const bastion = structuredClone(dv.current().Bastion);
+
+		const facility = bastion.facilities.find(f => f.name === facilityName);
+		if (!facility) return;
+
+		if (facility.status === "inactive") {
+			// Reactivate
+			facility.status = "operational";
+		} else {
+			// Deactivate + cancel order
+			facility.status = "inactive";
+			facility.order = "None";
+			delete facility.order_started_day;
+			delete facility.order_duration;
+			delete facility.order_result;
+		}
+
+		await app.fileManager.processFrontMatter(file, fm => {
+			fm.Bastion = bastion;
+		});
+
+		renderBastionsTab();
+	}
 
 
+	/* ---------------------------
+       Helpers
+    ----------------------------*/
+
+	const ORDER_OPTIONS = {
+		"Arcane Study": {
+			"Craft: Blank Book": {
+			duration: 7,
+			result: "A blank book is carefully prepared and ready for use."
+			},
+			"Craft: Arcane Focus": {
+			duration: 7,
+			result: "An Arcane Focus has been crafted and is ready to pick up."
+			},
+			"Craft: Common Magic Item": {
+			duration: 5,
+			result: "A common magic item has been created. It cost 50 gp to make."
+			},
+			"Craft: Uncommon Magic Item": {
+			duration: 10,
+			result: "An uncommon magic item has been created. It cost 200 gp to make."
+			}
+		},
+
+		"Archive": {
+			"Research Helpful Lore": {
+			duration: 7,
+			result: "Valuable information is uncovered within the archives."
+			},
+			"Reference Book": {
+			duration: 1,
+			result: "A reference book is created for future use."
+			}
+		},
+
+		"Armory": {
+			"Trade: Stock Armory": {
+			duration: 7,
+			result: "The armory is restocked with common weapons and armor."
+			}
+		},
+
+		"Barrack": {
+			"Recruit Bastion Defenders": {
+			duration: 7,
+			result: "Four new defenders have been recruited to protect the bastion."
+			}
+		},
+
+		"Demiplane": {
+			"Empower: Arcane Resilience": {
+			duration: 7,
+			result: "You gain temporary hit points equal to 5 × your character level."
+			},
+			"Fabricate: Common Item": {
+			duration: 1,
+			result: "A common item of your choice has been created within the demiplane."
+			}
+		},
+
+		"Gaming Hall": {
+			"Trade: Gambling Hall": {
+			duration: 7,
+			result: "Roll 1d100 to determine earnings from the gambling hall."
+			}
+		},
+
+		"Garden": {
+			"Harvest Garden Growth": {
+			duration: 7,
+			result: "You harvest useful herbs and plants from the garden."
+			}
+		},
+
+		"Greenhouse": {
+			"Fruit of Restoration": {
+			duration: 1,
+			result: "You harvest up to three fruits that grant the effects of Lesser Restoration when consumed."
+			},
+			"Harvest Healing Herbs": {
+			duration: 7,
+			result: "Hirelings create a greater Potion of Healing from harvested herbs."
+			},
+			"Harvest Poison": {
+			duration: 7,
+			result: "Hirelings create a basic poison from toxic plants."
+			}
+		},
+
+		"Guildhall": {
+			"Recruit Guild Assignment": {
+			duration: 5,
+			result: "A new guild assignment has been recruited to the bastion."
+			}
+		},
+
+		"Laboratory": {
+			"Craft: Alchemist's Supplies": {
+			duration: 3,
+			result: "An item made using alchemist's supplies has been created."
+			},
+			"Craft: Potion": {
+			duration: 5,
+			result: "A potion (Burnt Othur Fumes, Essence of Ether, or Torpor) has been created."
+			}
+		},
+
+		"Library": {
+			"Research: Topical Lore": {
+			duration: 7,
+			result: "Valuable information is uncovered within the library."
+			}
+		},
+
+		"Meditation Chamber": {
+			"Empower: Inner Peace": {
+			duration: 1,
+			result: "You have gained inner peace, granting advantage on the next Bastion Event roll."
+			},
+			"Fortify Self": {
+			duration: 7,
+			result: "Roll twice on the Saving Throws table. You gain advantage on determined saving throws for 7 days."
+			}
+		},
+
+		"Menagerie": {
+			"Recruit Creature": {
+			duration: 7,
+			result: "Hirelings recruit a creature to add to the menagerie. It is counted as a bastion defender."
+			}
+		},
+
+		"Observatory": {
+			"Empower: Eldritch Discovery": {
+			duration: 7,
+			result: "Roll to see if you gain a charm. On an odd, gain one of the following: Charm of Darkvision, Charm of Heroism, or Charm of Vitality."
+			}
+		},
+
+		"Pub": {
+			"Research: Information Gathering": {
+			duration: 7,
+			result: "Your spies can gain valuable information regarding local creatures."
+			}
+		},
+
+		"Reliquary": {
+			"Harvest Talisman": {
+			duration: 7,
+			result: "A talisman has been created that can be used in place of material components for one spell."
+			}
+		},
+
+		"Sarcristy": {
+			"Craft: Holy Water": {
+			duration: 7,
+			result: "Holy water has been created."
+			},
+			"Craft: Magic Item (Relic)": {
+			duration: 14,
+			result: "A relic magic item has been created. It cost 500 gp to make."
+			}
+		},
+
+		"Sanctuary": {
+			"Craft: Sacred Focus": {
+			duration: 7,
+			result: "A sacred focus has been created."
+			}
+		},
+
+		"Sanctum": {
+			"Empower: Fortifying Rites": {
+			duration: 7,
+			result: "You gain temporary hit points equal to your level"
+			},
+			"Sanctum Recall": {
+			duration: 1,
+			result: "Your sanctum can be used as the destination for Word of Recall."
+			}
+		},
+
+		"Scriptorium": {
+			"Craft: Book Replica": {
+			duration: 7,
+			result: "A replica of a non-magical book has been created."
+			},
+			"Craft: Spell Scroll": {
+			duration: 10,
+			result: "A spell scroll of level 3 or lower has been created."
+			},
+			"Craft: Paperwork": {
+			duration: 7,
+			result: "Up to 50 copies of broadsheet, pamphlet, or similar paperwork have been created."
+			}
+		},
+
+		"Smithy": {
+			"Craft: Smith Tools": {
+			duration: 3,
+			result: "An item made using smith's tools has been created."
+			},
+			"Craft: Magic Item": {
+			duration: 10,
+			result: "A common or uncommon magic item has been created."
+			}
+		},
+
+		"Stable": {
+			"Trade: Animals": {
+			duration: 7,
+			result: "A mount has been recruited to the stable."
+			}
+		},
+
+		"Storehouse": {
+			"Trade: Goods": {
+			duration: 7,
+			result: "Supplies have been stockpiled in the storehouse."
+			}
+		},
+
+		"Teleportation Circle": {
+			"Recruit Spellcaster": {
+			duration: 1,
+			result: "Roll a die. On an even, you recruit a Friendly NPC spellcaster that can cast an 8th-level spell."
+			}
+		},
+
+		"Theater": {
+			"Host Performance": {
+			duration: 7,
+			result: "A performance has been hosted in the theater."
+			}
+		},
+
+		"Training Area": {
+			"Train Bastion Defenders": {
+			duration: 7,
+			result: "Bastion defenders are trained in combat."
+			}
+		},
+
+		"Trophy Room": {
+			"Research: Lore": {
+			duration: 7,
+			result: "Hirelings uncover valuable lore about a specific topic."
+			},
+			"Research: Trinket Trophy": {
+			duration: 7,
+			result: "Roll a die. On an even, a magic item is discovered (Common Implement)."
+			}
+		},
+
+		"War Room": {
+			"Recruit: Lieutenant": {
+			duration: 7,
+			result: "You recruit a lieutenant to help manage bastion defenses."
+			},
+			"Recruit: Soldiers": {
+			duration: 3,
+			result: "Your Lieutenant's have gathered an army."
+			}
+		},
+
+		"Workshop": {
+			"Craft: Adventuring Gear": {
+			duration: 7,
+			result: "A replica of a set of artisan's tools has been created."
+			},
+			"Craft: Magic Item": {
+			duration: 10,
+			result: "A common or uncommon magic item has been created."
+			}
+		}
+	};
+
+
+	async function setFacilityOrder(facilityName, order) {
+		const file = dv.current().file.path;
+		const bastion = structuredClone(dv.current().Bastion);
+
+		const facility = bastion.facilities.find(f => f.name === facilityName);
+		if (!facility) return;
+
+		const orderDef = ORDER_OPTIONS[facility.name]?.[order];
+		if (!orderDef) return;
+
+		facility.order = order;
+		facility.order_started_day = bastion.current_day ?? 1;
+		facility.order_duration = orderDef.duration;
+		facility.order_result = orderDef.result;
+
+		await app.fileManager.processFrontMatter(
+			app.vault.getAbstractFileByPath(file),
+			fm => {
+				fm.Bastion = bastion;
+			}
+		);
+	}
+
+	
+	
+	
+
+	async function completeOrder(facilityName) {
+		const file = app.vault.getAbstractFileByPath(dv.current().file.path);
+		const bastion = structuredClone(dv.current().Bastion);
+
+		const facility = bastion.facilities.find(f => f.name === facilityName);
+		if (!facility) return;
+
+		// --- Apply order effects ---
+		if (facility.name === "Barrack" && facility.order === "Recruit Bastion Defenders") {
+			const maxDefenders = getMaxDefenders(bastion);
+			bastion.defenders = Math.min(
+				(bastion.defenders ?? 0) + 4,
+				maxDefenders
+			);
+		}
+
+		// Record result
+		facility.last_result = "Completed";
+		facility.last_result_note = facility.order_result;
+
+		// Clear active order
+		facility.order = "None";
+		delete facility.order_started_day;
+		delete facility.order_duration;
+		delete facility.order_result;
+
+		await app.fileManager.processFrontMatter(file, fm => {
+			fm.Bastion = bastion;
+		});
+
+		new Notice(`${facility.name}: Order completed`);
+		renderBastionsTab();
+	}
+
+	function getRemainingDays(facility, currentDay) {
+		if (!facility.order_started_day || !facility.order_duration) return null;
+		return (facility.order_started_day + facility.order_duration) - currentDay;
+	}
+
+	function isOrderComplete(facility, currentDay) {
+		const remaining = getRemainingDays(facility, currentDay);
+		return remaining !== null && remaining <= 0;
+	}
+
+
+	function facilityToNotePath(name) {
+		const slug = name.toLowerCase().replace(/\s+/g, "-");
+		return `${BASTIONS_FOLDER}/${slug}.md`;
+	}
+
+	function createFacilityLink(parentEl, facilityName) {
+		const path = facilityToNotePath(facilityName);
+
+		const link = parentEl.createEl("a", {
+			text: "details…",
+			cls: "internal-link facility-details-link"
+		});
+
+		link.setAttr("data-href", path);
+		link.setAttr("href", path);
+
+		return link;
+	}
+
+	async function advanceBastionTime(days) {
+		const file = app.vault.getAbstractFileByPath(dv.current().file.path);
+		const bastion = structuredClone(dv.current().Bastion);
+
+		bastion.current_day = (bastion.current_day ?? 1) + days;
+
+		await app.fileManager.processFrontMatter(file, fm => {
+			fm.Bastion = bastion;
+		});
+
+		renderBastionsTab();
+	}
+
+    /* ---------------------------
+       Bastion Overview Card
+    ----------------------------*/
+
+    const card = bastionPanel.createEl("div", {
+      cls: "bastion-card bastion-overview"
+    });
+
+    // Heading
+    card.createEl("h3", {
+      text: `🏰 ${bastion.name}`,
+      cls: "phb-heading"
+    });
+
+    // --- Bastion Flavor Text ---
+	let flavorText = "The bastion stands quietly, its purpose yet to be fully realized.";
+
+	const flavorPage = dv.page("z_Assets/Strings/BastionComments");
+	const fm = flavorPage?.file?.frontmatter;
+
+	if (fm?.default && Array.isArray(fm.default) && fm.default.length > 0) {
+	flavorText = fm.default[Math.floor(Math.random() * fm.default.length)];
+	}
+
+	card.createEl("p", {
+	text: flavorText,
+	cls: "bastion-flavor"
+	}); 
+
+    // --- Derived State ---
+    const facilities = bastion.facilities ?? [];
+
+    const totalFacilities = facilities.length;
+    const specialFacilitiesCount = facilities.filter(f => f.type === "special").length;
+    const basicFacilitiesCount = facilities.filter(f => f.type === "basic").length;
+    const hirelings = facilities.reduce((sum, f) => sum + (f.hirelings ?? 0), 0);
+	const defenders = bastion.defenders ?? 0;
+
+    // --- State Grid ---
+    const stats = card.createEl("div", { cls: "bastion-stats-grid" });
+
+    const stat = (label, value) => {
+      const s = stats.createEl("div", { cls: "bastion-stat" });
+      s.createEl("div", { text: value, cls: "bastion-stat-value" });
+      s.createEl("div", { text: label, cls: "bastion-stat-label" });
+    };
+
+    stat("Facilities", totalFacilities);
+    stat("Basic", basicFacilitiesCount);
+    stat("Special", specialFacilitiesCount);
+    stat("Hirelings", hirelings);
+	stat("Defenders", defenders || "0");
+
+	/* ---------------------------
+	Facilities Grid
+	----------------------------*/
+
+	// Split facilities
+	const specialFacilities = facilities.filter(f => f.type === "special");
+	const basicFacilities = facilities.filter(f => f.type === "basic");
+
+	/* ---------- Special Facilities ---------- */
+
+	if (specialFacilities.length > 0) {
+	const specialSection = bastionPanel.createEl("div", {
+		cls: "bastion-section"
+	});
+
+	specialSection.createEl("h4", {
+		text: "Special Facilities",
+		cls: "phb-heading"
+	});
+
+	const grid = specialSection.createEl("div", {
+		cls: "facility-grid special"
+	});
+
+	specialFacilities.forEach(f => {
+		const card = grid.createEl("div", {
+			cls: "facility-card special"
+		});
+
+		// Header
+		card.createEl("h5", {
+			text: f.name,
+			cls: "facility-name"
+		});
+
+		const linkRow = card.createEl("div", { cls: "facility-links" });
+		createFacilityLink(linkRow, f.name);
+
+		// Meta
+		const meta = card.createEl("div", { cls: "facility-meta" });
+		meta.createEl("span", { text: `Size: ${f.size}` });
+		meta.createEl("span", { text: `Level: ${f.level}` });
+		meta.createEl("span", { text: `Hirelings: ${f.hirelings ?? 0}` });
+
+		// Order display
+		let orderLine = "Idle";
+
+		if (f.order && f.order !== "None") {
+			const remaining = getRemainingDays(f, bastion.current_day ?? 1);
+
+			orderLine = remaining > 0
+				? `${f.order} — completes in ${remaining} day${remaining === 1 ? "" : "s"}`
+				: `${f.order} — ready to complete`;
+		}
+
+		card.createEl("div", {
+			text: `Order: ${orderLine}`,
+			cls: "facility-order"
+		});
+
+		if (f.last_result) {
+			card.createEl("div", {
+				text: `${f.last_result}: ${f.last_result_note}`,
+				cls: "facility-result"
+			});
+		}
+
+		// Assign Order Button
+		// if (f.status === "operational") {
+		// 	const btn = card.createEl("button", {
+		// 		text: "Assign Order",
+		// 		cls: "facility-btn assign-order"
+		// 	});
+		// 	// existing logic...
+		// } else {
+		// 	card.createEl("div", {
+		// 		text: "Facility inactive — cannot issue orders this turn.",
+		// 		cls: "muted"
+		// 	});
+		// }
+
+		if (f.status === "operational") {
+			const btn = card.createEl("button", {
+				text: "Assign Order",
+				cls: "facility-btn assign-order"
+			});
+
+			btn.addEventListener("click", () => {
+				card.querySelector(".order-picker")?.remove();
+
+				const picker = card.createEl("div", { cls: "order-picker" });
+				const options = Object.keys(ORDER_OPTIONS[f.name] ?? {});
+
+				options.forEach(opt => {
+					const optBtn = picker.createEl("button", {
+						text: opt,
+						cls: "facility-btn small"
+					});
+
+					optBtn.addEventListener("click", async () => {
+						await setFacilityOrder(f.name, opt);
+						renderBastionsTab();
+					});
+				});
+
+				const cancel = picker.createEl("button", {
+					text: "Cancel",
+					cls: "facility-btn small muted"
+				});
+
+				cancel.addEventListener("click", () => picker.remove());
+			});
+		} else {
+			card.createEl("div", {
+				text: "Facility inactive — cannot issue orders this turn.",
+				cls: "muted"
+			});
+		}
+
+		const statusRow = card.createEl("div", {
+			cls: "facility-status-row"
+		});
+
+		statusRow.createEl("span", {
+			text: `Status: ${f.status}`,
+			cls: f.status === "inactive" ? "status inactive" : "status operational"
+		});
+
+		const toggleBtn = statusRow.createEl("button", {
+			text: f.status === "inactive" ? "Repair Facility" : "Shut Down",
+			cls: "facility-btn small"
+		});
+
+		toggleBtn.addEventListener("click", async () => {
+			await toggleFacilityStatus(f.name);
+		});
+
+		if (f.status === "inactive") {
+			card.classList.add("inactive");
+		}
+
+	});
+	}
+
+	
+
+	/* ---------- Basic Facilities ---------- */
+
+	if (basicFacilities.length > 0) {
+	const basicSection = bastionPanel.createEl("div", {
+		cls: "bastion-section"
+	});
+
+	basicSection.createEl("h4", {
+		text: "Basic Facilities",
+		cls: "phb-heading muted"
+	});
+
+	const grid = basicSection.createEl("div", {
+		cls: "facility-grid basic"
+	});
+
+	basicFacilities.forEach(f => {
+		const card = grid.createEl("div", {
+		cls: "facility-card basic"
+		});
+
+		card.createEl("div", {
+		text: `${f.name} (${f.size})`,
+		cls: "facility-name"
+		});
+
+		const linkRow = card.createEl("div", { cls: "facility-links" });
+		createFacilityLink(linkRow, f.name);
+	});
+	}
+
+	/* ---------------------------
+	Bastion Orders Section
+	----------------------------*/
+
+	const activeOrders = (bastion.facilities ?? []).filter(f =>
+	f.type === "special" &&
+	f.status === "operational" &&
+	f.order &&
+	f.order !== "None"
+	);
+
+	const ordersSection = bastionPanel.createEl("div", {
+	cls: "bastion-section bastion-orders"
+	});
+
+	ordersSection.createEl("h4", {
+	text: "Active Bastion Orders",
+	cls: "phb-heading"
+	});
+
+	if (activeOrders.length === 0) {
+	ordersSection.createEl("p", {
+		text: "No active orders. Special facilities are currently idle.",
+		cls: "muted"
+	});
+	} else {
+	const orderList = ordersSection.createEl("div", {
+		cls: "order-list"
+	});
+
+	activeOrders.forEach(f => {
+		const card = orderList.createEl("div", {
+		cls: "order-card"
+		});
+
+		// Facility name
+		card.createEl("div", {
+		text: f.name,
+		cls: "order-facility"
+		});
+
+		// Order description
+		card.createEl("div", {
+		text: `Order: ${f.order}`,
+		cls: "order-type"
+		});
+
+		// Supporting details
+		const details = card.createEl("div", {
+		cls: "order-meta"
+		});
+
+		details.createEl("span", {
+		text: `Hirelings: ${f.hirelings ?? 0}`
+		});
+
+		details.createEl("span", {
+		text: `Facility Level: ${f.level ?? 1}`
+		});
+
+		const remaining = getRemainingDays(f, bastion.current_day ?? 1);
+
+
+	if (remaining > 0) {
+		card.createEl("div", {
+			text: `Completes in ${remaining} day${remaining === 1 ? "" : "s"}`,
+			cls: "order-timer muted"
+		});
+	} else {
+			const resolveBtn = card.createEl("button", {
+				text: "Complete Order",
+				cls: "facility-btn resolve-order"
+			});
+
+			resolveBtn.addEventListener("click", async () => {
+				await completeOrder(f.name);
+			});
+		}
+	});
+	}
+
+	/* ---------------------------
+	Bastion Time Controls
+	----------------------------*/
+
+	const timeBar = bastionPanel.createEl("div", {
+		cls: "bastion-time-bar"
+	});
+
+	timeBar.createEl("div", {
+		text: `📅 Bastion Day ${bastion.current_day ?? 1}`,
+		cls: "bastion-day-display"
+	});
+
+	const btnGroup = timeBar.createEl("div", {
+		cls: "bastion-time-buttons"
+	});
+
+	const advance1 = btnGroup.createEl("button", {
+		text: "+1 Day",
+		cls: "facility-btn advance-time"
+	});
+
+	advance1.addEventListener("click", () => advanceBastionTime(1));
+
+	const advance7 = btnGroup.createEl("button", {
+		text: "+7 Days",
+		cls: "facility-btn advance-time"
+	});
+
+	advance7.addEventListener("click", () => advanceBastionTime(7));
+
+	const attackBtn = timeBar.createEl("button", {
+		text: "Resolve Bastion Attack",
+		cls: "facility-btn danger"
+	});
+
+	attackBtn.addEventListener("click", async () => {
+		const losses = Number(prompt("How many defenders were lost?"));
+		if (Number.isNaN(losses)) return;
+		await resolveBastionAttack(losses);
+	});
+
+
+
+  } catch (e) {
+    console.error("Bastions tab failed:", e);
+  }
+})();
 
 
 // ======================================================================================

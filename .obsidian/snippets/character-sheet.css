@@ -603,20 +603,6 @@ background-color: #000;
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 .spell-header-row {
   display: flex;
   justify-content: space-between;
@@ -630,7 +616,7 @@ background-color: #000;
   margin-left: 1rem;
   padding: 4px 8px;
   border-radius: 6px;
-  rgba:(20, 10, 35, 0.5);
+  background-color: rgba(20, 10, 35, 0.5);
   font-weight: 400;
   display: flex;
   align-items: Right;
@@ -814,3 +800,173 @@ background-color: #000;
 }
 
 
+/* =========================================================
+   Bastion Tab
+   ========================================================= */
+   .bastion-card {
+  background: var(--background-secondary);
+  border-radius: 8px;
+  padding: 1em;
+  margin-bottom: 1em;
+}
+
+.bastion-flavor {
+  font-style: italic;
+  opacity: 0.9;
+}
+
+.bastion-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 0.75em;
+  margin-top: 0.75em;
+}
+
+.bastion-stat {
+  text-align: center;
+}
+
+.bastion-stat-value {
+  font-size: 1.25em;
+  font-weight: bold;
+}
+
+
+.bastion-section {
+  margin-top: 1.5em;
+}
+
+.facility-grid {
+  display: grid;
+  gap: 1em;
+}
+
+.facility-grid.special {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+.facility-grid.basic {
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  opacity: 0.75;
+}
+
+.facility-card {
+  background: var(--background-secondary);
+  border-radius: 8px;
+  padding: 0.75em;
+}
+
+.facility-card.special {
+  border-left: 4px solid var(--interactive-accent);
+}
+
+.facility-name {
+  font-weight: bold;
+  margin-bottom: 0.25em;
+}
+
+.facility-meta {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.85em;
+  opacity: 0.9;
+}
+
+.facility-order {
+  margin-top: 0.5em;
+  font-style: italic;
+}
+
+.facility-btn {
+  margin-top: 0.5em;
+  width: 100%;
+}
+
+
+.bastion-orders .order-list {
+  display: grid;
+  gap: 0.75em;
+}
+
+.order-card {
+  background: var(--background-secondary);
+  border-left: 4px solid var(--color-green);
+  border-radius: 6px;
+  padding: 0.75em;
+}
+
+.order-facility {
+  font-weight: bold;
+}
+
+.order-type {
+  font-style: italic;
+  margin-bottom: 0.25em;
+}
+
+.order-meta {
+  display: flex;
+  gap: 1em;
+  font-size: 0.85em;
+  opacity: 0.9;
+}
+
+.order-picker {
+  display: flex;
+  gap: 0.5em;
+  margin-top: 0.5em;
+  flex-wrap: wrap;
+}
+
+.facility-btn.small {
+  font-size: 0.8em;
+  padding: 0.25em 0.5em;
+}
+
+.facility-result {
+  margin-top: 0.5em;
+  font-size: 0.85em;
+  opacity: 0.85;
+}
+
+
+.facility-links {
+	margin-top: 4px;
+	font-size: 0.85em;
+}
+
+.facility-details-link {
+	opacity: 0.75;
+	text-decoration: underline;
+}
+
+.facility-details-link:hover {
+	opacity: 1;
+}
+
+.bastion-time-bar {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-top: 1rem;
+	gap: 1rem;
+}
+
+.bastion-time-buttons {
+	display: flex;
+	gap: 0.5rem;
+}
+
+.facility-card.inactive {
+	opacity: 0.6;
+	filter: grayscale(0.8);
+}
+
+.status.inactive {
+	color: var(--text-error);
+	font-weight: 600;
+}
+
+.status.operational {
+	color: var(--text-success);
+}
