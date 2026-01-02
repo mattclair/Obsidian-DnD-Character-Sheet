@@ -163,7 +163,7 @@ Dreadful_Strike:
 Bastion:
   name: Ivy Lane
   current_day: 14
-  defenders: 8
+  defenders: 4
   facilities:
     - name: Bedroom
       type: basic
@@ -197,7 +197,7 @@ Bastion:
       hirelings: 1
       order: None
       status: operational
-      level: 1
+      level: 5
       upgrade_cost: 250
       last_result: Completed
       last_result_note: Four new defenders have been recruited to protect the bastion.

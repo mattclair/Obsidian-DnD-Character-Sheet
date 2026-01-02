@@ -4968,13 +4968,50 @@ console.log("Rendering TAB: Bastions");
       return;
     }
 
+	const FACILITY_SIZE_ORDER = ["cramped", "roomy", "vast"];
+
+	function getNextFacilitySize(size) {
+		const idx = FACILITY_SIZE_ORDER.indexOf(size);
+		if (idx === -1 || idx === FACILITY_SIZE_ORDER.length - 1) return null;
+		return FACILITY_SIZE_ORDER[idx + 1];
+	}
+
+	async function upgradeFacilitySize(facilityName) {
+		const file = app.vault.getAbstractFileByPath(dv.current().file.path);
+		const bastion = structuredClone(dv.current().Bastion);
+
+		const facility = bastion.facilities.find(f => f.name === facilityName);
+		if (!facility) return;
+
+		const nextSize = getNextFacilitySize(facility.size);
+		if (!nextSize) return;
+
+		facility.size = nextSize;
+
+		await app.fileManager.processFrontMatter(file, fm => {
+			fm.Bastion = bastion;
+		});
+
+		new Notice(`${facility.name} upgraded to ${nextSize}`);
+		renderBastionsTab();
+	}
+
 	function getMaxDefenders(bastion) {
 		const barracks = (bastion.facilities ?? []).filter(f =>
 			f.name === "Barrack" && f.status === "operational"
 		);
 
 		return barracks.reduce((sum, b) => {
-			return sum + (b.level >= 2 ? 25 : 12);
+			const size = (b.size ?? "").toLowerCase();
+
+			switch (size) {
+				case "vast":
+					return sum + 25;
+				case "roomy":
+					return sum + 12;
+				default:
+					return sum; // cramped or invalid
+			}
 		}, 0);
 	}
 
@@ -4982,7 +5019,17 @@ console.log("Rendering TAB: Bastions");
 		const file = app.vault.getAbstractFileByPath(dv.current().file.path);
 		const bastion = structuredClone(dv.current().Bastion);
 
-		bastion.defenders = Math.max((bastion.defenders ?? 0) - losses, 0);
+		// Apply losses
+		bastion.defenders = Math.max(
+			(bastion.defenders ?? 0) - losses,
+			0
+		);
+
+		// Clamp to current capacity (in case barracks were lost)
+		bastion.defenders = Math.min(
+			bastion.defenders,
+			getMaxDefenders(bastion)
+		);
 
 		if (bastion.defenders === 0) {
 			bastion.facilities.forEach(f => {
@@ -5444,6 +5491,7 @@ console.log("Rendering TAB: Bastions");
     const basicFacilitiesCount = facilities.filter(f => f.type === "basic").length;
     const hirelings = facilities.reduce((sum, f) => sum + (f.hirelings ?? 0), 0);
 	const defenders = bastion.defenders ?? 0;
+	const maxDefenders = getMaxDefenders(bastion);
 
     // --- State Grid ---
     const stats = card.createEl("div", { cls: "bastion-stats-grid" });
@@ -5458,7 +5506,7 @@ console.log("Rendering TAB: Bastions");
     stat("Basic", basicFacilitiesCount);
     stat("Special", specialFacilitiesCount);
     stat("Hirelings", hirelings);
-	stat("Defenders", defenders || "0");
+	stat("Defenders", `${defenders} / ${maxDefenders}`);
 
 	/* ---------------------------
 	Facilities Grid
@@ -5503,6 +5551,33 @@ console.log("Rendering TAB: Bastions");
 		meta.createEl("span", { text: `Size: ${f.size}` });
 		meta.createEl("span", { text: `Level: ${f.level}` });
 		meta.createEl("span", { text: `Hirelings: ${f.hirelings ?? 0}` });
+		
+		const statusRow = card.createEl("div", {
+			cls: "facility-status-row"
+		});
+		statusRow.createEl("span", {
+			text: `Status: ${f.status}`,
+			cls: f.status === "inactive" ? "status inactive" : "status operational"
+		});
+
+		// Upgrade button
+		const nextSize = getNextFacilitySize(f.size);
+
+		if (nextSize) {
+			const upgradeBtn = card.createEl("button", {
+				text: `Upgrade to ${nextSize}`,
+				cls: "facility-btn small"
+			});
+
+			upgradeBtn.addEventListener("click", async () => {
+				await upgradeFacilitySize(f.name);
+			});
+		} else {
+			card.createEl("div", {
+				text: "Facility fully upgraded",
+				cls: "muted"
+			});
+		}
 
 		// Order display
 		let orderLine = "Idle";
@@ -5527,19 +5602,6 @@ console.log("Rendering TAB: Bastions");
 			});
 		}
 
-		// Assign Order Button
-		// if (f.status === "operational") {
-		// 	const btn = card.createEl("button", {
-		// 		text: "Assign Order",
-		// 		cls: "facility-btn assign-order"
-		// 	});
-		// 	// existing logic...
-		// } else {
-		// 	card.createEl("div", {
-		// 		text: "Facility inactive — cannot issue orders this turn.",
-		// 		cls: "muted"
-		// 	});
-		// }
 
 		if (f.status === "operational") {
 			const btn = card.createEl("button", {
@@ -5579,14 +5641,8 @@ console.log("Rendering TAB: Bastions");
 			});
 		}
 
-		const statusRow = card.createEl("div", {
-			cls: "facility-status-row"
-		});
+		
 
-		statusRow.createEl("span", {
-			text: `Status: ${f.status}`,
-			cls: f.status === "inactive" ? "status inactive" : "status operational"
-		});
 
 		const toggleBtn = statusRow.createEl("button", {
 			text: f.status === "inactive" ? "Repair Facility" : "Shut Down",
@@ -5634,6 +5690,24 @@ console.log("Rendering TAB: Bastions");
 
 		const linkRow = card.createEl("div", { cls: "facility-links" });
 		createFacilityLink(linkRow, f.name);
+
+		const nextSize = getNextFacilitySize(f.size);
+
+		if (nextSize) {
+			const upgradeBtn = card.createEl("button", {
+				text: `Upgrade to ${nextSize}`,
+				cls: "facility-btn small"
+			});
+
+			upgradeBtn.addEventListener("click", async () => {
+				await upgradeFacilitySize(f.name);
+			});
+		} else {
+			card.createEl("div", {
+				text: "Facility fully upgraded",
+				cls: "muted"
+			});
+		}
 	});
 	}
 
