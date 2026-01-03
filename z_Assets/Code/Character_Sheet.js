@@ -4176,22 +4176,7 @@ console.log("Rendering TAB: Inventory");
 		
 		inputWrapper.appendChild(btnWrapper);
 		inventoryWrapper.appendChild(invContainer);
-		
-		// ============================
-		// ADD / REMOVE ITEM FUNCTIONS
-		// ============================
-		
-		// Normalize user input for matching
-		/*function normalizeForMatch(str) {
-		    return String(str)
-		        .toLowerCase()
-		        .replace(/\([^)]*\)/g, "")
-		        .replace(/'/g, "")
-		        .replace(/[^a-z0-9]/g, "-")
-		        .replace(/-+/g, "-")
-		        .replace(/^-|-$/g, "");
-		}*/
-		
+				
 		
 		async function updateInventoryYaml(newInventory) {
 		    const file = app.workspace.getActiveFile();
@@ -4962,13 +4947,35 @@ console.log("Rendering TAB: Bastions");
     bastionPanel.innerHTML = "";
 
     const page = dv.current();
-    const bastion = page.Bastion;
-    if (!bastion) {
-      bastionPanel.createEl("p", { text: "No Bastion data found." });
-      return;
-    }
+		const bastion = page.Bastion ?? {
+		name: "",
+		current_day: 0,
+		defenders: 0,
+		facilities: []
+	};
+    
+
+	/* ---------------------------
+       Helpers
+    ----------------------------*/
 
 	const FACILITY_SIZE_ORDER = ["cramped", "roomy", "vast"];
+
+	const BASIC_FACILITY_TYPES = [
+		"Bedroom",
+		"Dining Room",
+		"Parlor",
+		"Courtyard",
+		"Kitchen",
+		"Storage"
+	];
+
+	function countBasicBySize(bastion, size) {
+		return (bastion.facilities ?? []).filter(f =>
+			f.type === "basic" &&
+			f.size === size
+		).length;
+	}
 
 	function getNextFacilitySize(size) {
 		const idx = FACILITY_SIZE_ORDER.indexOf(size);
@@ -5013,6 +5020,148 @@ console.log("Rendering TAB: Bastions");
 					return sum; // cramped or invalid
 			}
 		}, 0);
+	}
+
+	async function createBasicFacility(name, size) {
+		const page = dv.current();
+		const file = app.vault.getAbstractFileByPath(page.file.path);
+
+		await app.fileManager.processFrontMatter(file, fm => {
+			if (!fm.Bastion) {
+			fm.Bastion = {
+				name: "",
+				current_day: 0,
+				defenders: 0,
+				facilities: []
+			};
+			}
+
+			if (!Array.isArray(fm.Bastion.facilities)) {
+			fm.Bastion.facilities = [];
+			}
+
+			fm.Bastion.facilities.push({
+			name,
+			type: "basic",
+			size,
+			status: "operational",
+			hirelings: 0
+			});
+		});
+	}
+
+
+	function showCreateBasicFacilityModal() {
+		const bastion = dv.current().Bastion;
+		if (!bastion) return;
+
+		const crampedExists = countBasicBySize(bastion, "cramped") >= 1;
+		const roomyExists = countBasicBySize(bastion, "roomy") >= 1;
+
+		// Overlay
+		const overlay = document.createElement("div");
+		Object.assign(overlay.style, {
+			position: "fixed",
+			inset: 0,
+			background: "rgba(0,0,0,0.5)",
+			zIndex: 9999,
+			display: "flex",
+			alignItems: "center",
+			justifyContent: "center"
+		});
+
+		const box = document.createElement("div");
+		Object.assign(box.style, {
+			background: "var(--background-secondary)",
+			color: "var(--text)",
+			padding: "12px",
+			borderRadius: "6px",
+			minWidth: "320px"
+		});
+
+		box.appendChild(Object.assign(document.createElement("h4"), {
+			textContent: "Create Basic Facility"
+		}));
+
+		/* ---------- Type Picker ---------- */
+
+		const typeLabel = document.createElement("div");
+		typeLabel.textContent = "Facility Type";
+		typeLabel.style.marginTop = "8px";
+		box.appendChild(typeLabel);
+
+		const typeSelect = document.createElement("select");
+		BASIC_FACILITY_TYPES.forEach(t => {
+			const opt = document.createElement("option");
+			opt.value = t;
+			opt.textContent = t;
+			typeSelect.appendChild(opt);
+		});
+		box.appendChild(typeSelect);
+
+		/* ---------- Size Picker ---------- */
+
+		const sizeLabel = document.createElement("div");
+		sizeLabel.textContent = "Facility Size";
+		sizeLabel.style.marginTop = "12px";
+		box.appendChild(sizeLabel);
+
+		let selectedSize = null;
+
+		const sizeRow = document.createElement("div");
+		sizeRow.style.display = "flex";
+		sizeRow.style.gap = "8px";
+		sizeRow.style.marginTop = "6px";
+
+		function makeSizeButton(size, disabled) {
+			const btn = document.createElement("button");
+			btn.textContent = size[0].toUpperCase() + size.slice(1);
+			btn.disabled = disabled;
+
+			btn.onclick = () => {
+			selectedSize = size;
+			[...sizeRow.children].forEach(b => b.classList.remove("mod-cta"));
+			btn.classList.add("mod-cta");
+			};
+
+			return btn;
+		}
+
+		sizeRow.appendChild(makeSizeButton("cramped", crampedExists));
+		sizeRow.appendChild(makeSizeButton("roomy", roomyExists));
+
+		box.appendChild(sizeRow);
+
+		/* ---------- Buttons ---------- */
+
+		const btnRow = document.createElement("div");
+		btnRow.style.display = "flex";
+		btnRow.style.justifyContent = "flex-end";
+		btnRow.style.gap = "8px";
+		btnRow.style.marginTop = "12px";
+
+		const cancel = document.createElement("button");
+		cancel.textContent = "Cancel";
+		cancel.onclick = () => overlay.remove();
+
+		const confirm = document.createElement("button");
+		confirm.textContent = "Create";
+		confirm.classList.add("mod-cta");
+
+		confirm.onclick = async () => {
+			if (!selectedSize) return;
+
+			await createBasicFacility(typeSelect.value, selectedSize);
+			overlay.remove();
+			renderBastionsTab();
+		};
+
+		btnRow.appendChild(cancel);
+		btnRow.appendChild(confirm);
+		box.appendChild(btnRow);
+
+		overlay.appendChild(box);
+		document.body.appendChild(overlay);
 	}
 
 
@@ -5136,10 +5285,6 @@ console.log("Rendering TAB: Bastions");
 		renderBastionsTab();
 	}
 
-
-	/* ---------------------------
-       Helpers
-    ----------------------------*/
 
 	const ORDER_OPTIONS = {
 		"Arcane Study": {
@@ -5414,6 +5559,225 @@ console.log("Rendering TAB: Bastions");
 		}
 	};
 
+	const SPECIAL_FACILITIES = {
+		"Arcane Study": {
+			minLevel: 5,
+			size: "roomy",
+			hirelings: 1,
+			repeatable: false
+		},
+		"Armory": {
+			minLevel: 5,
+			size: "roomy",
+			hirelings: 1,
+			repeatable: false
+		},
+		"Barrack": {
+			minLevel: 5,
+			size: "roomy",
+			hirelings: 1,
+			repeatable: true
+		},
+		"Garden": {
+			minLevel: 5,
+			size: "roomy",
+			hirelings: 1,
+			repeatable: true
+		},
+		"Library": {
+			minLevel: 5,
+			size: "roomy",
+			hirelings: 1,
+			repeatable: false
+		},
+		"Sanctuary": {
+			minLevel: 5,
+			size: "roomy",
+			hirelings: 1,
+			repeatable: false
+		},
+		"Smithy": {
+			minLevel: 5,
+			size: "roomy",
+			hirelings: 2,
+			repeatable: false
+		},
+		"Storehouse": {
+			minLevel: 5,
+			size: "roomy",
+			hirelings: 1,
+			repeatable: false
+		},
+		"Workshop": {
+			minLevel: 5,
+			size: "roomy",
+			hirelings: 3,
+			repeatable: false
+		},
+		"Gaming Hall": {
+			minLevel: 9,
+			size: "vast",
+			hirelings: 4,
+			repeatable: false
+		},
+		"Greenhouse": {
+			minLevel: 9,
+			size: "roomy",
+			hirelings: 1,
+			repeatable: false
+		},
+		"Laboratory": {
+			minLevel: 9,
+			size: "roomy",
+			hirelings: 1,
+			repeatable: false
+		},
+		"Sacristy": {
+			minLevel: 9,
+			size: "roomy",
+			hirelings: 1,
+			repeatable: false
+		},
+		"Scriptorium": {
+			minLevel: 9,
+			size: "roomy",
+			hirelings: 1,
+			repeatable: false
+		},
+		"Stable": {
+			minLevel: 9,
+			size: "roomy",
+			hirelings: 1,
+			repeatable: true
+		},
+		"Teleportation Circle": {
+			minLevel: 9,
+			size: "roomy",
+			hirelings: 1,
+			repeatable: false
+		},
+		"Theater": {
+			minLevel: 9,
+			size: "vast",
+			hirelings: 4,
+			repeatable: false
+		},
+		"Training Area": {
+			minLevel: 9,
+			size: "vast",
+			hirelings: 4,
+			repeatable: true
+		},
+		"Trophy Room": {
+			minLevel: 9,
+			size: "roomy",
+			hirelings: 1,
+			repeatable: false
+		},
+		"Archive": {
+			minLevel: 13,
+			size: "roomy",
+			hirelings: 1,
+			repeatable: false
+		},
+		"Meditation Chamber": {
+			minLevel: 13,
+			size: "cramped",
+			hirelings: 1,
+			repeatable: false
+		},
+		"Menagerie": {
+			minLevel: 13,
+			size: "vast",
+			hirelings: 2,
+			repeatable: false
+		},
+		"Observatory": {
+			minLevel: 13,
+			size: "roomy",
+			hirelings: 1,
+			repeatable: false
+		},
+		"Pub": {
+			minLevel: 13,
+			size: "roomy",
+			hirelings: 1,
+			repeatable: false
+		},
+		"Reliquary": {
+			minLevel: 13,
+			size: "cramped",
+			hirelings: 1,
+			repeatable: false
+		},
+
+		"Demiplane": {
+			minLevel: 17,
+			size: "vast",
+			hirelings: 1,
+			repeatable: false
+		},
+		"Guildhall": {
+			minLevel: 17,
+			size: "vast",
+			hirelings: 1,
+			repeatable: false
+		},
+		"Sanctum": {
+			minLevel: 17,
+			size: "roomy",
+			hirelings: 4,
+			repeatable: false
+		},
+		"War Room": {
+			minLevel: 17,
+			size: "vast",
+			hirelings: 2,
+			repeatable: false
+		}
+	};
+
+	const characterLevel = page.Level ?? 0;
+		const existing = new Set((bastion.facilities ?? []).map(f => f.name));
+
+		const availableSpecialFacilities = Object.entries(SPECIAL_FACILITIES)
+		.filter(([name, def]) =>
+			def.minLevel <= characterLevel &&
+			!existing.has(name)
+	);
+
+	async function createSpecialFacility(name) {
+		const def = SPECIAL_FACILITIES[name];
+		if (!def) return;
+
+		const page = dv.current();
+		const file = app.vault.getAbstractFileByPath(page.file.path);
+
+		await app.fileManager.processFrontMatter(file, fm => {
+			if (!fm.Bastion) {
+			fm.Bastion = {
+				name: "",
+				current_day: 0,
+				defenders: 0,
+				facilities: []
+			};
+			}
+
+			fm.Bastion.facilities ??= [];
+
+			fm.Bastion.facilities.push({
+			name,
+			type: "special",
+			size: def.size,
+			hirelings: def.hirelings,
+			order: "None",
+			status: "operational"
+			});
+		});
+	}
+
+
+
 
 	async function setFacilityOrder(facilityName, order) {
 		const file = dv.current().file.path;
@@ -5436,10 +5800,7 @@ console.log("Rendering TAB: Bastions");
 				fm.Bastion = bastion;
 			}
 		);
-	}
-
-	
-	
+	}	
 	
 
 	async function completeOrder(facilityName) {
@@ -5519,9 +5880,135 @@ console.log("Rendering TAB: Bastions");
 		renderBastionsTab();
 	}
 
+	function showBastionNamePicker(onConfirm) {
+		const overlay = document.createElement("div");
+		overlay.style.position = "fixed";
+		overlay.style.inset = 0;
+		overlay.style.background = "rgba(0,0,0,0.5)";
+		overlay.style.zIndex = 9999;
+		overlay.style.display = "flex";
+		overlay.style.alignItems = "center";
+		overlay.style.justifyContent = "center";
+
+		const box = document.createElement("div");
+		box.style.background = "var(--background-secondary)";
+		box.style.color = "var(--text)";
+		box.style.padding = "12px";
+		box.style.borderRadius = "6px";
+		box.style.minWidth = "300px";
+
+		const title = document.createElement("div");
+		title.textContent = "Name Your Bastion";
+		title.style.marginBottom = "8px";
+		box.appendChild(title);
+
+		const input = document.createElement("input");
+		input.type = "text";
+		input.placeholder = "Bastion Name";
+		input.style.width = "100%";
+		input.style.marginBottom = "10px";
+		input.focus();
+		box.appendChild(input);
+
+		const row = document.createElement("div");
+		row.style.display = "flex";
+		row.style.justifyContent = "space-between";
+
+		const create = document.createElement("button");
+		create.textContent = "Create";
+		create.className = "mod-cta";
+
+		const cancel = document.createElement("button");
+		cancel.textContent = "Cancel";
+
+		create.onclick = () => {
+			const name = input.value.trim();
+			if (!name) return;
+			overlay.remove();
+			onConfirm(name);
+		};
+
+		cancel.onclick = () => overlay.remove();
+
+		row.appendChild(create);
+		row.appendChild(cancel);
+		box.appendChild(row);
+
+		overlay.appendChild(box);
+		document.body.appendChild(overlay);
+	}
+
     /* ---------------------------
        Bastion Overview Card
     ----------------------------*/
+
+	//const characterLevel = page.Level ?? 0;
+	
+	const existingFacilities = (bastion.facilities ?? []);
+
+	const eligibleSpecialFacilities = Object.entries(SPECIAL_FACILITIES)
+		.filter(([name, def]) => {
+			if (def.minLevel > characterLevel) return false;
+
+			if (!def.repeatable) {
+				return !existingFacilities.some(f => f.name === name);
+			}
+
+			return true; // repeatable facilities always allowed
+		});
+
+	if (!page.Bastion) {
+		const card = bastionPanel.createEl("div", {
+			cls: "bastion-card bastion-empty"
+		});
+
+		card.createEl("h3", {
+			text: "🏰 Bastion",
+			cls: "phb-heading"
+		});
+
+		card.createEl("p", {
+			text: "No bastion data is configured for this character."
+		});
+
+		const btn = card.createEl("button", {
+			text: "Create Bastion"
+		});
+
+		if ((page.Level ?? 0) < 5) {
+			btn.disabled = true;
+			btn.title = "Requires level 5";
+		} else {
+			btn.onclick = () => {
+				showBastionNamePicker(async (name) => {
+					const file = app.workspace.getActiveFile();
+					const fm = app.metadataCache.getFileCache(file)?.frontmatter;
+
+					const newFm = {
+						...(fm ?? {}),
+						Bastion: {
+							name,
+							current_day: 0,
+							defenders: 0,
+							facilities: []
+						}
+					};
+
+					await app.fileManager.processFrontMatter(file, f => {
+						Object.assign(f, newFm);
+					});
+
+					new Notice(`Bastion "${name}" created`);
+				});
+			};
+		}
+
+		return; // ⛔ stop here, do not render normal bastion UI
+	}
+
+	/* ---------------------------
+	Facilities Grid
+	----------------------------*/
 
     const card = bastionPanel.createEl("div", {
       cls: "bastion-card bastion-overview"
@@ -5552,9 +6039,9 @@ console.log("Rendering TAB: Bastions");
     const facilities = bastion.facilities ?? [];
 
     const totalFacilities = facilities.length;
-    const specialFacilitiesCount = facilities.filter(f => f.type === "special").length;
-    const basicFacilitiesCount = facilities.filter(f => f.type === "basic").length;
-    const hirelings = facilities.reduce((sum, f) => sum + (f.hirelings ?? 0), 0);
+	const specialFacilitiesCount = facilities.filter(f => f.type === "special").length;
+	const basicFacilitiesCount = facilities.filter(f => f.type === "basic").length;
+	const hirelings = facilities.reduce((sum, f) => sum + (f.hirelings ?? 0), 0);
 	const defenders = bastion.defenders ?? 0;
 	const maxDefenders = getMaxDefenders(bastion);
 
@@ -5562,10 +6049,16 @@ console.log("Rendering TAB: Bastions");
     const stats = card.createEl("div", { cls: "bastion-stats-grid" });
 
     const stat = (label, value) => {
-      const s = stats.createEl("div", { cls: "bastion-stat" });
-      s.createEl("div", { text: value, cls: "bastion-stat-value" });
-      s.createEl("div", { text: label, cls: "bastion-stat-label" });
-    };
+	const s = stats.createEl("div", { cls: "bastion-stat" });
+	s.createEl("div", {
+		text: String(value),
+		cls: "bastion-stat-value"
+	});
+	s.createEl("div", {
+		text: label,
+		cls: "bastion-stat-label"
+	});
+	};
 
     stat("Facilities", totalFacilities);
     stat("Basic", basicFacilitiesCount);
@@ -5573,9 +6066,59 @@ console.log("Rendering TAB: Bastions");
     stat("Hirelings", hirelings);
 	stat("Defenders", `${defenders} / ${maxDefenders}`);
 
-	/* ---------------------------
-	Facilities Grid
-	----------------------------*/
+	const addBasicBtn = bastionPanel.createEl("button", {
+		text: "Create Basic Facility",
+		cls: "facility-btn"
+	});
+
+	addBasicBtn.addEventListener("click", showCreateBasicFacilityModal);
+
+	const createRow = bastionPanel.createEl("div", {
+		cls: "bastion-create-row"
+		});
+
+		const createBtn = createRow.createEl("button", {
+		text: "➕ Create Special Facility",
+		cls: "facility-btn"
+		});
+
+		createBtn.disabled = eligibleSpecialFacilities.length === 0;
+
+		if (eligibleSpecialFacilities.length === 0) {
+		createRow.createEl("div", {
+			text: "No special facilities available at your current level.",
+			cls: "muted"
+		});
+	}
+
+	createBtn.addEventListener("click", () => {
+		// Prevent duplicates
+		createRow.querySelector(".facility-picker")?.remove();
+
+		const picker = createRow.createEl("div", {
+			cls: "facility-picker"
+		});
+
+		eligibleSpecialFacilities.forEach(([name, def]) => {
+			const btn = picker.createEl("button", {
+				text: `${name} (${def.size}, ${def.hirelings} hirelings)`,
+				cls: "facility-btn small"
+			});
+
+			btn.addEventListener("click", async () => {
+				await createSpecialFacility(name);
+				renderBastionsTab();
+			});
+		});
+
+		const cancel = picker.createEl("button", {
+			text: "Cancel",
+			cls: "facility-btn small muted"
+		});
+
+		cancel.addEventListener("click", () => picker.remove());
+	});
+
 
 	// Split facilities
 	const specialFacilities = facilities.filter(f => f.type === "special");

@@ -185,28 +185,24 @@ Bastion:
       hirelings: 0
       order: None
       status: operational
-      level: 5
     - name: Storage
       type: basic
       size: roomy
       hirelings: 0
       order: None
       status: operational
-      level: 5
     - name: Library
       type: special
       size: roomy
       hirelings: 1
       order: None
       status: operational
-      level: 5
     - name: Arcane Study
       type: special
       size: roomy
       hirelings: 1
       order: None
       status: operational
-      level: 5
 BASE_FOLDER: 3. Mechanics/CLI
 ---
 ```dataviewjs
