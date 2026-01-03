@@ -5938,6 +5938,10 @@ console.log("Rendering TAB: Bastions");
 		document.body.appendChild(overlay);
 	}
 
+	function capitalize(word) {
+		return word ? word.charAt(0).toUpperCase() + word.slice(1) : "";
+	}
+
     /* ---------------------------
        Bastion Overview Card
     ----------------------------*/
@@ -6156,8 +6160,8 @@ console.log("Rendering TAB: Bastions");
 
 		// Meta
 		const meta = card.createEl("div", { cls: "facility-meta" });
-		meta.createEl("span", { text: `Size: ${f.size}` });
-		meta.createEl("span", { text: `Level: ${f.level}` });
+		meta.createEl("span", { text: `Space: ${capitalize(f.size)}` });
+		meta.createEl("span", { text: `Level: ${characterLevel}` });
 		meta.createEl("span", { text: `Hirelings: ${f.hirelings ?? 0}` });
 		
 		const statusRow = card.createEl("div", {
@@ -6292,7 +6296,7 @@ console.log("Rendering TAB: Bastions");
 		});
 
 		card.createEl("div", {
-		text: `${f.name} (${f.size})`,
+		text: `${f.name} (${capitalize(f.size)})`,
 		cls: "facility-name"
 		});
 
@@ -6376,7 +6380,7 @@ console.log("Rendering TAB: Bastions");
 		});
 
 		details.createEl("span", {
-		text: `Facility Level: ${f.level ?? 1}`
+		text: `Facility Level: ${characterLevel ?? 1}`
 		});
 
 		const remaining = getRemainingDays(f, bastion.current_day ?? 1);

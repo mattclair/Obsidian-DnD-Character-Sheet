@@ -201,8 +201,11 @@ Bastion:
       type: special
       size: roomy
       hirelings: 1
-      order: None
+      order: "Craft: Blank Book"
       status: operational
+      order_started_day: 1
+      order_duration: 7
+      order_result: A blank book is carefully prepared and ready for use.
 BASE_FOLDER: 3. Mechanics/CLI
 ---
 ```dataviewjs
