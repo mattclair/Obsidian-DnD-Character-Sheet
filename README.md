@@ -484,7 +484,7 @@ mastery:
 If your character has 2 levels in Druid, a new interface will be added in the Spells tab to manage Wild Shape forms. It automatically allows the number of wild shapes based on level and takes into account differences for Circle of the Moon Druids. The UI will manage all frontmatter yaml for this feature.
 
 ### Bastions
-The Bastion Tab will allow you to name your bastion, track facilities and issue orders to your bastion hirelings.
+The Bastion Tab will allow you to name your bastion, track facilities and issue orders to your bastion hirelings. Bastion Frontmatter can all be added through the UI.
 
 
 | Frontmatter Value    | Type   | Details                                            |
@@ -505,26 +505,22 @@ Bastion:
       hirelings: 0
       order: None
       status: operational
-      level: 1
     - name: Storage
       type: basic
       size: roomy
       hirelings: 0
       order: None
       status: operational
-      level: 1
     - name: Library
       type: special
       size: roomy
       hirelings: 1
       order: None
       status: operational
-      level: 1
     - name: Arcane Study
       type: special
       size: roomy
       hirelings: 1
       order: None
       status: operational
-      level: 1
 ```
