@@ -1929,9 +1929,9 @@ setTimeout(() => {
 		}
 
 		// ======================================================================================
-		// Wild Shape Helper
+		// Wild Shape Card Selection
 		// ======================================================================================
-		console.log("Rendering: Wild Shape Helper");
+		console.log("Rendering: Wild Card Selection");
 		const page = dv.current();
 		const wildShapeWrapper = spellsPanel.createEl("div", {
 			cls: "wild-shape-wrapper"
@@ -2207,7 +2207,7 @@ setTimeout(() => {
 				footer.createEl("a", {
 					text: "Open Stat Block",
 					cls: "internal-link",
-					href: beast.page.file.path
+					href: beast.page.file.path + "#Animals"
 				});
 
 				const clear = footer.createEl("button", { text: "Clear" });
@@ -2227,7 +2227,9 @@ setTimeout(() => {
 
 
 
-
+		// ======================================================================================
+		// Spell Slots
+		// ======================================================================================
 
         const char = dv.current() ?? {};
 		const preparedSpells = (char.Prepared_spells ?? []).map(s => String(s).trim()).filter(Boolean);
