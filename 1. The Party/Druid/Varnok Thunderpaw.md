@@ -226,7 +226,9 @@ Wild_Shape:
   wild_shape-1: true
   wild_shape-2: true
 mastery:
-wild-shape-options: []
+wild-shape-options:
+  - Draft Horse
+  - Badger
 purse: 1615.5
 BASE_FOLDER: 3. Mechanics/CLI
 ---

@@ -883,12 +883,15 @@ background-color: #000;
 	padding: 0.25rem 0.4rem;
 	cursor: pointer;
 	opacity: 0.6;
+  min-width: 2.2rem;
+	min-height: 2.2rem;
 }
 
 .wild-shape-filter-btn.is-active {
 	opacity: 1;
 	background: var(--interactive-accent);
 	color: var(--text-on-accent);
+	transform: scale(1.05);
 }
 
 .wild-shape-select {
@@ -896,6 +899,14 @@ background-color: #000;
 	margin: 0 auto;
   min-width: 200px;
 	text-align: center;
+}
+
+.wild-shape-filter-btn {
+	transition:
+		background 0.15s ease,
+		color 0.15s ease,
+		transform 0.1s ease,
+		opacity 0.15s ease;
 }
 
 
