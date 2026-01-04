@@ -232,7 +232,6 @@ wild-shape-options:
   - Scorpion
   - Brown Bear
   - Cat
-  - Tiger
 purse: 1615.5
 BASE_FOLDER: 3. Mechanics/CLI
 ---

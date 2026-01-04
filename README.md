@@ -51,6 +51,8 @@ BASE_FOLDER: 3. Mechanics/CLI
 |                                                                                                                |                                                                                                                                                                          |                                                                                |
 | <img src="z_Assets/Screenshots/Multi-Class-Example.png" width="350">                                           | <img src="z_Assets/Screenshots/Prepare-Spells.png" width="350">                                                                                                          | <img src="z_Assets/Screenshots/Spell-Slot-Picker.png" width="350">             |
 | *Multi-Class Characters are supported, Including tracking full spell progression with full, half, 1/3 casters* | *Add Spells through the UI. The table will instruct you to add spells if you have too few prepared. Use the Arrow buttons to move the spells from 'Known' to 'Prepared'* | *Cast a spell - Pick the spell slot that you want to use*                      |
+| ![[Pasted image 20260104113024.png]]                                                                           | ![[Pasted image 20260104113207.png]]                                                                                                                                     |                                                                                |
+| *Wild Shape Selection Menu for Druids*                                                                         | *Manage your bastion*                                                                                                                                                    |                                                                                |
 ## ✏️Configuring Frontmatter
 ### Basic Info
 
@@ -457,6 +459,15 @@ Stat_Bonus:
 ### Weapon Mastery
 The weapon mastery table will allow you to select the weapon types that you want to claim mastery over. You can do this after a long rest. The table will give you the amount of weapon mastery slots assigned by your class.
 
+*Note* - To display all information your beast notes will need some modification. Add the following yaml to the frontmatter for each beast note.
+```yaml
+wildshape:
+  ac: 11
+  speed: "40 ft., climb 30 ft."
+  fly: false
+  image: "3. Mechanics/CLI/bestiary/beast/token/black-bear-xmm.webp"
+```
+
 | Frontmatter Value | Type   | Details                                      |
 | ----------------- | ------ | -------------------------------------------- |
 | `mastery:`        | Object | List your weapons and their weapon masteries |
@@ -468,6 +479,9 @@ mastery:
   Shortbow: Vex
   Shortsword: Nick
 ```
+
+### Wild Shape
+If your character has 2 levels in Druid, a new interface will be added in the Spells tab to manage Wild Shape forms. It automatically allows the number of wild shapes based on level and takes into account differences for Circle of the Moon Druids. The UI will manage all frontmatter yaml for this feature.
 
 ### Bastions
 The Bastion Tab will allow you to name your bastion, track facilities and issue orders to your bastion hirelings.
