@@ -249,6 +249,9 @@ let eldritchKnightLevel = 0;
 let arcaneTricksterLevel = 0;
 if (hasEldritchKnight) { eldritchKnightLevel = fighterLevel };
 if (hasArcaneTrickster) { arcaneTricksterLevel = rogueLevel };
+const hasCircleOfTheMoon = Array.isArray(c.subclass)
+  ? c.subclass.includes("Circle of the Moon")
+  : c.subclass === "Circle of the Moon";
 // Debug logs removed for production
 // ======================
 // Feats
@@ -1239,6 +1242,10 @@ longRestBtn.onclick = async () => {
 		});
 	}
 
+	if (hasDruid && druidLevel >= 2) {
+		fm["wild-shape-options"] = [];
+	}
+
 	if (hasFighter) {
 		Object.keys(fm.Second_Wind).forEach(key => {
 			if (key.startsWith("second_wind-")) {
@@ -1915,31 +1922,78 @@ setTimeout(() => {
  (async function renderSpellsTab() {
 	try {
 		// Rendering Spells (diagnostics suppressed)
-
-		if (c.Spellcasting_Ability == "None" || !c.Spellcasting_Ability) {
-			const spellsPanel = container.querySelector("#spells .panel");
+		const spellsPanel = container.querySelector("#spells .panel");
+		if (c.Spellcasting_Ability == "None" || !c.Spellcasting_Ability) {			
 			spellsPanel.innerHTML = "<p>This character does not have spellcasting ability.</p>";
 			return;
 		}
 
 		// ======================================================================================
-		//=============================================================         Wild Shape Helper
+		// Wild Shape Helper
 		// ======================================================================================
 		console.log("Rendering: Wild Shape Helper");
-		let wildShapeWrapper = null;
+		const page = dv.current();
+		const wildShapeWrapper = spellsPanel.createEl("div", {
+			cls: "wild-shape-wrapper"
+		});
 		if (hasDruid && druidLevel >= 2) {
 			function getWildShapeRules(druidLevel) {
-				if (druidLevel >= 8) {
-					return { known: 8, maxCR: 1, allowFly: true };
+				if (hasCircleOfTheMoon) {
+					return {
+						known: druidLevel >= 8 ? 8 : druidLevel >= 4 ? 6 : 4,
+						maxCR: Math.floor(druidLevel / 3),
+						allowFly: druidLevel >= 8
+					};
 				}
-				if (druidLevel >= 4) {
-					return { known: 6, maxCR: 0.5, allowFly: false };
-				}
-				if (druidLevel >= 2) {
-					return { known: 4, maxCR: 0.25, allowFly: false };
-				}
+
+				if (druidLevel >= 8) return { known: 8, maxCR: 1, allowFly: true };
+				if (druidLevel >= 4) return { known: 6, maxCR: 0.5, allowFly: false };
+				if (druidLevel >= 2) return { known: 4, maxCR: 0.25, allowFly: false };
 				return { known: 0, maxCR: 0, allowFly: false };
 			}
+
+			function isExcludedWildShape(name) {
+				if (!name) return true;
+				const n = name.toLowerCase();
+				return n.startsWith("beast of the") || // exclude spell summoned versions
+					n.startsWith("bestial spirit") || // exclude spell summoned versions
+					n.startsWith("giant-insect") || // prefer monster manual versions
+					n.includes("swarm of"); // exclude swarms
+			}
+
+			function formatCR(cr) {
+				if (!Number.isFinite(cr)) return "0";
+				if (cr === 0) return "0";
+
+				const fractions = {
+					0.125: "1/8",
+					0.25: "1/4",
+					0.5: "1/2"
+				};
+
+				return fractions[cr] ?? String(cr);
+			}
+
+			function hasBurrowSpeed(beast) {
+				if (!beast.speed) return false;
+				return beast.speed.toLowerCase().includes("burrow");
+			}
+
+			function hasClimbSpeed(beast) {
+				if (!beast.speed) return false;
+				return beast.speed.toLowerCase().includes("climb");
+			}
+
+			function hasFlySpeed(beast) {
+				if (!beast.speed) return false;
+				return beast.speed.toLowerCase().includes("fly");
+			}
+
+			function hasSwimSpeed(beast) {
+				if (!beast.speed) return false;
+				return beast.speed.toLowerCase().includes("swim");
+			}
+
 
 			const rules = getWildShapeRules(druidLevel);
 			
@@ -1951,104 +2005,335 @@ setTimeout(() => {
 					let cr = 0;
 
 					if (crTag) {
-					const raw = crTag.split("/").pop();
-					if (raw.includes("-")) {
-						const [num, den] = raw.split("-").map(Number);
-						cr = num / den;
-					} else {
-						cr = Number(raw);
-					}
+						const raw = crTag.split("/").pop();
+						if (raw.includes("-")) {
+							const [num, den] = raw.split("-").map(Number);
+							cr = num / den;
+						} else {
+							cr = Number(raw);
+						}
 					}
 
-					const statblock = p.statblock ?? {};
-					const speed = String(statblock.speed ?? "");
-					const hasFly = /\bfly\s*\d+/i.test(speed);
+					if (!Number.isFinite(cr)) cr = 0;
+
+					const ws = p.wildshape ?? {};
+					const name = p.aliases?.[0] ?? p.file.name.replace(/-x\w+$/, "");
 
 					return {
-					name: p.aliases?.[0] ?? p.file.name.replace(/-x\w+$/, ""),
-					page: p,
-					cr,
-					hasFly
+						name,
+						page: p,
+						cr,
+						ac: ws.ac ?? null,
+						speed: ws.speed ?? "",
+						image: ws.image ?? null,
+						hasFly: ws.fly === true
 					};
 				})
 				.where(b =>
+					!isExcludedWildShape(b.name) &&
 					b.cr <= rules.maxCR &&
 					(rules.allowFly || !b.hasFly)
 				)
 				.sort(b => b.name);
 
+			function renderWildShapeUI() {
+				wildShapeWrapper.empty();
+				const grid = wildShapeWrapper.createEl("div", { cls: "wild-shape-card-grid" });
+				for (let i = 0; i < rules.known; i++) {
+					renderWildShapeCard(grid, i);
+				}
+			}
+
 
 			const file = app.workspace.getActiveFile();
-			const savedWS = Array.isArray(dv.current()["wild-shape-options"])
-			? dv.current()["wild-shape-options"]
-			: [];
+			const saved = Array.isArray(page["wild-shape-options"])
+				? page["wild-shape-options"]
+				: [];
 
-			wildShapeWrapper = document.createElement("div");
-			wildShapeWrapper.classList.add("wild-shape-wrapper");
+			const grid = wildShapeWrapper.createEl("div", { cls: "wild-shape-card-grid" });
 
-			wildShapeWrapper.createEl("h4", { text: "Wild Shape Options", cls: "phb-heading" });
-			wildShapeWrapper.createEl("p", {
-			text: `Choose ${rules.known} beast forms (Max CR ${rules.maxCR}${rules.allowFly ? ", Fly allowed" : ""})`
-			});
-
-			for (let i = 0; i < rules.known; i += 2) {
-			const row = wildShapeWrapper.createEl("div", { cls: "wild-shape-row" });
-
-			renderWildShapeSlot(row, i);
-			renderWildShapeSlot(row, i + 1);
+			for (let i = 0; i < rules.known; i++) {
+				renderWildShapeCard(grid, i);
 			}
-			function renderWildShapeSlot(row, index) {
-				if (index >= rules.known) return;
 
-				const slot = row.createEl("div", { cls: "wild-shape-slot" });
+			function renderWildShapeCard(parent, index) {
+				const card = parent.createEl("div", { cls: "wild-shape-card" });
+				const selected = saved[index];
 
-				const select = slot.createEl("select");
-				select.createEl("option", { text: "-- Select Beast --", value: "" });
+				if (!selected) {
+					// EMPTY CARD
+					card.createEl("h4", { text: `🐾 Wild Shape Slot ${index + 1}` });
 
-				beasts.forEach(b => {
-					select.createEl("option", {
-					text: `${b.name} (CR ${b.cr})`,
-					value: b.name.toLowerCase()
+					// ===== All Beasts Dropdown =====
+					const selectAll = card.createEl("select");
+					selectAll.createEl("option", { text: "-- Select Beast --", value: "" });
+
+					beasts.forEach(b => {
+						selectAll.createEl("option", {
+							text: `${b.name} (CR ${formatCR(b.cr)})`,
+							value: b.name
+						});
 					});
-				});
 
-				const link = slot.createEl("a", {
-					cls: "internal-link",
-					text: "—",
-					href: "#"
-				});
+					selectAll.addEventListener("change", async e => {
+						if (!e.target.value) return;
 
-				// Restore saved choice
-				if (savedWS[index]) {
-					select.value = savedWS[index].toLowerCase();
-					const found = beasts.find(b => b.name.toLowerCase() === savedWS[index].toLowerCase());
-					if (found) {
-					link.textContent = found.name;
-					link.href = found.page.file.path;
+						const next = [...saved];
+						next[index] = e.target.value;
+
+						await app.fileManager.processFrontMatter(file, fm => {
+							fm["wild-shape-options"] = next;
+						});
+
+						wildShapeWrapper.empty();
+						renderWildShapeUI();
+					});
+
+					// ===== Burrow Speed Dropdown =====
+					const burrowBeasts = beasts.filter(hasBurrowSpeed);
+
+					if (burrowBeasts.length) {
+						card.createEl("div", {
+							text: "🧗 Beasts with Burrow Speed",
+							cls: "wild-shape-subheader"
+						});
+
+						const selectBurrow = card.createEl("select");
+						selectBurrow.createEl("option", {
+							text: "-- Select Beast --",
+							value: ""
+						});
+
+						burrowBeasts.forEach(b => {
+							selectBurrow.createEl("option", {
+								text: `${b.name} (CR ${formatCR(b.cr)})`,
+								value: b.name
+							});
+						});
+
+						selectBurrow.addEventListener("change", async e => {
+							if (!e.target.value) return;
+
+							const next = [...saved];
+							next[index] = e.target.value;
+
+							await app.fileManager.processFrontMatter(file, fm => {
+								fm["wild-shape-options"] = next;
+							});
+
+							wildShapeWrapper.empty();
+							renderWildShapeUI();
+						});
+					}
+
+					// ===== Climb Speed Dropdown =====
+					const climbBeasts = beasts.filter(hasClimbSpeed);
+
+					if (climbBeasts.length) {
+						card.createEl("div", {
+							text: "🧗 Beasts with Climb Speed",
+							cls: "wild-shape-subheader"
+						});
+
+						const selectClimb = card.createEl("select");
+						selectClimb.createEl("option", {
+							text: "-- Select Beast --",
+							value: ""
+						});
+
+						climbBeasts.forEach(b => {
+							selectClimb.createEl("option", {
+								text: `${b.name} (CR ${formatCR(b.cr)})`,
+								value: b.name
+							});
+						});
+
+						selectClimb.addEventListener("change", async e => {
+							if (!e.target.value) return;
+
+							const next = [...saved];
+							next[index] = e.target.value;
+
+							await app.fileManager.processFrontMatter(file, fm => {
+								fm["wild-shape-options"] = next;
+							});
+
+							wildShapeWrapper.empty();
+							renderWildShapeUI();
+						});
+					}
+
+					// ===== Fly Speed Dropdown =====
+					const flyBeasts = beasts.filter(hasFlySpeed);
+
+					if (flyBeasts.length) {
+						card.createEl("div", {
+							text: "🧗 Beasts with Fly Speed",
+							cls: "wild-shape-subheader"
+						});
+
+						const selectFly = card.createEl("select");
+						selectFly.createEl("option", {
+							text: "-- Select Beast --",
+							value: ""
+						});
+
+						flyBeasts.forEach(b => {
+							selectFly.createEl("option", {
+								text: `${b.name} (CR ${formatCR(b.cr)})`,
+								value: b.name
+							});
+						});
+
+						selectFly.addEventListener("change", async e => {
+							if (!e.target.value) return;
+
+							const next = [...saved];
+							next[index] = e.target.value;
+
+							await app.fileManager.processFrontMatter(file, fm => {
+								fm["wild-shape-options"] = next;
+							});
+
+							wildShapeWrapper.empty();
+							renderWildShapeUI();
+						});
+					}
+
+					// ===== Swim Speed Dropdown =====
+					const swimBeasts = beasts.filter(hasSwimSpeed);
+
+					if (swimBeasts.length) {
+						card.createEl("div", {
+							text: "🧗 Beasts with Swim Speed",
+							cls: "wild-shape-subheader"
+						});
+
+						const selectSwim = card.createEl("select");
+						selectSwim.createEl("option", {
+							text: "-- Select Beast --",
+							value: ""
+						});
+
+						swimBeasts.forEach(b => {
+							selectSwim.createEl("option", {
+								text: `${b.name} (CR ${formatCR(b.cr)})`,
+								value: b.name
+							});
+						});
+
+						selectSwim.addEventListener("change", async e => {
+							if (!e.target.value) return;
+
+							const next = [...saved];
+							next[index] = e.target.value;
+
+							await app.fileManager.processFrontMatter(file, fm => {
+								fm["wild-shape-options"] = next;
+							});
+
+							wildShapeWrapper.empty();
+							renderWildShapeUI();
+						});
+					}
+
+					return;
+				}
+
+				// POPULATED CARD
+				const beast = beasts.find(b => b.name === selected);
+				console.log("Selected beast:", selected, beast);
+				if (!beast) return;
+
+				card.createEl("h4", { text: `🐾 ${beast.name}` });
+
+				if (beast.image) {
+					console.log("wild shape image:", beast.image);
+					const imgPath = app.vault.getAbstractFileByPath(beast.image);
+					if (imgPath) {
+						card.createEl("img", {
+							attr: {
+								src: app.vault.getResourcePath(imgPath)
+							},
+							cls: "wild-shape-token"
+						});
 					}
 				}
 
-				select.addEventListener("change", async e => {
-					const value = e.target.value;
-					const next = [...savedWS];
-					next[index] = value || null;
+				const stats = card.createEl("div", { cls: "wild-shape-stats" });
+
+				// AC (Moon override later)
+				let ac = beast.ac;
+				if (hasCircleOfTheMoon && WIS_MOD) {
+					ac = Math.max(ac ?? 0, 13 + WIS_MOD);
+				}
+
+				//ac
+				const acBlock = stats.createEl("div", { cls: "wild-shape-stat-block" });
+				acBlock.createEl("span", {
+					text: "🛡AC",
+					cls: "wild-shape-stat-label"
+				});
+				acBlock.createEl("span", {
+					text: ac,
+					cls: "wild-shape-stat-value"
+				});
+				
+				//speed
+				const speedBlock = stats.createEl("div", { cls: "wild-shape-speed" });
+
+				speedBlock.createEl("span", {
+					text: "🐾Speed",
+					cls: "wild-shape-speed-label"
+				});
+
+				(beast.speed || "")
+					.split(",")
+					.map(s => s.trim())
+					.filter(Boolean)
+					.forEach(part => {
+						speedBlock.createEl("span", {
+							text: part,
+							cls: "wild-shape-speed-entry"
+						});
+					});
+				
+				// CR
+				const crBlock = stats.createEl("div", { cls: "wild-shape-stat-block" });
+				crBlock.createEl("span", {
+					text: "💀CR",
+					cls: "wild-shape-stat-label"
+				});
+				crBlock.createEl("span", {
+					text: formatCR(beast.cr),
+					cls: "wild-shape-stat-value"
+				});
+				
+
+				//footer
+				const footer = card.createEl("div", { cls: "wild-shape-footer" });
+
+				footer.createEl("a", {
+					text: "Open Stat Block",
+					cls: "internal-link",
+					href: beast.page.file.path
+				});
+
+				const clear = footer.createEl("button", { text: "Clear" });
+				clear.addEventListener("click", async () => {
+					const next = [...saved];
+					next[index] = null;
 
 					await app.fileManager.processFrontMatter(file, fm => {
-					fm["wild-shape-options"] = next.filter(Boolean);
+						fm["wild-shape-options"] = next.filter(Boolean);
 					});
 
-					const beast = beasts.find(b => b.name.toLowerCase() === value);
-					if (beast) {
-					link.textContent = beast.name;
-					link.href = beast.page.file.path;
-					} else {
-					link.textContent = "—";
-					link.href = "#";
-					}
+					wildShapeWrapper.empty();
+					renderWildShapeUI();
 				});
 			}
-
 		}
+
 
 
 
@@ -2059,7 +2344,7 @@ setTimeout(() => {
 		
 		
 		// ---------- SPELL TAB PANEL ----------
-		const spellsPanel = container.querySelector("#spells .panel");
+		//const spellsPanel = container.querySelector("#spells .panel");
 		if (!spellsPanel) return console.error("Spell panel not found!");
 		
 		// ---------- SPELL SLOTS ----------
@@ -3335,7 +3620,7 @@ setTimeout(() => {
 
 
 
-
+ 
 
 // ======================================================================================
 //================================================================== Weapon Container Tab

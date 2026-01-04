@@ -63,9 +63,9 @@ conditions:
   deafened: false
   frightened: false
   grappled: false
-  heroic_inspiration: true
+  heroic_inspiration: false
   incapacitated: false
-  invisible: true
+  invisible: false
   mage_armor: false
   paralyzed: false
   petrified: false

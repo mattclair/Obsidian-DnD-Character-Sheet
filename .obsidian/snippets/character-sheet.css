@@ -785,18 +785,86 @@ background-color: #000;
 
 
 
-
-.wild-shape-row {
-  display: flex;
-  gap: 2rem;
-  margin-bottom: 0.5rem;
+/* =========================================================
+   Wild Shape Cards
+   ========================================================= */
+.wild-shape-card-grid {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
 }
 
-.wild-shape-slot {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 45%;
+.wild-shape-card {
+	background: var(--background-secondary);
+	border-radius: 12px;
+	padding: 1rem;
+	min-width: 220px;
+	flex: 1 1 220px;
+	box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.wild-shape-card h4 {
+	margin-top: 0;
+}
+
+.wild-shape-token {
+	width: 100%;
+	max-height: 140px;
+	object-fit: contain;
+	margin: 0.5rem 0;
+}
+
+.wild-shape-stats {
+	display: flex;
+	justify-content: space-between;
+	font-size: 0.9em;
+	opacity: 0.85;
+}
+
+.wild-shape-footer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-top: 0.5rem;
+}
+
+.wild-shape-speed {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.wild-shape-speed-label {
+	font-weight: 600;
+}
+
+.wild-shape-speed-entry {
+	font-size: 0.9em;
+	padding-left: 0.5em;
+	opacity: 0.9;
+}
+
+.wild-shape-stat-block {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.wild-shape-stat-label {
+	font-weight: 600;
+	font-size: 0.85em;
+	opacity: 0.85;
+}
+
+.wild-shape-stat-value {
+	font-size: 1em;
+}
+
+.wild-shape-subheader {
+	margin-top: 0.75rem;
+	font-size: 0.85rem;
+	font-weight: 600;
+	opacity: 0.8;
 }
 
 
