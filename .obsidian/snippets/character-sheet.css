@@ -799,7 +799,7 @@ background-color: #000;
 	border-radius: 12px;
 	padding: 1rem;
 	min-width: 220px;
-	flex: 1 1 220px;
+	flex: 0 1 220px;
 	box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 
@@ -865,6 +865,37 @@ background-color: #000;
 	font-size: 0.85rem;
 	font-weight: 600;
 	opacity: 0.8;
+}
+
+.wild-shape-filter-row {
+	display: flex;
+  justify-content: center; /* Centers horizontally */
+  align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.wild-shape-filter-btn {
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	padding: 0.25rem 0.4rem;
+	cursor: pointer;
+	opacity: 0.6;
+}
+
+.wild-shape-filter-btn.is-active {
+	opacity: 1;
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.wild-shape-select {
+	display: block;
+	margin: 0 auto;
+  min-width: 200px;
+	text-align: center;
 }
 
 

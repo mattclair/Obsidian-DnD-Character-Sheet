@@ -2060,22 +2060,51 @@ setTimeout(() => {
 				const card = parent.createEl("div", { cls: "wild-shape-card" });
 				const selected = saved[index];
 
+				// =====================================================
+				// EMPTY CARD
+				// =====================================================
 				if (!selected) {
-					// EMPTY CARD
 					card.createEl("h4", { text: `🐾 Wild Shape Slot ${index + 1}` });
 
-					// ===== All Beasts Dropdown =====
-					const selectAll = card.createEl("select");
-					selectAll.createEl("option", { text: "-- Select Beast --", value: "" });
+					let activeFilter = "all";
+					const filterButtons = {};
 
-					beasts.forEach(b => {
-						selectAll.createEl("option", {
-							text: `${b.name} (CR ${formatCR(b.cr)})`,
-							value: b.name
+					const FILTERS = [
+						{ key: "all", icon: "🐾", label: "All", test: () => true },
+						{ key: "climb", icon: "🧗", label: "Climb", test: hasClimbSpeed },
+						{ key: "swim", icon: "🏊", label: "Swim", test: hasSwimSpeed },
+						{ key: "burrow", icon: "🪏", label: "Burrow", test: hasBurrowSpeed },
+						{ key: "fly", icon: "🦅", label: "Fly", test: hasFlySpeed }
+					];
+
+					// Filter buttons
+					const filterRow = card.createEl("div", {
+						cls: "wild-shape-filter-row"
+					});
+
+					FILTERS.forEach(f => {
+						const btn = filterRow.createEl("button", {
+							text: f.icon,
+							cls: "wild-shape-filter-btn",
+							attr: { title: f.label }
+						});
+
+						filterButtons[f.key] = btn;
+
+						btn.addEventListener("click", () => {
+							activeFilter = activeFilter === f.key ? "all" : f.key;
+							updateFilterUI();
+							renderSelectOptions();
 						});
 					});
 
-					selectAll.addEventListener("change", async e => {
+					// Dropdown
+					const select = card.createEl("select", {
+						cls: "wild-shape-select"
+					});
+
+
+					select.addEventListener("change", async e => {
 						if (!e.target.value) return;
 
 						const next = [...saved];
@@ -2089,172 +2118,51 @@ setTimeout(() => {
 						renderWildShapeUI();
 					});
 
-					// ===== Burrow Speed Dropdown =====
-					const burrowBeasts = beasts.filter(hasBurrowSpeed);
-
-					if (burrowBeasts.length) {
-						card.createEl("div", {
-							text: "🧗 Beasts with Burrow Speed",
-							cls: "wild-shape-subheader"
+					function updateFilterUI() {
+						Object.entries(filterButtons).forEach(([key, btn]) => {
+							btn.classList.toggle(
+								"is-active",
+								key === activeFilter && activeFilter !== "all"
+							);
 						});
+					}
 
-						const selectBurrow = card.createEl("select");
-						selectBurrow.createEl("option", {
-							text: "-- Select Beast --",
+					function renderSelectOptions() {
+						select.innerHTML = "";
+						select.createEl("option", {
+							text: "--- Select Beast ---",
 							value: ""
 						});
 
-						burrowBeasts.forEach(b => {
-							selectBurrow.createEl("option", {
+						const filter = FILTERS.find(f => f.key === activeFilter);
+						const filtered = beasts.filter(b => filter.test(b));
+
+						filtered.forEach(b => {
+							select.createEl("option", {
 								text: `${b.name} (CR ${formatCR(b.cr)})`,
 								value: b.name
 							});
 						});
-
-						selectBurrow.addEventListener("change", async e => {
-							if (!e.target.value) return;
-
-							const next = [...saved];
-							next[index] = e.target.value;
-
-							await app.fileManager.processFrontMatter(file, fm => {
-								fm["wild-shape-options"] = next;
-							});
-
-							wildShapeWrapper.empty();
-							renderWildShapeUI();
-						});
 					}
 
-					// ===== Climb Speed Dropdown =====
-					const climbBeasts = beasts.filter(hasClimbSpeed);
-
-					if (climbBeasts.length) {
-						card.createEl("div", {
-							text: "🧗 Beasts with Climb Speed",
-							cls: "wild-shape-subheader"
-						});
-
-						const selectClimb = card.createEl("select");
-						selectClimb.createEl("option", {
-							text: "-- Select Beast --",
-							value: ""
-						});
-
-						climbBeasts.forEach(b => {
-							selectClimb.createEl("option", {
-								text: `${b.name} (CR ${formatCR(b.cr)})`,
-								value: b.name
-							});
-						});
-
-						selectClimb.addEventListener("change", async e => {
-							if (!e.target.value) return;
-
-							const next = [...saved];
-							next[index] = e.target.value;
-
-							await app.fileManager.processFrontMatter(file, fm => {
-								fm["wild-shape-options"] = next;
-							});
-
-							wildShapeWrapper.empty();
-							renderWildShapeUI();
-						});
-					}
-
-					// ===== Fly Speed Dropdown =====
-					const flyBeasts = beasts.filter(hasFlySpeed);
-
-					if (flyBeasts.length) {
-						card.createEl("div", {
-							text: "🧗 Beasts with Fly Speed",
-							cls: "wild-shape-subheader"
-						});
-
-						const selectFly = card.createEl("select");
-						selectFly.createEl("option", {
-							text: "-- Select Beast --",
-							value: ""
-						});
-
-						flyBeasts.forEach(b => {
-							selectFly.createEl("option", {
-								text: `${b.name} (CR ${formatCR(b.cr)})`,
-								value: b.name
-							});
-						});
-
-						selectFly.addEventListener("change", async e => {
-							if (!e.target.value) return;
-
-							const next = [...saved];
-							next[index] = e.target.value;
-
-							await app.fileManager.processFrontMatter(file, fm => {
-								fm["wild-shape-options"] = next;
-							});
-
-							wildShapeWrapper.empty();
-							renderWildShapeUI();
-						});
-					}
-
-					// ===== Swim Speed Dropdown =====
-					const swimBeasts = beasts.filter(hasSwimSpeed);
-
-					if (swimBeasts.length) {
-						card.createEl("div", {
-							text: "🧗 Beasts with Swim Speed",
-							cls: "wild-shape-subheader"
-						});
-
-						const selectSwim = card.createEl("select");
-						selectSwim.createEl("option", {
-							text: "-- Select Beast --",
-							value: ""
-						});
-
-						swimBeasts.forEach(b => {
-							selectSwim.createEl("option", {
-								text: `${b.name} (CR ${formatCR(b.cr)})`,
-								value: b.name
-							});
-						});
-
-						selectSwim.addEventListener("change", async e => {
-							if (!e.target.value) return;
-
-							const next = [...saved];
-							next[index] = e.target.value;
-
-							await app.fileManager.processFrontMatter(file, fm => {
-								fm["wild-shape-options"] = next;
-							});
-
-							wildShapeWrapper.empty();
-							renderWildShapeUI();
-						});
-					}
-
+					updateFilterUI();
+					renderSelectOptions();
 					return;
 				}
 
+				// =====================================================
 				// POPULATED CARD
+				// =====================================================
 				const beast = beasts.find(b => b.name === selected);
-				console.log("Selected beast:", selected, beast);
 				if (!beast) return;
 
 				card.createEl("h4", { text: `🐾 ${beast.name}` });
 
 				if (beast.image) {
-					console.log("wild shape image:", beast.image);
 					const imgPath = app.vault.getAbstractFileByPath(beast.image);
 					if (imgPath) {
 						card.createEl("img", {
-							attr: {
-								src: app.vault.getResourcePath(imgPath)
-							},
+							attr: { src: app.vault.getResourcePath(imgPath) },
 							cls: "wild-shape-token"
 						});
 					}
@@ -2262,26 +2170,16 @@ setTimeout(() => {
 
 				const stats = card.createEl("div", { cls: "wild-shape-stats" });
 
-				// AC (Moon override later)
 				let ac = beast.ac;
 				if (hasCircleOfTheMoon && WIS_MOD) {
 					ac = Math.max(ac ?? 0, 13 + WIS_MOD);
 				}
 
-				//ac
 				const acBlock = stats.createEl("div", { cls: "wild-shape-stat-block" });
-				acBlock.createEl("span", {
-					text: "🛡AC",
-					cls: "wild-shape-stat-label"
-				});
-				acBlock.createEl("span", {
-					text: ac,
-					cls: "wild-shape-stat-value"
-				});
-				
-				//speed
-				const speedBlock = stats.createEl("div", { cls: "wild-shape-speed" });
+				acBlock.createEl("span", { text: "🛡AC", cls: "wild-shape-stat-label" });
+				acBlock.createEl("span", { text: ac, cls: "wild-shape-stat-value" });
 
+				const speedBlock = stats.createEl("div", { cls: "wild-shape-speed" });
 				speedBlock.createEl("span", {
 					text: "🐾Speed",
 					cls: "wild-shape-speed-label"
@@ -2297,22 +2195,15 @@ setTimeout(() => {
 							cls: "wild-shape-speed-entry"
 						});
 					});
-				
-				// CR
+
 				const crBlock = stats.createEl("div", { cls: "wild-shape-stat-block" });
-				crBlock.createEl("span", {
-					text: "💀CR",
-					cls: "wild-shape-stat-label"
-				});
+				crBlock.createEl("span", { text: "💀CR", cls: "wild-shape-stat-label" });
 				crBlock.createEl("span", {
 					text: formatCR(beast.cr),
 					cls: "wild-shape-stat-value"
 				});
-				
 
-				//footer
 				const footer = card.createEl("div", { cls: "wild-shape-footer" });
-
 				footer.createEl("a", {
 					text: "Open Stat Block",
 					cls: "internal-link",
@@ -2331,7 +2222,7 @@ setTimeout(() => {
 					wildShapeWrapper.empty();
 					renderWildShapeUI();
 				});
-			}
+			}			
 		}
 
 
