@@ -122,7 +122,7 @@ spell_slot:
   level_2_2: true
   level_2_1: true
   level_1_1: true
-  level_1_2: true
+  level_1_2: false
   level_1_3: true
   level_1_4: true
   druid: true

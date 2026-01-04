@@ -494,6 +494,7 @@
 /* Hover highlight (subtle darkening) */
 .mb-input-wrapper.spell-toggle .checkbox-container:hover {
   background-color: #8e0f2c;
+  cursor: pointer;
 }
 
 /* --- SPELL TOGGLE: Arcane Pulse Ring (Centered Fix) --- */
@@ -503,6 +504,7 @@
   border-color: #ff6b9b !important;
   position: relative;
   overflow: visible;
+  cursor: pointer;
 }
 
 /* centered aura ring */
@@ -554,6 +556,7 @@
   box-shadow: none;
   position: relative;
   margin-left: 15px;
+  cursor: pointer;
 }
 
 
@@ -852,12 +855,11 @@ background-color: #000;
 
 .wild-shape-stat-label {
 	font-weight: 600;
-	font-size: 0.85em;
-	opacity: 0.85;
 }
 
 .wild-shape-stat-value {
 	font-size: 1em;
+  margin-left: 1rem;
 }
 
 .wild-shape-subheader {

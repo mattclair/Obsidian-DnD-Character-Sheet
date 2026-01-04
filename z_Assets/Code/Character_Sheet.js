@@ -2071,7 +2071,7 @@ setTimeout(() => {
 
 					const FILTERS = [
 						{ key: "all", icon: "🐾", label: "All", test: () => true },
-						{ key: "climb", icon: "🧗", label: "Climb", test: hasClimbSpeed },
+						{ key: "climb", icon: "🪜", label: "Climb", test: hasClimbSpeed },
 						{ key: "swim", icon: "🏊", label: "Swim", test: hasSwimSpeed },
 						{ key: "burrow", icon: "🪏", label: "Burrow", test: hasBurrowSpeed },
 						{ key: "fly", icon: "🦅", label: "Fly", test: hasFlySpeed }
