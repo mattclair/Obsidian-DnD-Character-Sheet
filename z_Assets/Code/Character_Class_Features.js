@@ -14,6 +14,26 @@ const phbClassPath = `${BASE_FOLDER}/classes`;
 // -----------------------------
 
 // ---------- Helpers ----------
+function findSubclassFile(classSlug, subclassName) {
+    if (!subclassName) return null;
+
+    const baseSlug = normalizeSubclassSlug(subclassName);
+    const prefix = `${classSlug}-xphb-${baseSlug}`;
+
+    return dv.app.vault.getFiles().find(f =>
+        f.path.startsWith(`${phbClassPath}/`) &&
+        f.name.toLowerCase().startsWith(prefix) &&
+        f.extension === "md"
+    ) ?? null;
+}
+
+function normalizeSubclassSlug(name) {
+  return name
+    .toLowerCase()
+    .replace(/ domain$/, "")
+    .replace(/\s+/g, "-");
+}
+
 function normalizeClasses(raw) {
     if (!raw) return [];
 
@@ -105,10 +125,15 @@ for (let idx = 0; idx < classesRaw.length; idx++) {
     const classLevel = (entry.level !== null && entry.level !== undefined) ? Number(entry.level) : (pageLevel !== null ? pageLevel : 1);
     const classSlug = fileSlugFor(className);
     const subclassName = subclassArray[idx] ?? null;
-    const subclassSlug = subclassName ? fileSlugFor(subclassName) : null;
+    //const subclassSlug = subclassName ? fileSlugFor(subclassName) : null;
 
     const classPath = `${phbClassPath}/${classSlug}-xphb.md`;
-    const subclassPath = subclassSlug ? `${phbClassPath}/${classSlug}-xphb-${subclassSlug}-xphb.md` : null;
+    const subclassFile = findSubclassFile(classSlug, subclassName);
+    const subclassPath = subclassFile?.path ?? null;
+
+    if (subclassName && !subclassPath) {
+        console.warn("Subclass not found:", className, subclassName);
+    }
 
     // load files
     const classText = await loadFileText(classPath);

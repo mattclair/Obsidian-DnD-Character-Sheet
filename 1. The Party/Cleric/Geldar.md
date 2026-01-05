@@ -8,7 +8,7 @@ WIS: 12
 CHA: 12
 name: Geldar
 dndClass: Cleric
-subclass: Knowlege Domain
+subclass: Knowledge Domain
 background: Wayfarer
 species: Elf
 species_traits:

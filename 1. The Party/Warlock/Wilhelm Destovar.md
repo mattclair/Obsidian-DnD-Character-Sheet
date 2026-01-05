@@ -60,7 +60,7 @@ conditions:
   heroic_inspiration: true
   incapacitated: false
   invisible: false
-  mage_armor: false
+  mage_armor: true
   paralyzed: false
   petrified: false
   poisoned: false
