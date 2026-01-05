@@ -1,5 +1,4 @@
 {
-  "startupScripts": [
-    "z_Assets/Scripts/dnd5e-character-sheet.js"
-  ]
+  "startupScripts": [],
+  "disableStatusbar": false
 }

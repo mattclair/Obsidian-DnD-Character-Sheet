@@ -263,7 +263,7 @@ const feats = dv.current().feats ?? [];
 // Functions
 function formatSpellName(name) {
   return name
-    .replace(/-xphb$|-phb$|-srd$/i, "")
+    .replace(/-xphb$|-phb$|-frhof$|-srd$/i, "")
     .replace(/-/g, " ")
     .replace(/'/g, "")
     .replace(/\b\w/g, c => c.toUpperCase());
@@ -1910,33 +1910,47 @@ setTimeout(() => {
 
 
 
-
-
-
-
-
 // ======================================================================================
 //================================================================   Spells Container Tab
 // ======================================================================================
 
  (async function renderSpellsTab() {
 	try {
-		// Rendering Spells (diagnostics suppressed)
+
+		// ---------- SPELL TAB PANEL ----------
 		const spellsPanel = container.querySelector("#spells .panel");
-		if (c.Spellcasting_Ability == "None" || !c.Spellcasting_Ability) {			
-			spellsPanel.innerHTML = "<p>This character does not have spellcasting ability.</p>";
+		if (!spellsPanel) {
+			console.error("Spell panel not found!");
 			return;
 		}
 
-		// ======================================================================================
 		// Wild Shape Card Selection
-		// ======================================================================================
 		console.log("Rendering: Wild Card Selection");
+
 		const page = dv.current();
 		const wildShapeWrapper = spellsPanel.createEl("div", {
 			cls: "wild-shape-wrapper"
 		});
+
 		if (hasDruid && druidLevel >= 2) {
+			const loading = wildShapeWrapper.createEl("div", {
+				text: "🐾 Loading Wild Shape options...",
+				cls: "wild-shape-loading"
+			});
+
+			setTimeout(() => {
+				try {
+					loading.remove();
+					renderWildShapeHelper(wildShapeWrapper, page);
+				} catch (err) {
+					console.error("Wild Shape load failed:", err);
+					loading.setText("⚠️ Failed to load Wild Shape data.");
+				}
+			}, 0);
+		}
+		
+		function renderWildShapeHelper(wildShapeWrapper, page) {
+
 			function getWildShapeRules(druidLevel) {
 				if (hasCircleOfTheMoon) {
 					return {
@@ -2036,24 +2050,20 @@ setTimeout(() => {
 				)
 				.sort(b => b.name);
 
-			function renderWildShapeUI() {
-				wildShapeWrapper.empty();
-				const grid = wildShapeWrapper.createEl("div", { cls: "wild-shape-card-grid" });
-				for (let i = 0; i < rules.known; i++) {
-					renderWildShapeCard(grid, i);
-				}
-			}
-
-
 			const file = app.workspace.getActiveFile();
 			const saved = Array.isArray(page["wild-shape-options"])
 				? page["wild-shape-options"]
 				: [];
 
-			const grid = wildShapeWrapper.createEl("div", { cls: "wild-shape-card-grid" });
+			function renderWildShapeUI() {
+				wildShapeWrapper.empty();
+				const grid = wildShapeWrapper.createEl("div", {
+					cls: "wild-shape-card-grid"
+				});
 
-			for (let i = 0; i < rules.known; i++) {
-				renderWildShapeCard(grid, i);
+				for (let i = 0; i < rules.known; i++) {
+					renderWildShapeCard(grid, i);
+				}
 			}
 
 			function renderWildShapeCard(parent, index) {
@@ -2070,11 +2080,11 @@ setTimeout(() => {
 					const filterButtons = {};
 
 					const FILTERS = [
-						{ key: "all", icon: "🐾", label: "All", test: () => true },
-						{ key: "climb", icon: "🪜", label: "Climb", test: hasClimbSpeed },
-						{ key: "swim", icon: "🏊", label: "Swim", test: hasSwimSpeed },
-						{ key: "burrow", icon: "🪏", label: "Burrow", test: hasBurrowSpeed },
-						{ key: "fly", icon: "🦅", label: "Fly", test: hasFlySpeed }
+						{ key: "all", icon: "🐾", label: "All Beasts", test: () => true },
+						{ key: "climb", icon: "🪜", label: "Filter for Beasts with a Climb Speed", test: hasClimbSpeed },
+						{ key: "swim", icon: "🏊", label: "Filter for Beasts with a Swim Speed", test: hasSwimSpeed },
+						{ key: "burrow", icon: "🪏", label: "Filter for Beasts with a Burrow Speed", test: hasBurrowSpeed },
+						{ key: "fly", icon: "🪽", label: "Filter for Beasts with a Fly Speed", test: hasFlySpeed }
 					];
 
 					// Filter buttons
@@ -2223,6 +2233,7 @@ setTimeout(() => {
 					renderWildShapeUI();
 				});
 			}			
+			renderWildShapeUI();
 		}
 
 
@@ -2719,7 +2730,7 @@ setTimeout(() => {
 		
 		function formatSpellName(name) {
 		  return name
-		    .replace(/-xphb$|-phb$|-srd$/i, "")
+		    .replace(/-xphb$|-phb$|-frhof$|-srd$/i, "")
 		    .replace(/-/g, " ")
 		    .replace(/\b\w/g, c => c.toUpperCase());
 		}
@@ -3608,7 +3619,7 @@ setTimeout(() => {
 			fileName = fileName.toLowerCase();
 
 			// Acceptable suffixes
-			const allowedSuffixes = ["-xphb", "-homebrew", "-xdmg"];
+			const allowedSuffixes = ["-xphb", "-homebrew", "-xdmg", "-frhof", "-fraif"];
 
 			for (const suffix of allowedSuffixes) {
 				if (fileName === slug + suffix) return true;

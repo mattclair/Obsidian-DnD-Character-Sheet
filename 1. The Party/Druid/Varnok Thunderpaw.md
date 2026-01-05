@@ -122,7 +122,7 @@ spell_slot:
   level_2_2: true
   level_2_1: true
   level_1_1: true
-  level_1_2: false
+  level_1_2: true
   level_1_3: true
   level_1_4: true
   druid: true
@@ -227,11 +227,9 @@ Wild_Shape:
   wild_shape-2: true
 mastery:
 wild-shape-options:
-  - Boar
-  - Mastiff
-  - Scorpion
+  - Deer
+  - 
   - Brown Bear
-  - Cat
 purse: 1615.5
 BASE_FOLDER: 3. Mechanics/CLI
 ---
