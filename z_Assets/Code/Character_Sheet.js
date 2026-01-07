@@ -1659,7 +1659,25 @@ setTimeout(() => {
 	}
 }, 300);
 
-
+// =====================
+// Keyboard Navigation
+// =====================
+document.addEventListener("keydown", (e) => {
+	if (!e.ctrlKey || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
+	const activeTab = tabContainer.querySelector(".tab-bar .tab.active");
+	if (!activeTab) return;
+	e.preventDefault();
+	const tabsArray = Array.from(tabButtons);
+	const currentIndex = tabsArray.indexOf(activeTab);
+	let newIndex = currentIndex;
+	if (e.key === "ArrowLeft") {
+		newIndex = (currentIndex - 1 + tabsArray.length) % tabsArray.length;
+	}	 else if (e.key === "ArrowRight") {
+		newIndex = (currentIndex + 1) % tabsArray.length;
+	}
+	setActiveTab(tabsArray[newIndex].id);
+	localStorage.setItem("lastActiveInventoryTab", tabsArray[newIndex].id);
+});
 
 
 
@@ -2084,7 +2102,7 @@ setTimeout(() => {
 						{ key: "climb", icon: "🪜", label: "Filter for Beasts with a Climb Speed", test: hasClimbSpeed },
 						{ key: "swim", icon: "🏊", label: "Filter for Beasts with a Swim Speed", test: hasSwimSpeed },
 						{ key: "burrow", icon: "🪏", label: "Filter for Beasts with a Burrow Speed", test: hasBurrowSpeed },
-						{ key: "fly", icon: "🪽", label: "Filter for Beasts with a Fly Speed", test: hasFlySpeed }
+						{ key: "fly", icon: "🦇", label: "Filter for Beasts with a Fly Speed", test: hasFlySpeed }
 					];
 
 					// Filter buttons

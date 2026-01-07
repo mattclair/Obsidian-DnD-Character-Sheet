@@ -53,11 +53,11 @@ Stat_Bonus:
 conditions:
   blinded: false
   charmed: false
-  concentrating: false
+  concentrating: true
   deafened: false
   frightened: false
   grappled: false
-  heroic_inspiration: true
+  heroic_inspiration: false
   incapacitated: false
   invisible: false
   mage_armor: true
@@ -71,12 +71,12 @@ conditions:
   exhaustion:
     count: 0
     Level: false
-  concentration_spell: ""
+  concentration_spell: Hunger Of Hadar
 health:
   max: 39
-  current: 39
+  current: 11
   temp: 0
-  maxTmp: 15
+  maxTmp: 4
 Luck:
   luck_point_1: true
   luck_point_2: true
@@ -110,15 +110,15 @@ inventory:
   Pole: 1
   Waterskin: 1
   Riding Horse: 1
-  Rations: 14
+  Rations: 11
   Riding Saddle: 1
 attuned:
   - 1 Rod of the Pact Keeper
 spell_slot:
-  druid: true
-  pact1: true
-  pact2: true
-  misty_step1: true
+  druid: false
+  pact1: false
+  pact2: false
+  misty_step1: false
   misty_step2: true
   misty_step3: true
   misty_step4: true
