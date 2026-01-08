@@ -46,10 +46,19 @@ async function syncFile(relativePath) {
   await ensureFolder(relativePath);
 
   const existing = app.vault.getAbstractFileByPath(relativePath);
-  if (existing) {
-    await app.vault.modify(existing, content);
-  } else {
-    await app.vault.create(relativePath, content);
+
+  try {
+    if (existing) {
+      if (existing instanceof app.vault.constructor.TFolder) {
+        console.warn("Path exists as folder, skipping:", relativePath);
+        return;
+      }
+      await app.vault.modify(existing, content);
+    } else {
+      await app.vault.create(relativePath, content);
+    }
+  } catch (e) {
+    console.warn("Sync failed for", relativePath, e);
   }
 }
 
@@ -66,9 +75,14 @@ async function runUpdater() {
 
     console.log(`Updating DnD system ${localVersion} → ${remoteVersion}`);
 
-    for (const file of manifest.files) {
-      await syncFile(file);
+    for (const entry of manifest.files) {
+    if (entry.endsWith("/")) {
+        // Folder entry
+        await ensureFolder(entry + "placeholder.md");
+    } else {
+        await syncFile(entry);
     }
+}
 
     localStorage.setItem(VERSION_KEY, remoteVersion);
     new Notice(`DnD system updated to v${remoteVersion}`);
