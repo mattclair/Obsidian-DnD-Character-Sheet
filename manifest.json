@@ -1,0 +1,18 @@
+{
+  "version": "0.3.1",
+  "files": [
+    ".obsidian/snippets/character-sheet.css",
+    ".obsidian/snippets/character-stats.css",
+
+    "1. The Party/_Base Character Template/Base Character Sheet.md",
+
+    "z_Assets/Code/Character_Class_Features.js",
+    "z_Assets/Code/Character_Eldritch_Invocations.js",
+    "z_Assets/Code/Character_Feats.js",
+    "z_Assets/Code/Character_Purse_Tracking.js",
+    "z_Assets/Code/Character_Sheet.js",
+
+    "z_Assets/Strings/BastionComments.md",
+    "z_Assets/Strings/Gold_Comments.md"
+  ]
+}
