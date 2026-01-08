@@ -1,3 +1,5 @@
+setTimeout(runUpdater, 1500); // delay to allow obsidian to load
+
 const c = dv.current(); // your character note
 // Suppress noisy debug logs from this script (restored at end)
 let __char_dashboard_origConsoleLog;
