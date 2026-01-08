@@ -1,6 +1,8 @@
 // use js engine plugin in obsidian to run this script at startup
 // this script will auto update the dnd character sheet system files from github
 
+setTimeout(runUpdater, 1500); // delay to allow obsidian to load
+
 const REPO_BASE =
   "https://raw.githubusercontent.com/mattclair/Obsidian-DnD-Character-Sheet/main";
 
@@ -49,13 +51,18 @@ async function syncFile(relativePath) {
 
   try {
     if (existing) {
-      if (existing instanceof app.vault.constructor.TFolder) {
+      if (existing.type === "folder") {
         console.warn("Path exists as folder, skipping:", relativePath);
         return;
       }
+
+      // Existing file → overwrite safely
       await app.vault.modify(existing, content);
+      console.log("Updated:", relativePath);
     } else {
+      // File does not exist → create
       await app.vault.create(relativePath, content);
+      console.log("Created:", relativePath);
     }
   } catch (e) {
     console.warn("Sync failed for", relativePath, e);
