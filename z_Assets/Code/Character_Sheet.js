@@ -1,4 +1,8 @@
-setTimeout(runUpdater, 1500); // delay to allow obsidian to load
+// timeout to allow dataview to load
+setTimeout(() => {
+    console.log("Waited for 5 seconds");
+    // You can call other functions or run more code here
+}, 5000)
 
 const c = dv.current(); // your character note
 // Suppress noisy debug logs from this script (restored at end)

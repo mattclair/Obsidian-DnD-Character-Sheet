@@ -229,6 +229,8 @@ mastery:
 wild-shape-options:
   - Deer
   - Giant Octopus
+  - Space Guppy
+  - Giant Toad
 purse: 1615.5
 BASE_FOLDER: 3. Mechanics/CLI
 ---
