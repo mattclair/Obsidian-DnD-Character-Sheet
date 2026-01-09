@@ -143,6 +143,13 @@ spell_slot:
   elf_faerie_fire: true
   elf_darkness: true
 BASE_FOLDER: 3. Mechanics/CLI
+weapon_mastery:
+  "1":
+    weapon: Shortbow
+    mastery: Vex
+  "2":
+    weapon: Dagger
+    mastery: Nick
 ---
 ```dataviewjs
 // Load full cahracter sheet

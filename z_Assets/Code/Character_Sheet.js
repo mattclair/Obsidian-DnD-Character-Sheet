@@ -1,9 +1,3 @@
-// timeout to allow dataview to load
-setTimeout(() => {
-    console.log("Waited for 5 seconds");
-    // You can call other functions or run more code here
-}, 5000)
-
 const c = dv.current(); // your character note
 // Suppress noisy debug logs from this script (restored at end)
 let __char_dashboard_origConsoleLog;
@@ -1341,6 +1335,12 @@ longRestBtn.onclick = async () => {
 			if (key.startsWith("quick_ritual_")) {
 				fm.Ritual_Caster[key] = true;
 			}
+		});
+	}
+
+	if (fm.weapon_mastery) {
+		app.fileManager.processFrontMatter(file, frontmatter => {
+			delete frontmatter.weapon_mastery;
 		});
 	}
 
@@ -3879,6 +3879,9 @@ document.addEventListener("keydown", (e) => {
 
 
 		// ===== Weapon Mastery Selector =====
+		const fm = dv.current();
+		const wMasteryMap = fm.weapon_mastery ?? {};
+
 		const WEAPON_MASTERY_MAP = {
 			Cleave: ["Greataxe", "Halberd"],
 			Graze: ["Glaive", "Greatsword"],
@@ -3894,7 +3897,6 @@ document.addEventListener("keydown", (e) => {
 			// Simple weapons
 			"Club": "Simple",
 			"Dagger": "Simple",
-			"Dart": "Simple",
 			"Greatclub": "Simple",
 			"Handaxe": "Simple",
 			"Javelin": "Simple",
@@ -3902,8 +3904,12 @@ document.addEventListener("keydown", (e) => {
 			"Mace": "Simple",
 			"Quarterstaff": "Simple",
 			"Sickle": "Simple",
-			"Spear": "Simple",
-			"Light Crossbow": "Simple",
+			"Spear": "Simple",		
+
+			// Simple Ranged Weapons
+			"Dart": "Simple",
+			"Crossbow, Light": "Simple",
+			"Light Crossbow": "Simple",	
 			"Shortbow": "Simple",
 			"Sling": "Simple",
 
@@ -3923,14 +3929,19 @@ document.addEventListener("keydown", (e) => {
 			"Scimitar": "Martial",
 			"Shortsword": "Martial",
 			"Trident": "Martial",
-			"War Pick": "Martial",
 			"Warhammer": "Martial",
+			"War Pick": "Martial",
 			"Whip": "Martial",
+
+			// Martial Ranged Weapons
+			"Blowgun": "Martial",
+			"Hand Crossbow": "Martial",
+			"Heavy Crossbow": "Martial",
+			"Longbow": "Martial",
 
 			// Firearms (2024 DMG keeps them Martial)
 			"Pistol": "Martial",
 			"Musket": "Martial",
-			"Revolver": "Martial",
 		};
 
 
@@ -4069,6 +4080,28 @@ document.addEventListener("keydown", (e) => {
 			return false;
 		}
 
+		async function saveWeaponMastery(slot, weapon, mastery) {
+			const file = app.workspace.getActiveFile();
+			if (!file) return;
+
+			const cache = app.metadataCache.getFileCache(file);
+			const fm = cache?.frontmatter ?? {};
+
+			const updated = structuredClone(fm);
+
+			if (!updated.weapon_mastery) updated.weapon_mastery = {};
+
+			if (!weapon) {
+				delete updated.weapon_mastery[slot];
+			} else {
+				updated.weapon_mastery[slot] = { weapon, mastery };
+			}
+
+			await app.fileManager.processFrontMatter(file, frontmatter => {
+				frontmatter.weapon_mastery = updated.weapon_mastery;
+			});
+		}
+
 
 
 			
@@ -4088,16 +4121,28 @@ document.addEventListener("keydown", (e) => {
 			const options = uniqueWeapons.map(w => `<option value="${w.name}">${w.name}</option>`).join("");
 			
 			for (let i = 1; i <= totalMasterySlots; i++) {
-			const select = masteryContainer.querySelector(`#mastery${i}`);
-			if (select) {
+				const select = masteryContainer.querySelector(`#mastery${i}`);
+				const output = masteryContainer.querySelector(`#mastery${i}Mastery`);
+
+				if (!select) continue;
+
 				select.innerHTML += options;
 
-				select.addEventListener("change", e => {
-					const output = masteryContainer.querySelector(`#mastery${i}Mastery`);
-					output.textContent = findMastery(e.target.value);
+				// Restore saved value
+				if (wMasteryMap[i]?.weapon) {
+					select.value = wMasteryMap[i].weapon;
+					output.textContent = wMasteryMap[i].mastery ?? findMastery(wMasteryMap[i].weapon);
+				}
+
+				select.addEventListener("change", async e => {
+					const weapon = e.target.value;
+					const mastery = findMastery(weapon);
+
+					output.textContent = mastery;
+
+					await saveWeaponMastery(i, weapon, mastery);
 				});
 			}
-		}
 			
 			function findMastery(weaponClass) {
 				const w = uniqueWeapons.find(x => x.name === weaponClass);
