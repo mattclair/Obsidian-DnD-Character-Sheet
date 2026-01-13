@@ -79,7 +79,7 @@ conditions:
     Level: false
 health:
   max: 35
-  current: 23
+  current: 35
   temp: 0
   maxTmp: 0
 Luck: {}
@@ -95,23 +95,24 @@ Hit_Dice:
   Ranger_d10-4: true
   Ranger_d10-5: true
 inventory:
-  Potion of Healing: 3
-  Bag of Holding: 1
-  Staff of the Python: 1
-  Shield: 1
-  Backpack: 1
-  Herbalism Kit: 1
-  Staff: 1
-  Oil: 1
-  Rations: 1
+  HandAxe: 1
+  Javelin: 4
+  Light Crossbow: 1
+  GreatAxe (+1): 1
   Rope: 1
   Bedroll: 1
-  Tinderbox: 1
-  Torch: 1
-  Waterskin: 1
-  studded leather armor: 1
-  The Drowned Favor: 1
+  Riding Horse: 1
+  Rations: 9
+  Climbers Kit: 1
+  Tinker Tools: 1
+  Woodcarvers Tools: 1
+  Herbalism Kit: 1
+  Tent: 1
+  Shovel: 1
+  Potion of Healing: 1
+  Riding Saddle: 1
 attuned:
+  - Bag of Holding
 spell_slot:
   wizard: true
   shadow_touched_invisibility: true

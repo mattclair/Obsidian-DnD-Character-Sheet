@@ -77,7 +77,7 @@ conditions:
     Level: false
 health:
   max: 35
-  current: 30
+  current: 35
   temp: 0
   maxTmp: 0
 Luck:
@@ -188,13 +188,6 @@ Bastion:
       hirelings: 2
       order: None
       status: operational
-weapon_mastery:
-  "1":
-    weapon: Longbow
-    mastery: Slow
-  "2":
-    weapon: Shortsword
-    mastery: Vex
 ---
 
 

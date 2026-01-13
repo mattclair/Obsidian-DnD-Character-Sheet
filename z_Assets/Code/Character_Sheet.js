@@ -65,9 +65,14 @@ async function commitPendingChanges() {
 
     Object.assign(fm.health, structuredClone(pendingState.health));
 
-    // future:
-    // fm.conditions = structuredClone(pendingState.conditions);
-    // fm.spellSlots = structuredClone(pendingState.spellSlots);
+		// Persist inventory if present in pendingState
+		if (pendingState.inventory !== undefined) {
+			fm.inventory = structuredClone(pendingState.inventory);
+		}
+
+		// future:
+		// fm.conditions = structuredClone(pendingState.conditions);
+		// fm.spellSlots = structuredClone(pendingState.spellSlots);
   });
   clearDirty();
   new Notice("All changes saved", 3000);
@@ -4401,8 +4406,10 @@ console.log("Rendering TAB: Inventory");
 		// ============================
 		// CONFIG
 		// ============================
-		
-		const inventory = dv.current().inventory ?? {};
+        
+		// Use in-memory inventory state (persisted to `window.pendingState`)
+		pendingState.inventory = pendingState.inventory || structuredClone(dv.current().inventory ?? {});
+		const inventory = pendingState.inventory;
 		//const STR = dv.current().STR ?? 10; // default STR if missing
 		const size = dv.current().size ?? "Medium";
 		
@@ -4456,49 +4463,50 @@ console.log("Rendering TAB: Inventory");
 		}
 		
 		// ============================
-		// BUILD TABLE DATA
+		// BUILD TABLE DATA (async helper)
 		// ============================
 		const files = dv.pages(`"${ITEMS_FOLDER}"`);
-		//console.log(`files = ${files}`)
-		const tableData = [];
-		let totalWeight = 0;
-		
-		for (const [name, qty] of Object.entries(inventory)) {
-		    const norm = normalizeName(name);
-		    let match = files.find(p => normalizeName(p.file.name) === norm);
-		
-		    if (!match) {
-		        match = files.find(p => (p.aliases ?? []).some(a => normalizeName(a) === norm));
-		    }
-		    if (!match) {
-		        match = files.find(p => normalizeName(p.file.name).includes(norm));
-		    }
-		
-		    let cost = "—";
-		    let weight = "—";
-		
-		    if (match) {
-		        const content = await getFileContent(match.file.path);
-		        const fields = extractFields(content, match.tags);
-		        cost = fields.cost;
-		        weight = fields.weight;
-		        const numericWeight = parseFloat(weight.replace(/[^\d.]/g, "")) || 0;
-		        totalWeight += numericWeight * qty;
-		    }
-		
-		    tableData.push({
-		        file: match?.file,
-		        Name: name,
-		        Qty: qty,
-		        Cost: cost,
-		        Weight: weight,
-		    });
+
+		async function buildTableData(inv) {
+			const tableData = [];
+			let totalWeight = 0;
+
+			for (const [name, qty] of Object.entries(inv)) {
+				const norm = normalizeName(name);
+				let match = files.find(p => normalizeName(p.file.name) === norm);
+
+				if (!match) {
+					match = files.find(p => (p.aliases ?? []).some(a => normalizeName(a) === norm));
+				}
+				if (!match) {
+					match = files.find(p => normalizeName(p.file.name).includes(norm));
+				}
+
+				let cost = "—";
+				let weight = "—";
+
+				if (match) {
+					const content = await getFileContent(match.file.path);
+					const fields = extractFields(content, match.tags);
+					cost = fields.cost;
+					weight = fields.weight;
+					const numericWeight = parseFloat(weight.replace(/[^\d.]/g, "")) || 0;
+					totalWeight += numericWeight * qty;
+				}
+
+				tableData.push({
+					file: match?.file,
+					Name: name,
+					Qty: qty,
+					Cost: cost,
+					Weight: weight,
+				});
+			}
+
+			return { tableData, totalWeight };
 		}
 		
-		// ============================
-		// DETERMINE ENCUMBRANCE
-		// ============================
-		let encumbrance = totalWeight <= carryWeight ? "Unencumbered" : "Encumbered";
+		// Encumbrance will be determined after computing totalWeight in buildTableData
 		
 		// ============================
 		// BUILD TABLE ELEMENT
@@ -4518,43 +4526,53 @@ console.log("Rendering TAB: Inventory");
 		`;
 		
 		const invbody = document.createElement("tbody");
-		
-		// Sort Inventory Table Alphabetically
-		tableData.sort((a, b) => a.Name.localeCompare(b.Name));
-		
-		// Build table rows
-		for (const item of tableData) {
-		    const row = document.createElement("tr");
-		
-		    // ---- ITEM NAME (with real Obsidian link + hover preview) ----
-		    const nameCell = document.createElement("td");
-		
-		    if (item.file) {
-		        const link = document.createElement("a");
-		        link.classList.add("internal-link");         // enables hover + styling
-		        link.href = item.file.path;                  // correct vault-relative path
-		        link.textContent = item.Name;                // displayed name
-		        nameCell.appendChild(link);
-		    } else {
-		        nameCell.textContent = item.Name;
-		    }
-		
-		    // Other fields
-		    const qtyCell = document.createElement("td"); qtyCell.textContent = item.Qty;
-		    const costCell = document.createElement("td"); costCell.textContent = item.Cost;
-		    const weightCell = document.createElement("td"); weightCell.textContent = item.Weight;
-		
-		    row.appendChild(nameCell);
-		    row.appendChild(qtyCell);
-		    row.appendChild(costCell);
-		    row.appendChild(weightCell);
-		
-		    invbody.appendChild(row);
+
+		// Optional: display total weight
+		const totalDiv = document.createElement("div");
+		totalDiv.style.marginTop = "0.5rem";
+		inventoryWrapper.appendChild(totalDiv);
+
+		function renderTable(tableData, totalWeight) {
+			// clear existing rows
+			invbody.innerHTML = "";
+
+			// Sort and render rows
+			tableData.sort((a, b) => a.Name.localeCompare(b.Name));
+			for (const item of tableData) {
+				const row = document.createElement("tr");
+
+				const nameCell = document.createElement("td");
+				if (item.file) {
+					const link = document.createElement("a");
+					link.classList.add("internal-link");
+					link.href = item.file.path;
+					link.textContent = item.Name;
+					nameCell.appendChild(link);
+				} else {
+					nameCell.textContent = item.Name;
+				}
+
+				const qtyCell = document.createElement("td"); qtyCell.textContent = item.Qty;
+				const costCell = document.createElement("td"); costCell.textContent = item.Cost;
+				const weightCell = document.createElement("td"); weightCell.textContent = item.Weight;
+
+				row.appendChild(nameCell);
+				row.appendChild(qtyCell);
+				row.appendChild(costCell);
+				row.appendChild(weightCell);
+
+				invbody.appendChild(row);
+			}
+
+			totalDiv.innerHTML = `<strong>Total Weight:</strong> ${totalWeight.toFixed(1)} lbs — ${totalWeight <= carryWeight ? "Unencumbered" : "Encumbered"}`;
 		}
 		
-		invTable.appendChild(invbody);
+		// Initially build table data and render
+		const { tableData, totalWeight } = await buildTableData(inventory);
+		renderTable(tableData, totalWeight);
 		
 		// Add the table to your wrapper
+		invTable.appendChild(invbody);
 		inventoryWrapper.appendChild(invTable);
 
 		// Mark panel as rendered to avoid duplicate renders
@@ -4562,11 +4580,8 @@ console.log("Rendering TAB: Inventory");
 
 		// Inventory UI appended (diagnostics suppressed)
 		
-		// Optional: display total weight
-		const totalDiv = document.createElement("div");
-		totalDiv.style.marginTop = "0.5rem";
-		totalDiv.innerHTML = `<strong>Total Weight:</strong> ${totalWeight.toFixed(1)} lbs — ${encumbrance}`;
-		inventoryWrapper.appendChild(totalDiv);
+		// totalDiv populated by renderTable
+        
 		
 		
 		// ============================
@@ -4703,23 +4718,26 @@ console.log("Rendering TAB: Inventory");
 		// ADD ITEM
 		// -----------------------------
 		addButton.onclick = async () => {
-		    const raw = itemInput.value.trim();
-		    if (!raw) return;
-		
-		    const currentInv = { ...inventory };
-		
-		    const matchedKey = findMatchingInventoryKey(raw, currentInv);
-		
-		    if (matchedKey) {
-		        // Increase existing quantity
-		        currentInv[matchedKey] += 1;
-		    } else {
-		        // Create a new key in the YAML using the EXACT typed name
-		        currentInv[raw] = 1;
-		    }
-		
-		    await updateInventoryYaml(currentInv);
-		    itemInput.value = "";
+			const raw = itemInput.value.trim();
+			if (!raw) return;
+
+			// Ensure pendingState.inventory exists
+			pendingState.inventory = pendingState.inventory || {};
+			const currentInv = pendingState.inventory;
+
+			const matchedKey = findMatchingInventoryKey(raw, currentInv);
+
+			if (matchedKey) {
+				currentInv[matchedKey] = Number(currentInv[matchedKey] || 0) + 1;
+			} else {
+				currentInv[raw] = 1;
+			}
+
+			markDirty();
+			itemInput.value = "";
+
+			const { tableData, totalWeight } = await buildTableData(currentInv);
+			renderTable(tableData, totalWeight);
 		};
 		
 		
@@ -4727,28 +4745,32 @@ console.log("Rendering TAB: Inventory");
 		// REMOVE ITEM
 		// -----------------------------
 		removeButton.onclick = async () => {
-		    const raw = itemInput.value.trim();
-		    if (!raw) return;
-		
-		    const currentInv = { ...inventory };
-		
-		    const matchedKey = findMatchingInventoryKey(raw, currentInv);
-		
-		    if (!matchedKey) {
-		        new Notice(`Item "${raw}" not found in inventory.`);
-		        return;
-		    }
-		
-		    // decrement qty
-		    currentInv[matchedKey] -= 1;
-		
-		    // remove if reaches zero
-		    if (currentInv[matchedKey] <= 0) {
-		        delete currentInv[matchedKey];
-		    }
-		
-		    await updateInventoryYaml(currentInv);
-		    itemInput.value = "";
+			const raw = itemInput.value.trim();
+			if (!raw) return;
+
+			pendingState.inventory = pendingState.inventory || {};
+			const currentInv = pendingState.inventory;
+
+			const matchedKey = findMatchingInventoryKey(raw, currentInv);
+
+			if (!matchedKey) {
+				new Notice(`Item "${raw}" not found in inventory.`);
+				return;
+			}
+
+			// decrement qty
+			currentInv[matchedKey] = Number(currentInv[matchedKey] || 0) - 1;
+
+			// remove if reaches zero
+			if (currentInv[matchedKey] <= 0) {
+				delete currentInv[matchedKey];
+			}
+
+			markDirty();
+			itemInput.value = "";
+
+			const { tableData, totalWeight } = await buildTableData(currentInv);
+			renderTable(tableData, totalWeight);
 		};
 		
 		//===================================================== Attuned Items
