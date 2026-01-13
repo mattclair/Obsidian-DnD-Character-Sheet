@@ -6565,6 +6565,11 @@ console.log("Rendering TAB: Bastions");
 	flavorText = fm.default[Math.floor(Math.random() * fm.default.length)];
 	}
 
+	// Replace tokens
+	const bastionName = dv.current()?.Bastion?.name ?? "the bastion";
+
+	flavorText = flavorText.replaceAll("{{bastion_name}}", bastionName);
+	console.log("Flavor text:", flavorText);
 	card.createEl("p", {
 	text: flavorText,
 	cls: "bastion-flavor"
