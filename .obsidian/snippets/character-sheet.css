@@ -139,7 +139,7 @@
 /* HP label */
 .hp-label {
   font-size: 0.8em;
-  color: #3e2a1b;
+  color: var(--text-normal);
   margin-top: 2px;
 }
 
@@ -235,6 +235,95 @@
 
 
 
+/* === Menu wrapper (hamburger + panel) === */
+.char-menu {
+  position: absolute;
+  top: 12px;
+  left: 12px; /* starting point for hamburger */
+  display: flex;
+  align-items: flex-start;
+  z-index: 20;
+  transition: transform 0.25s ease; /* slide entire wrapper */
+}
+
+/* Hamburger button */
+.char-menu-toggle {
+  font-size: 1.4rem;
+  background-color: var(--background-primary-alt) !important; /* theme-aware background */
+  color: var(--text-normal) !important;  /* adapts to dark/light theme */
+  border: none;
+  cursor: pointer;
+  padding: 0.3rem 0.4rem;
+  border-radius: 6px;
+  box-shadow: none !important;
+  transition: background 0.15s ease;
+  z-index: 30; /* above panel */
+}
+
+/* Hover state */
+.char-menu-toggle:hover {
+  background-color: var(--background-primary) !important; /* slightly different bg on hover */
+}
+
+.char-menu-toggle:hover {
+  background: var(--background-secondary); 
+}
+
+/* Sliding panel */
+.char-menu-panel {
+  margin-right: 8px; /* space between panel and hamburger */
+  background: var(--background-secondary);
+  border: 1px solid var(--background-secondary-alt);
+  border-radius: 8px;
+  padding: 0.5rem;
+  min-width: 170px;
+  box-shadow: 0 6px 5px rgba(0,0,0,0.4);
+
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-210px); /* start offscreen left */
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  z-index: 10;
+}
+
+/* Open state: slide panel and hamburger together */
+.char-menu.open .char-menu-panel {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-10); /* panel moves into view */
+}
+
+.char-menu.open {
+  transform: translateX(172px); /* entire wrapper slides so hamburger moves right of panel */
+}
+
+/* Menu buttons */
+.char-menu-btn {
+  width: 100%;
+  margin-bottom: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.char-menu-btn:hover {
+  background: var(--background-secondary-alt);
+}
+
+.char-menu-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dirty-indicator {
+  font-size: 0.75rem;
+  color: var(--text-accent);
+  margin-bottom: 0.25rem;
+}
 
 
 

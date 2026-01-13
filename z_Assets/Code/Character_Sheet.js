@@ -24,6 +24,56 @@ const BASTIONS_FOLDER = `${BASE_FOLDER}/bastions`;
 // =====================
 // Helper Functions
 // =====================
+
+// Persist dirty flag on `window` so it survives Dataview/Obsidian redraws
+window.__char_pending_dirty = window.__char_pending_dirty || false;
+let isDirty = !!window.__char_pending_dirty;
+function markDirty() {
+	isDirty = true;
+	window.__char_pending_dirty = true;
+	updateSaveUi();
+}
+
+function clearDirty() {
+	isDirty = false;
+	window.__char_pending_dirty = false;
+	updateSaveUi();
+}
+
+// In-memory storage for character stats
+window.pendingState = window.pendingState || {
+  health: {
+    current: Number(c.health?.current ?? c.health?.max ?? 0),
+    max:     Number(c.health?.max ?? 0),
+    temp:    Number(c.health?.temp ?? 0),
+    maxTmp:  Number(c.health?.maxTmp ?? 0),
+  },
+
+  // future-safe
+  // spellSlots: {},
+  // conditions: {},
+};
+
+const pendingState = window.pendingState;
+
+async function commitPendingChanges() {
+  const file = app.workspace.getActiveFile();
+  if (!file) return;
+
+  await app.fileManager.processFrontMatter(file, fm => {
+    fm.health ??= {};
+
+    Object.assign(fm.health, structuredClone(pendingState.health));
+
+    // future:
+    // fm.conditions = structuredClone(pendingState.conditions);
+    // fm.spellSlots = structuredClone(pendingState.spellSlots);
+  });
+  clearDirty();
+  new Notice("All changes saved", 3000);
+}
+
+
 // Generic helper to wait until a DOM element exists
 async function waitForElement(selector, timeout = 2000, interval = 50) {
     const start = Date.now();
@@ -318,13 +368,49 @@ for (const [key, val] of Object.entries(condObj)) {
   }
 }
 
+function getHpUiState() {
+  const h = pendingState.health;
+
+  const maxHP     = Number(h.max ?? 0);
+  const currentHP = Number(h.current ?? 0);
+  const tempHP    = Number(h.temp ?? 0);
+  const maxTemp   = Number((h.maxTmp ?? maxHP) || 1);
+
+  const hpPercent = maxHP > 0
+    ? Math.max(0, Math.min(100, (currentHP / maxHP) * 100))
+    : 0;
+
+  const tempPercent = tempHP > 0
+    ? Math.max(0, Math.min(100, (tempHP / maxTemp) * 100))
+    : 0;
+
+  return {
+    maxHP,
+    currentHP,
+    tempHP,
+    hpPercent,
+    tempPercent
+  };
+}
+
+
 const condDisplay = active.length ? active.join(", ") : "None";
-const maxHP = c.health?.max ?? 30;
-const currentHP = c.health?.current ?? 30;
-const tempHP = c.health?.temp ?? 0;
-const maxTemp = c.health?.maxTmp ?? maxHP;
+const maxHP = pendingState.health.max;
+const currentHP = pendingState.health.current;
+const tempHP = pendingState.health.temp;
+const maxTemp = pendingState.health.maxTmp ?? maxHP;
 const hpPercent = Math.max(0, Math.min(100, (currentHP / maxHP) * 100));
 const tempPercent = Math.max(0, Math.min(100, (tempHP / maxTemp) * 100));
+
+function resolveImageSrc(path) {
+  if (!path) return "";
+  const file = app.vault.getAbstractFileByPath(path);
+  if (!file) {
+    console.warn("Image not found in vault:", path);
+    return "";
+  }
+  return app.vault.getResourcePath(file);
+}
 
 let images = [];
 
@@ -335,13 +421,44 @@ if (Array.isArray(c.image)) {
 }
 
 // Pick one image — your choice of rule:
-const chosenImage = images.length > 0
-    ? images[Math.floor(Math.random() * images.length)]  // Random pick
+const chosenImagePath =
+  images.length > 0
+    ? images[Math.floor(Math.random() * images.length)]
     : "";
 
-let html = `
+const chosenImage = resolveImageSrc(chosenImagePath);
+
+const menuHtml = `
+<div class="char-menu">
+  <button class="char-menu-toggle" aria-label="Open menu">☰</button>
+
+  <div class="char-menu-panel">
+    <div class="dirty-indicator" hidden>● Unsaved changes</div>
+    <button class="char-menu-btn save-btn" disabled>
+      💾 Save Changes
+    </button>
+  </div>
+</div>
+`;
+
+
+
+function updateSaveUi() {
+  if (!saveBtn) return;
+
+  saveBtn.disabled = !isDirty;
+  saveBtn.classList.toggle("disabled", !isDirty);
+
+  const dirtyEl = root.querySelector(".dirty-indicator");
+  if (dirtyEl) {
+    dirtyEl.hidden = !isDirty;
+  }
+}
+
+	let html = `
 <div class="char-header" style="border: 1px solid ${borderColor}; border-radius: 14px; transition: border-color 0.3s;">
-  <div class="char-info">
+	${menuHtml}
+<div class="char-info">
     <h1 class="char-name">${c.name ?? "Unnamed Character"}</h1>
     <div class="char-subtitle">
 		  Level ${c.Level ?? "?"}
@@ -388,15 +505,57 @@ let html = `
 </div>
 `;
 
+const root = dv.container.createEl("div");
+root.classList.add("character-header-block");
+root.innerHTML = html;
+
+const hpFill   = root.querySelector(".hp-fill");
+const tempFill = root.querySelector(".temp-fill");
+const hpLabel  = root.querySelector(".hp-label");
+
+const menuRoot = root.querySelector(".char-menu");
+const toggleBtn = root.querySelector(".char-menu-toggle");
+const saveBtn   = root.querySelector(".save-btn");
+
+if (menuRoot && toggleBtn && !menuRoot.dataset.bound) {
+  menuRoot.dataset.bound = "true";
+
+  toggleBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    menuRoot.classList.toggle("open");
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!menuRoot.classList.contains("open")) return;
+    if (!menuRoot.contains(e.target)) {
+      menuRoot.classList.remove("open");
+    }
+  });
+
+  if (saveBtn) {
+    saveBtn.addEventListener("click", commitPendingChanges);
+	//new Notice("Changes saved", 3000);
+  }
+  if (!menuRoot || !toggleBtn) {
+	console.warn("Character menu not ready yet");
+	}
+}
+
+// Ensure UI reflects any persisted dirty state from previous runs
+updateSaveUi();
 
 
-// === Character Header Bottom Bar (Luck, Hit Dice, Inspiration) ===
+renderHpDisplay();
 
-// === Render header and capture the element ===
-const headerEl = dv.el("div", html, { cls: "character-header-block" });
+
+
+
+
+
 
 // === Character Header Bottom Bar ===
-const bottomBar = headerEl.createEl("div", { cls: "char-header-bottom" });
+const bottomBar = root.createEl("div", { cls: "char-header-bottom" });
 
 /* ===== Heroic Inspiration ===== */
 const inspWrap = bottomBar.createEl("div", { cls: "char-header-block" });
@@ -827,94 +986,120 @@ dv.el("span",
 
 let hpChangeValue = 0;
 
-async function updateHealth(updater, afterNotice) {
-  const file = app.workspace.getActiveFile();
-  if (!file) return;
+function renderHpDisplay() {
+  const {
+    maxHP,
+    currentHP,
+    tempHP,
+    hpPercent,
+    tempPercent
+  } = getHpUiState();
 
-  await app.fileManager.processFrontMatter(file, fm => {
-    fm.health ??= {};
-    updater(fm);
-  });
+  if (hpFill) {
+    hpFill.style.height = `${hpPercent}%`;
+  }
+
+  if (tempFill) {
+    tempFill.style.height = `${tempPercent}%`;
+  }
+
+  if (hpLabel) {
+    hpLabel.textContent =
+      `${currentHP}/${maxHP}` + (tempHP > 0 ? ` (+${tempHP})` : "");
+  }
+}
+
+function updateHealthMemory(updater, afterNotice) {
+  pendingState.health ??= {};
+  updater(pendingState);
+
+  markDirty();
 
   if (afterNotice) afterNotice();
 }
 
-function resetHpInput() {
-  hpChangeValue = 0;
-  hpInput.value = "";
-}
 
-async function dealDamage() {
+
+function dealDamage() {
   const delta = hpChangeValue;
-  if (!delta) return; // early return if nothing to deal
+  if (!delta) return;
 
-  await updateHealth(fm => {
-    fm.health ??= {};
-    const temp = Number(fm.health.temp ?? 0);
-    const current = Number(fm.health.current ?? 0);
+  updateHealthMemory(state => {
+    const temp = Number(state.health.temp ?? 0);
+    const current = Number(state.health.current ?? 0);
 
     if (temp === 0) {
-      fm.health.current = Math.max(0, current - delta);
+      state.health.current = Math.max(0, current - delta);
     } else {
-      fm.health.temp = temp - delta;
-      if (fm.health.temp < 0) {
-        fm.health.current = Math.max(0, current + fm.health.temp);
-        fm.health.temp = 0;
+      state.health.temp = temp - delta;
+      if (state.health.temp < 0) {
+        state.health.current = Math.max(0, current + state.health.temp);
+        state.health.temp = 0;
       }
     }
-  }, async () => {
-    const file = app.workspace.getActiveFile();
-    const content = await app.vault.read(file);
+  }, () => {
     const rollMod = CON_MOD + pb;
 
-    if (/concentrating:\s*true/.test(content)) {
+    if (c.conditions?.concentrating === true) {
       let conTest = Math.floor(delta / 2);
-      if (conTest > 30) conTest = 30;
-      if (conTest < 10) conTest = 10;
-
-      new Notice(`Roll a DC ${conTest} Concentration Check! Add ${rollMod} to the D20 Test`, 5000);
+      conTest = Math.min(30, Math.max(10, conTest));
+      new Notice(`Roll a DC ${conTest} Concentration Check! Add ${rollMod}`, 5000);
     } else {
-      new Notice(`Dealing ${delta} hp of damage`, 5000);
+      new Notice(`Dealing ${delta} hp of damage (Unsaved)`, 5000);
     }
   });
+
+  renderHpDisplay();
+  resetHpInput();
 }
 
 
 
-async function healHitPoints() {
-  await updateHealth(fm => {
-    const delta = hpChangeValue;
-    if (!delta) return;
+function healHitPoints() {
+  const delta = hpChangeValue;
+  if (!delta) return;
 
-    const max = Number(fm.health.max ?? 0);
-    const current = Number(fm.health.current ?? 0);
+  updateHealthMemory(state => {
+    const max = Number(state.health.max ?? 0);
+    const current = Number(state.health.current ?? 0);
 
-    fm.health.current = Math.min(
+    state.health.current = Math.min(
       Math.max(0, current + delta),
       max
     );
-	new Notice("Healing " + `${hpChangeValue}` + " hp of damage", 5000);
+  }, () => {
+    new Notice(`Healing ${delta} HP (Unsaved)`, 5000);
   });
+
+  renderHpDisplay();
+  resetHpInput();
 }
 
-async function applyTempHP() {
-  await updateHealth(fm => {
-    const delta = hpChangeValue;
-    if (!delta) return;
+function applyTempHP() {
+  const delta = hpChangeValue;
+  if (!delta) return;
 
-    const currentTemp = Number(fm.health.temp ?? 0);
-
-    fm.health.temp = Math.max(currentTemp, delta);
-    fm.health.maxTmp = delta;
-	new Notice("Adding " + `${hpChangeValue}` + " Temperary Hit Points", 5000);
+  updateHealthMemory(state => {
+    const currentTemp = Number(state.health.temp ?? 0);
+    state.health.temp = Math.max(currentTemp, delta);
+    state.health.maxTmp = delta;
+  }, () => {
+    new Notice(`Adding ${delta} Temporary Hit Points (Unsaved)`, 5000);
   });
+
+  renderHpDisplay();
+  resetHpInput();
 }
 
-async function resetHP() {
-  await updateHealth(fm => {
-    fm.health.current = Number(fm.health.max ?? 0);
-    fm.health.temp = 0;
+function resetHP() {
+  updateHealthMemory(state => {
+    state.health.current = Number(state.health.max ?? 0);
+    state.health.temp = 0;
+    state.health.maxTmp = 0;
   });
+
+  renderHpDisplay();
+  new Notice("Health reset", 3000);
 }
 
 let dealDamageBtn, healBtn, tempBtn, resetBtn;
@@ -949,19 +1134,24 @@ hpInput.addEventListener("input", () => {
   updateHpButtons();
 });
 
-async function resetHpInput() {
-  const delta = hpChangeValue; 
+function resetHpToMax() {
+  updateHealthMemory(state => {
+    state.health.current = Number(state.health.max ?? 0);
+    state.health.temp = 0;
+    state.health.maxTmp = 0;
+	markDirty();
+  }, () => {
+    new Notice("Health reset to maximum (unsaved)", 3000);
+  });
+
+  renderHpDisplay();
+  resetHpInput();
+}
+
+function resetHpInput() {
   hpChangeValue = 0;
   hpInput.value = "";
   updateHpButtons();
-
-  await updateHealth(fm => {
-    fm.health ??= {};
-    fm.health.current = Number(fm.health.max ?? 0);
-    fm.health.temp = 0;
-  });
-
-  new Notice("Health values reset to default", 5000);
 }
 
 // Buttons
@@ -1007,7 +1197,7 @@ buttonsRow1.forEach(btn => {
 
     case "reset-hp-input":
       resetBtn = el;
-      el.onclick = resetHpInput;
+      el.onclick = resetHpToMax;
       break;
   }
 });
@@ -6864,4 +7054,98 @@ console.log("Rendering TAB: Session Notes");
 
 
 
+// force save before closing note
 
+async function confirmSave(title, message) {
+  return new Promise(resolve => {
+    // Overlay
+    const overlay = document.createElement("div");
+    overlay.style = `
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    `;
+
+    // Modal box
+    const box = document.createElement("div");
+    box.style = `
+      background: white; 
+      padding: 1rem 2rem; 
+      border-radius: 8px;
+      max-width: 400px;
+      text-align: center;
+    `;
+
+    const h2 = document.createElement("h2");
+    h2.textContent = title;
+
+    const p = document.createElement("p");
+    p.textContent = message;
+
+    const btnWrap = document.createElement("div");
+    btnWrap.style = "margin-top: 1rem; display: flex; justify-content: space-around;";
+
+    const yesBtn = document.createElement("button");
+    yesBtn.textContent = "Save";
+    yesBtn.onclick = () => {
+      document.body.removeChild(overlay);
+      resolve(true);
+    };
+
+    const noBtn = document.createElement("button");
+    noBtn.textContent = "Discard";
+    noBtn.onclick = () => {
+      document.body.removeChild(overlay);
+      resolve(false);
+    };
+
+    btnWrap.appendChild(yesBtn);
+    btnWrap.appendChild(noBtn);
+
+    box.appendChild(h2);
+    box.appendChild(p);
+    box.appendChild(btnWrap);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+  });
+}
+
+
+
+let ignoreNextLeafChange = false;
+let pendingLeavePrompt = false;
+let lastActiveLeaf = app.workspace.activeLeaf;
+
+app.workspace.on("active-leaf-change", async (leaf) => {
+	const previousLeaf = lastActiveLeaf;
+	lastActiveLeaf = leaf;
+
+	if (ignoreNextLeafChange) {
+		ignoreNextLeafChange = false;
+		return;
+	}
+
+	if (!isDirty) return;
+	if (pendingLeavePrompt) return;
+
+	pendingLeavePrompt = true;
+	const choice = await confirmSave(
+		"Unsaved Changes",
+		"You have unsaved changes. Save before leaving?"
+	);
+	pendingLeavePrompt = false;
+
+	if (choice === true) {
+		// Save and allow navigation
+		await commitPendingChanges();
+	} else if (choice === false) {
+		// Discard: clear dirty state so the user won't be prompted again
+		clearDirty();
+		// No programmatic reveal; allow navigation to proceed normally
+	}
+});

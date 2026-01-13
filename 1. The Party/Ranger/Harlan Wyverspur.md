@@ -77,9 +77,9 @@ conditions:
     Level: false
 health:
   max: 35
-  current: 35
+  current: 30
   temp: 0
-  maxTmp: 10
+  maxTmp: 0
 Luck:
 Hit_Dice:
   Ranger_d10-1: true
@@ -188,6 +188,13 @@ Bastion:
       hirelings: 2
       order: None
       status: operational
+weapon_mastery:
+  "1":
+    weapon: Longbow
+    mastery: Slow
+  "2":
+    weapon: Shortsword
+    mastery: Vex
 ---
 
 
