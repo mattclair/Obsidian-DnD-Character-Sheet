@@ -2200,6 +2200,7 @@ document.addEventListener("keydown", (e) => {
 				return n.startsWith("beast of the") || // exclude spell summoned versions
 					n.startsWith("bestial spirit") || // exclude spell summoned versions
 					n.startsWith("giant-insect") || // prefer monster manual versions
+					n.startsWith("giant insect") || // prefer monster manual versions
 					n.includes("swarm of"); // exclude swarms
 			}
 

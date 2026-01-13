@@ -233,7 +233,6 @@ wild-shape-options:
   - Draft Horse
   - Warhorse
   - Giant Octopus
-  - Panther
 purse: 1615.5
 BASE_FOLDER: 3. Mechanics/CLI
 ---
