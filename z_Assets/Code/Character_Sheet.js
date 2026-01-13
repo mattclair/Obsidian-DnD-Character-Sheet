@@ -25,36 +25,35 @@ const BASTIONS_FOLDER = `${BASE_FOLDER}/bastions`;
 // Helper Functions
 // =====================
 
-// Persist dirty flag on `window` so it survives Dataview/Obsidian redraws
-window.__char_pending_dirty = window.__char_pending_dirty || false;
-let isDirty = !!window.__char_pending_dirty;
+// Persist per-file dirty flags and pending state so data doesn't leak between notes
+const __char_file_key = c?.file?.path || c?.name || "__unknown__";
+window.__char_pending_dirtyByFile = window.__char_pending_dirtyByFile || {};
+window.__char_pendingStateByFile = window.__char_pendingStateByFile || {};
+
+let isDirty = !!window.__char_pending_dirtyByFile[__char_file_key];
 function markDirty() {
-	isDirty = true;
-	window.__char_pending_dirty = true;
-	updateSaveUi();
+		isDirty = true;
+		window.__char_pending_dirtyByFile[__char_file_key] = true;
+		updateSaveUi();
 }
 
 function clearDirty() {
-	isDirty = false;
-	window.__char_pending_dirty = false;
-	updateSaveUi();
+		isDirty = false;
+		window.__char_pending_dirtyByFile[__char_file_key] = false;
+		updateSaveUi();
 }
 
-// In-memory storage for character stats
-window.pendingState = window.pendingState || {
-  health: {
-    current: Number(c.health?.current ?? c.health?.max ?? 0),
-    max:     Number(c.health?.max ?? 0),
-    temp:    Number(c.health?.temp ?? 0),
-    maxTmp:  Number(c.health?.maxTmp ?? 0),
-  },
-
-  // future-safe
-  // spellSlots: {},
-  // conditions: {},
+// In-memory storage for character stats (scoped per-file)
+window.__char_pendingStateByFile[__char_file_key] = window.__char_pendingStateByFile[__char_file_key] || {
+	health: {
+		current: Number(c.health?.current ?? c.health?.max ?? 0),
+		max:     Number(c.health?.max ?? 0),
+		temp:    Number(c.health?.temp ?? 0),
+		maxTmp:  Number(c.health?.maxTmp ?? 0),
+	},
 };
 
-const pendingState = window.pendingState;
+const pendingState = window.__char_pendingStateByFile[__char_file_key];
 
 async function commitPendingChanges() {
   const file = app.workspace.getActiveFile();
@@ -68,6 +67,16 @@ async function commitPendingChanges() {
 		// Persist inventory if present in pendingState
 		if (pendingState.inventory !== undefined) {
 			fm.inventory = structuredClone(pendingState.inventory);
+		}
+
+		// Persist spells if present in pendingState
+		if (pendingState.spells !== undefined) {
+			fm.Spells = structuredClone(pendingState.spells);
+		}
+
+		// Persist wild-shape options if present in pendingState
+		if (pendingState.wildShapeOptions !== undefined) {
+			fm["wild-shape-options"] = structuredClone(pendingState.wildShapeOptions);
 		}
 
 		// future:
@@ -2270,9 +2279,8 @@ document.addEventListener("keydown", (e) => {
 				.sort(b => b.name);
 
 			const file = app.workspace.getActiveFile();
-			const saved = Array.isArray(page["wild-shape-options"])
-				? page["wild-shape-options"]
-				: [];
+			// Use in-memory pending state for wild-shape options
+			pendingState.wildShapeOptions = pendingState.wildShapeOptions || structuredClone(Array.isArray(page["wild-shape-options"]) ? page["wild-shape-options"] : []);
 
 			function renderWildShapeUI() {
 				wildShapeWrapper.empty();
@@ -2287,7 +2295,7 @@ document.addEventListener("keydown", (e) => {
 
 			function renderWildShapeCard(parent, index) {
 				const card = parent.createEl("div", { cls: "wild-shape-card" });
-				const selected = saved[index];
+				const selected = (pendingState.wildShapeOptions || [])[index];
 
 				// =====================================================
 				// EMPTY CARD
@@ -2336,12 +2344,13 @@ document.addEventListener("keydown", (e) => {
 					select.addEventListener("change", async e => {
 						if (!e.target.value) return;
 
-						const next = [...saved];
+						const current = pendingState.wildShapeOptions || [];
+						const next = [...current];
 						next[index] = e.target.value;
 
-						await app.fileManager.processFrontMatter(file, fm => {
-							fm["wild-shape-options"] = next;
-						});
+						// Update in-memory and mark dirty; UI will re-render from pendingState
+						pendingState.wildShapeOptions = next;
+						markDirty();
 
 						wildShapeWrapper.empty();
 						renderWildShapeUI();
@@ -2441,12 +2450,13 @@ document.addEventListener("keydown", (e) => {
 
 				const clear = footer.createEl("button", { text: "Clear" });
 				clear.addEventListener("click", async () => {
-					const next = [...saved];
+					const current = pendingState.wildShapeOptions || [];
+					const next = [...current];
 					next[index] = null;
 
-					await app.fileManager.processFrontMatter(file, fm => {
-						fm["wild-shape-options"] = next.filter(Boolean);
-					});
+					// Update in-memory and mark dirty
+					pendingState.wildShapeOptions = next.filter(Boolean);
+					markDirty();
 
 					wildShapeWrapper.empty();
 					renderWildShapeUI();
@@ -2798,7 +2808,13 @@ document.addEventListener("keydown", (e) => {
 		
 		// ==========================
 		// Prepare combined cantrip list
-		const spellLists = dv.current().Spells ?? {};
+		// Use in-memory pending state for spells so changes survive reruns
+		pendingState.spells = pendingState.spells || structuredClone(dv.current().Spells ?? {
+			Prepared: { Cantrips: [], Spells: [] },
+			Always_Prepared: { Cantrips: [], Spells: [] },
+			Known: { Cantrips: [], Spells: [] }
+		});
+		const spellLists = pendingState.spells;
 		// Gather all spell names from all lists
 		const allSpells = [
 		  ...(spellLists.Prepared?.Cantrips ?? []),
@@ -2912,15 +2928,13 @@ document.addEventListener("keydown", (e) => {
 		
 		// ===============================================================
 		// ========================= SPELL TABLE =========================
+		// Update in-memory spell lists (persist to pendingState and mark dirty)
 		async function updateSpellLists(spellsObj) {
-		    const file = app.workspace.getActiveFile();
-		    if (!file) return;
-		
-		    await app.fileManager.processFrontMatter(file, fm => {
-		        fm.Spells = spellsObj;
-		    });
-		
-		    app.commands.executeCommandById("dataview:refresh-views");
+			// store in-memory so UI can be snappy; commitPendingChanges will persist to frontmatter
+			pendingState.spells = structuredClone(spellsObj);
+			markDirty();
+			// Refresh Dataview/UI so the script reruns and reads pendingState.spells
+			try { app.commands.executeCommandById("dataview:refresh-views"); } catch {}
 		}
 		
 		
@@ -3089,8 +3103,8 @@ document.addEventListener("keydown", (e) => {
 		
 		    return { allowedCantripCount, allowedSpellCount };
 		}
-		// Get Spells from YAML
-		const Spells = dv.current().Spells;
+		// Get Spells from in-memory pending state
+		const Spells = pendingState.spells;
 		const classes = getClassLevels(dv.current().dndClass, dv.current().Level);
 		
 		let totalAllowedCantrips = 0;
@@ -3128,7 +3142,43 @@ document.addEventListener("keydown", (e) => {
 		const knownWrapper = document.createElement("div");
 		knownWrapper.id = "knownWrapper";
 		knownWrapper.classList.add("spell-wrapper");
-		knownWrapper.appendChild(buildPreparedTable("Known Spells", knownRowsTyped, "known"));
+
+		// Local helper to rebuild prepared/known tables from pendingState.spells
+		function rebuildSpellUI() {
+			const spellListsLocal = pendingState.spells || structuredClone(dv.current().Spells ?? { Prepared: { Cantrips: [], Spells: [] }, Always_Prepared: { Cantrips: [], Spells: [] }, Known: { Cantrips: [], Spells: [] } });
+			const preparedLocal = normalizeList(spellListsLocal.Prepared);
+			const alwaysLocal = normalizeList(spellListsLocal.Always_Prepared);
+			const knownLocal = normalizeList(spellListsLocal.Known);
+			
+			const pRows = [];
+			const aRows = [];
+			const kRows = [];
+			for (const spell of spellData) {
+				const lower = spell.Name.toLowerCase();
+				if (belongsToCategory(alwaysLocal.Cantrips, lower) || belongsToCategory(alwaysLocal.Spells, lower)) {
+					aRows.push(spell);
+				} else if (belongsToCategory(preparedLocal.Cantrips, lower) || belongsToCategory(preparedLocal.Spells, lower)) {
+					pRows.push(spell);
+				} else if (belongsToCategory(knownLocal.Cantrips, lower) || belongsToCategory(knownLocal.Spells, lower)) {
+					kRows.push(spell);
+				}
+			}
+			const combined = [
+				...aRows.map(s => ({ ...s, type: 'always' })),
+				...pRows.map(s => ({ ...s, type: 'prepared' })),
+			];
+			combined.sort((a,b) => a.LevelNum - b.LevelNum || a.Name.localeCompare(b.Name));
+			const knownTyped = kRows.map(s => ({ ...s, type: 'known' }));
+			
+			// Clear and repopulate wrappers
+			preparedWrapper.innerHTML = '';
+			preparedWrapper.appendChild(buildPreparedTable('Prepared Spells', combined));
+			knownWrapper.innerHTML = '';
+			knownWrapper.appendChild(buildPreparedTable('Known Spells', knownTyped));
+		}
+
+		// Initialize UI from pendingState
+		rebuildSpellUI();
 		
 		// Now insert into your UI
 		// Option A: append inside the existing cantripWrapper (below the cantrip table)
@@ -3615,7 +3665,8 @@ document.addEventListener("keydown", (e) => {
 		async function moveSpell(name, fromKey, toKey) {
 			// moveSpell called (debug suppressed)
 			new Notice(`Moving spell ${name} from ${fromKey}, to ${toKey}`, 5000);
-		    const spellsObj = dv.current().Spells ?? {};
+			pendingState.spells = pendingState.spells || structuredClone(dv.current().Spells ?? { Prepared: { Cantrips: [], Spells: [] }, Always_Prepared: { Cantrips: [], Spells: [] }, Known: { Cantrips: [], Spells: [] } });
+			const spellsObj = pendingState.spells;
 		
 		    const mapping = {
 		        Prepared: spellsObj.Prepared,
@@ -3655,7 +3706,10 @@ document.addEventListener("keydown", (e) => {
 		    console.log("fromList AFTER:", fromList);
 		    console.log("toList AFTER:", toList);
 		
-		    await updateSpellLists(spellsObj);
+			await updateSpellLists(spellsObj);
+
+			// Update UI immediately from pending state
+			rebuildSpellUI();
 		}
 		
 		
@@ -3692,12 +3746,16 @@ document.addEventListener("keydown", (e) => {
 		    if (!raw) return;
 		
 		    const formatted = normalizeSpellName(raw);
-		    const spellsObj = dv.current().Spells;
+			pendingState.spells = pendingState.spells || structuredClone(dv.current().Spells ?? { Prepared: { Cantrips: [], Spells: [] }, Always_Prepared: { Cantrips: [], Spells: [] }, Known: { Cantrips: [], Spells: [] } });
+			const spellsObj = pendingState.spells;
 		
-		    if (!spellsObj.Known.Spells.some(s => s.toLowerCase() === formatted.toLowerCase())) {
-		        spellsObj.Known.Spells.push(formatted);
-		        await updateSpellLists(spellsObj);
-		    }
+
+			if (!spellsObj.Known.Spells.some(s => s.toLowerCase() === formatted.toLowerCase())) {
+				spellsObj.Known.Spells.push(formatted);
+				await updateSpellLists(spellsObj);
+				rebuildSpellUI();
+				spellInput.value = "";
+			}
 		};
 		
 		// REMOVE button
@@ -3705,21 +3763,23 @@ document.addEventListener("keydown", (e) => {
 		removeBtn.textContent = "Remove Spell";
 		removeBtn.style.padding = "6px 10px";
 		removeBtn.onclick = async () => {
-		    const raw = spellInput.value.trim();
-		    if (!raw) return;
-		
-		    const formatted = normalizeSpellName(raw);
-		    const spellsObj = dv.current().Spells;
-		    const list = spellsObj.Known.Spells;
-		
-		    const idx = list.findIndex(s => s.toLowerCase() === formatted.toLowerCase());
-		    if (idx !== -1) {
-		        list.splice(idx, 1);
-		        await updateSpellLists(spellsObj);
-		    }
+			const raw = spellInput.value.trim();
+			if (!raw) return;
+
+			const formatted = normalizeSpellName(raw);
+			pendingState.spells = pendingState.spells || structuredClone(dv.current().Spells ?? { Prepared: { Cantrips: [], Spells: [] }, Always_Prepared: { Cantrips: [], Spells: [] }, Known: { Cantrips: [], Spells: [] } });
+			const spellsObj = pendingState.spells;
+			const list = spellsObj.Known.Spells;
+
+			const idx = list.findIndex(s => s.toLowerCase() === formatted.toLowerCase());
+			if (idx !== -1) {
+				list.splice(idx, 1);
+				await updateSpellLists(spellsObj);
+				rebuildSpellUI();
+				spellInput.value = "";
+			}
 		};
-		
-		// Assemble controls
+		// Ensure the input field is visible before buttons
 		spellInputWrapper.appendChild(spellInput);
 		spellInputWrapper.appendChild(addBtn);
 		spellInputWrapper.appendChild(removeBtn);
@@ -4527,7 +4587,7 @@ console.log("Rendering TAB: Inventory");
 		
 		const invbody = document.createElement("tbody");
 
-		// Optional: display total weight
+		// display total weight
 		const totalDiv = document.createElement("div");
 		totalDiv.style.marginTop = "0.5rem";
 		inventoryWrapper.appendChild(totalDiv);

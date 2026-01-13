@@ -98,7 +98,6 @@ inventory:
   HandAxe: 1
   Javelin: 4
   Light Crossbow: 1
-  GreatAxe (+1): 1
   Rope: 1
   Bedroll: 1
   Riding Horse: 1
@@ -154,8 +153,11 @@ Spells:
       - Pass Without Trace
       - Hold Person
       - Heat Metal
-      - Fog Cloud
       - Spike Growth
+      - Wind Wall
+      - Fog Cloud
+      - Darkvision
+      - Create Or Destroy Water
   Always_Prepared:
     Cantrips:
       - Minor Illusion
@@ -177,7 +179,6 @@ Spells:
     Cantrips: []
     Spells:
       - Charm Person
-      - Create or Destroy Water
       - Detect Poison and Disease
       - Faerie Fire
       - Goodberry
@@ -193,7 +194,6 @@ Spells:
       - Barkskin
       - Beast Sense
       - Continual Flame
-      - Darkvision
       - Enhance Ability
       - Enlarge Reduce
       - Find Traps
@@ -221,13 +221,19 @@ Spells:
       - Summon Fey
       - Water Breathing
       - Water Walk
-      - Wind Wall
       - Animal Friendship
+      - Speak With The Dead
 Wild_Shape:
   wild_shape-1: true
   wild_shape-2: true
 mastery:
-wild-shape-options: []
+wild-shape-options:
+  - Badger
+  - Crab
+  - Draft Horse
+  - Warhorse
+  - Giant Octopus
+  - Panther
 purse: 1615.5
 BASE_FOLDER: 3. Mechanics/CLI
 ---
