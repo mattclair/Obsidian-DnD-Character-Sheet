@@ -117,6 +117,16 @@ Rage:
   rage-4: true
 purse: 156
 BASE_FOLDER: 3. Mechanics/CLI
+weapon_mastery:
+  "1":
+    weapon: Greataxe
+    mastery: Cleave
+  "2":
+    weapon: Heavy Crossbow
+    mastery: Push
+  "3":
+    weapon: Spear
+    mastery: Sap
 ---
 ```dataviewjs
 // Load full cahracter sheet

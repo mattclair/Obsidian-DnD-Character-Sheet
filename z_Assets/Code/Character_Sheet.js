@@ -33,14 +33,18 @@ window.__char_pendingStateByFile = window.__char_pendingStateByFile || {};
 let isDirty = !!window.__char_pending_dirtyByFile[__char_file_key];
 function markDirty() {
 		isDirty = true;
+		console.log("Marking dirty for file key:", __char_file_key);
 		window.__char_pending_dirtyByFile[__char_file_key] = true;
 		updateSaveUi();
+		updateMenuDirtyState();
 }
 
 function clearDirty() {
 		isDirty = false;
+		console.log("Clearing dirty for file key:", __char_file_key);
 		window.__char_pending_dirtyByFile[__char_file_key] = false;
 		updateSaveUi();
+		updateMenuDirtyState();
 }
 
 // In-memory storage for character stats (scoped per-file)
@@ -54,6 +58,10 @@ window.__char_pendingStateByFile[__char_file_key] = window.__char_pendingStateBy
 };
 
 const pendingState = window.__char_pendingStateByFile[__char_file_key];
+
+// Handlers to allow imperative re-renders of small UI regions without a full Dataview refresh
+window.__char_rebuildHandlers = window.__char_rebuildHandlers || {};
+window.__char_rebuildHandlers[__char_file_key] = window.__char_rebuildHandlers[__char_file_key] || {};
 
 async function commitPendingChanges() {
   const file = app.workspace.getActiveFile();
@@ -77,6 +85,11 @@ async function commitPendingChanges() {
 		// Persist wild-shape options if present in pendingState
 		if (pendingState.wildShapeOptions !== undefined) {
 			fm["wild-shape-options"] = structuredClone(pendingState.wildShapeOptions);
+		}
+
+		// Persist weapon mastery if present in pendingState
+		if (pendingState.weaponMastery !== undefined) {
+			fm.weapon_mastery = structuredClone(pendingState.weaponMastery);
 		}
 
 		// future:
@@ -416,6 +429,26 @@ const maxTemp = pendingState.health.maxTmp ?? maxHP;
 const hpPercent = Math.max(0, Math.min(100, (currentHP / maxHP) * 100));
 const tempPercent = Math.max(0, Math.min(100, (tempHP / maxTemp) * 100));
 
+function updateMenuDirtyState() {
+  const icon = document.querySelector(".menu-icon");
+  const dirtyIndicator = document.querySelector(".dirty-indicator");
+  const saveBtn = document.querySelector(".save-btn");
+
+  if (!icon) return;
+
+  if (isDirty) {
+    icon.textContent = "☰ !";
+    icon.classList.add("dirty");
+    dirtyIndicator.hidden = false;
+    saveBtn.disabled = false;
+  } else {
+    icon.textContent = "☰";
+    icon.classList.remove("dirty");
+    dirtyIndicator.hidden = true;
+    saveBtn.disabled = true;
+  }
+}
+
 function resolveImageSrc(path) {
   if (!path) return "";
   const file = app.vault.getAbstractFileByPath(path);
@@ -444,7 +477,9 @@ const chosenImage = resolveImageSrc(chosenImagePath);
 
 const menuHtml = `
 <div class="char-menu">
-  <button class="char-menu-toggle" aria-label="Open menu">☰</button>
+  <button class="char-menu-toggle" aria-label="Open menu">
+    <span class="menu-icon">☰</span>
+  </button>
 
   <div class="char-menu-panel">
     <div class="dirty-indicator" hidden>● Unsaved changes</div>
@@ -1063,8 +1098,10 @@ function dealDamage() {
     }
   });
 
-  renderHpDisplay();
-  resetHpInput();
+	// Ensure UI reflects any persisted dirty state from previous runs
+	updateSaveUi();
+	updateMenuDirtyState();
+	renderHpDisplay();
 }
 
 
@@ -1395,7 +1432,7 @@ longRestBtn.onclick = async () => {
   if (!file) return;
 
   // Reset HP via your existing logic
-  await resetHP();
+  resetHP();
 
   await app.fileManager.processFrontMatter(file, fm => {
     fm.spell_slot ??= {};
@@ -1447,7 +1484,11 @@ longRestBtn.onclick = async () => {
 	}
 
 	if (hasDruid && druidLevel >= 2) {
-		fm["wild-shape-options"] = [];
+		// Reset wild-shape selections in-memory and mark dirty (will be persisted on Save)
+		pendingState.wildShapeOptions = [];
+		markDirty();
+		try { window.__char_rebuildHandlers?.[__char_file_key]?.renderWildShapeUI?.(); } catch (e) {}
+		setTimeout(() => { try { app.commands.executeCommandById("dataview:refresh-views"); } catch {} }, 50);
 	}
 
 	if (hasFighter) {
@@ -1511,12 +1552,8 @@ longRestBtn.onclick = async () => {
 			}
 		});
 	}
-
-
+	
 	// Reset Feat Specific Resources
-	//fm.Luck ??= {};
-	//fm.Mage_Slayer ??= {};
-	//fm.Ritual_Caster ??= {};
 
 	if (feats.includes("Lucky")) {
 		Object.keys(fm.Luck).forEach(key => {
@@ -1542,10 +1579,12 @@ longRestBtn.onclick = async () => {
 		});
 	}
 
-	if (fm.weapon_mastery) {
-		app.fileManager.processFrontMatter(file, frontmatter => {
-			delete frontmatter.weapon_mastery;
-		});
+	if (pendingState.weaponMastery && Object.keys(pendingState.weaponMastery).length) {
+		// Clear in-memory weapon mastery and mark dirty; Save will persist
+		pendingState.weaponMastery = {};
+		markDirty();
+		try { window.__char_rebuildHandlers?.[__char_file_key]?.rebuildWeaponMastery?.(); } catch (e) {}
+		setTimeout(() => { try { app.commands.executeCommandById("dataview:refresh-views"); } catch {} }, 50);
 	}
 
 
@@ -2293,6 +2332,13 @@ document.addEventListener("keydown", (e) => {
 					renderWildShapeCard(grid, i);
 				}
 			}
+
+			// Expose an imperative re-render for rest handlers or other external triggers
+			try {
+				window.__char_rebuildHandlers[__char_file_key].renderWildShapeUI = function() {
+					try { renderWildShapeUI(); } catch (e) { console.error('renderWildShapeUI failed:', e); }
+				};
+			} catch (e) {}
 
 			function renderWildShapeCard(parent, index) {
 				const card = parent.createEl("div", { cls: "wild-shape-card" });
@@ -4136,7 +4182,9 @@ document.addEventListener("keydown", (e) => {
 
 		// ===== Weapon Mastery Selector =====
 		const fm = dv.current();
-		const wMasteryMap = fm.weapon_mastery ?? {};
+		// initialize per-file pending weapon mastery
+		pendingState.weaponMastery = pendingState.weaponMastery || structuredClone(fm.weapon_mastery ?? {});
+		const wMasteryMap = pendingState.weaponMastery;
 
 		const WEAPON_MASTERY_MAP = {
 			Cleave: ["Greataxe", "Halberd"],
@@ -4269,143 +4317,99 @@ document.addEventListener("keydown", (e) => {
 
 			const masteryContainer = dv.el("div", "", { cls: "weapon-mastery-selector" });
 
-			// Build table skeleton
-			let tableHtml = `
-			<table class="table">
-			<thead>
-				<tr>
-				<th>Mastery Slot</th>
-				<th>Weapon Type</th>
-				<th>Mastery</th>
-				</tr>
-			</thead>
-			<tbody>
-			`;
-			
-			// Create N rows based on total mastery slots
-			for (let i = 1; i <= totalMasterySlots; i++) {
-				tableHtml += `
-				<tr>
-				<td>Mastery ${i}</td>
-				<td><select id="mastery${i}">
-						<option value="">-- Select --</option>
-					</select>
-				</td>
-				<td id="mastery${i}Mastery">–</td>
-				</tr>`;
-			}
-			
-			tableHtml += `</tbody></table>`;
-			masteryContainer.innerHTML = tableHtml;
-			weaponPanel.appendChild(masteryContainer);
-			
-			
-			// ===== Helper Functions ======
+			function renderWeaponMasteryUI() {
+				// Build table skeleton
+				let tableHtml = `
+						<table class="table">
+					<thead>
+						<tr>
+						<th>Mastery Slot</th>
+						<th>Weapon Type</th>
+						<th>Mastery</th>
+						</tr>
+					</thead>
+					<tbody>
+					`;
 
-
-			// ===== Populate Mastery Options Dynamically =====
-			//const player = dv.current();
-			const trainings = Array.isArray(player.weapon_training)
-			? player.weapon_training
-			: [];
-			
-			
-			
-			function weaponAllowed(w) {
-			// Simple
-			if (trainings.includes("Simple Weapons") && w.type === "Simple") {
-				return true;
-			}
-
-			// Martial
-			if (trainings.includes("Martial Weapons") && w.type === "Martial") {
-				return true;
-			}
-
-			// Martial Finesse (manually list finesse weapons)
-			const finesseWeapons = ["Dagger", "Rapier", "Scimitar", "Shortsword", "Whip"];
-
-			if (
-				trainings.includes("Martial weapons that have the Finesse Property") &&
-				w.type === "Martial" &&
-				finesseWeapons.includes(w.name)
-			) {
-				return true;
-			}
-
-			return false;
-		}
-
-		async function saveWeaponMastery(slot, weapon, mastery) {
-			const file = app.workspace.getActiveFile();
-			if (!file) return;
-
-			const cache = app.metadataCache.getFileCache(file);
-			const fm = cache?.frontmatter ?? {};
-
-			const updated = structuredClone(fm);
-
-			if (!updated.weapon_mastery) updated.weapon_mastery = {};
-
-			if (!weapon) {
-				delete updated.weapon_mastery[slot];
-			} else {
-				updated.weapon_mastery[slot] = { weapon, mastery };
-			}
-
-			await app.fileManager.processFrontMatter(file, frontmatter => {
-				frontmatter.weapon_mastery = updated.weapon_mastery;
-			});
-		}
-
-
-
-			
-			const trainedWeapons = WEAPONS.filter(weaponAllowed);
-			
-			// Remove duplicates by weapon_class
-			const uniqueWeapons = [];
-			const seenClasses = new Set();
-			for (const w of trainedWeapons) {
-				if (!seenClasses.has(w.name)) {
-					seenClasses.add(w.name);
-					uniqueWeapons.push(w);
-				}
-			}
-			
-			// Build options
-			const options = uniqueWeapons.map(w => `<option value="${w.name}">${w.name}</option>`).join("");
-			
-			for (let i = 1; i <= totalMasterySlots; i++) {
-				const select = masteryContainer.querySelector(`#mastery${i}`);
-				const output = masteryContainer.querySelector(`#mastery${i}Mastery`);
-
-				if (!select) continue;
-
-				select.innerHTML += options;
-
-				// Restore saved value
-				if (wMasteryMap[i]?.weapon) {
-					select.value = wMasteryMap[i].weapon;
-					output.textContent = wMasteryMap[i].mastery ?? findMastery(wMasteryMap[i].weapon);
+				for (let i = 1; i <= totalMasterySlots; i++) {
+					tableHtml += `
+						<tr>
+						<td>Mastery ${i}</td>
+						<td><select id="mastery${i}">
+								<option value="">-- Select --</option>
+							</select>
+						</td>
+						<td id="mastery${i}Mastery">–</td>
+						</tr>`;
 				}
 
-				select.addEventListener("change", async e => {
-					const weapon = e.target.value;
-					const mastery = findMastery(weapon);
+				tableHtml += `</tbody></table>`;
+				masteryContainer.innerHTML = tableHtml;
+				weaponPanel.appendChild(masteryContainer);
 
-					output.textContent = mastery;
+				const trainings = Array.isArray(player.weapon_training) ? player.weapon_training : [];
 
-					await saveWeaponMastery(i, weapon, mastery);
-				});
+				function weaponAllowed(w) {
+					if (trainings.includes("Simple Weapons") && w.type === "Simple") return true;
+					if (trainings.includes("Martial Weapons") && w.type === "Martial") return true;
+					const finesseWeapons = ["Dagger", "Rapier", "Scimitar", "Shortsword", "Whip"];
+					if (trainings.includes("Martial weapons that have the Finesse Property") && w.type === "Martial" && finesseWeapons.includes(w.name)) return true;
+					return false;
+				}
+
+				async function saveWeaponMastery(slot, weapon, mastery) {
+					pendingState.weaponMastery = pendingState.weaponMastery || {};
+					if (!weapon) delete pendingState.weaponMastery[slot];
+					else pendingState.weaponMastery[slot] = { weapon, mastery };
+					markDirty();
+				}
+
+				const trainedWeapons = WEAPONS.filter(weaponAllowed);
+				const uniqueWeapons = [];
+				const seenClasses = new Set();
+				for (const w of trainedWeapons) {
+					if (!seenClasses.has(w.name)) { seenClasses.add(w.name); uniqueWeapons.push(w); }
+				}
+
+				const options = uniqueWeapons.map(w => `<option value="${w.name}">${w.name}</option>`).join("");
+
+				for (let i = 1; i <= totalMasterySlots; i++) {
+					const select = masteryContainer.querySelector(`#mastery${i}`);
+					const output = masteryContainer.querySelector(`#mastery${i}Mastery`);
+
+					if (!select) continue;
+
+					select.innerHTML += options;
+
+					if (pendingState.weaponMastery[i]?.weapon) {
+						select.value = pendingState.weaponMastery[i].weapon;
+						output.textContent = pendingState.weaponMastery[i].mastery ?? findMastery(pendingState.weaponMastery[i].weapon);
+					}
+
+					select.addEventListener("change", async e => {
+						const weapon = e.target.value;
+						const mastery = findMastery(weapon);
+						output.textContent = mastery;
+						await saveWeaponMastery(i, weapon, mastery);
+					});
+				}
+
+				function findMastery(weaponClass) {
+					const w = uniqueWeapons.find(x => x.name === weaponClass);
+					return w?.mastery ?? "–";
+				}
 			}
-			
-			function findMastery(weaponClass) {
-				const w = uniqueWeapons.find(x => x.name === weaponClass);
-				return w?.mastery ?? "–";
-			}
-			
-			
+
+			// Initial render
+			renderWeaponMasteryUI();
+
+			// Expose an imperative re-render for rest handlers or external triggers
+			try {
+				window.__char_rebuildHandlers[__char_file_key].rebuildWeaponMastery = function() {
+					try { renderWeaponMasteryUI(); } catch (e) { console.error('renderWeaponMasteryUI failed:', e); }
+				};
+			} catch (e) {}
+
 		}
 	} catch (e) {
 		console.error("Mastery Tab Failed:", e);

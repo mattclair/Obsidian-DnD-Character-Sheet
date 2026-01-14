@@ -79,9 +79,9 @@ conditions:
     Level: false
 health:
   max: 35
-  current: 35
+  current: 28
   temp: 0
-  maxTmp: 0
+  maxTmp: 5
 Luck: {}
 Hit_Dice:
   Druid_d8-1: true
@@ -227,14 +227,10 @@ Wild_Shape:
   wild_shape-1: true
   wild_shape-2: true
 mastery:
-wild-shape-options:
-  - Badger
-  - Crab
-  - Draft Horse
-  - Warhorse
-  - Giant Octopus
+wild-shape-options: []
 purse: 1615.5
 BASE_FOLDER: 3. Mechanics/CLI
+weapon_mastery: {}
 ---
 ```dataviewjs
 // Load full cahracter sheet

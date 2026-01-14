@@ -77,9 +77,9 @@ conditions:
     Level: false
 health:
   max: 35
-  current: 35
-  temp: 0
-  maxTmp: 0
+  current: 23
+  temp: 12
+  maxTmp: 12
 Luck:
 Hit_Dice:
   Ranger_d10-1: true
@@ -188,6 +188,10 @@ Bastion:
       hirelings: 2
       order: None
       status: operational
+weapon_mastery:
+  "1":
+    weapon: Spear
+    mastery: Sap
 ---
 
 
