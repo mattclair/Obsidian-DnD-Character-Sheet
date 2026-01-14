@@ -68,7 +68,7 @@ health:
   max: 34
   current: 34
   temp: 0
-  maxTmp: 10
+  maxTmp: 0
 Luck: {}
 Hit_Dice:
   Rogue_d8-1: true

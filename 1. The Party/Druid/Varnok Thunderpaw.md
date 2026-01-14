@@ -57,31 +57,16 @@ Stat_Bonus:
     value: 2 + 2
     source: Shield and Studded Leather Armor
 conditions:
-  blinded: false
-  charmed: false
-  concentrating: false
-  deafened: false
-  frightened: false
-  grappled: false
   heroic_inspiration: false
-  incapacitated: false
-  invisible: false
-  mage_armor: false
-  paralyzed: false
-  petrified: false
-  poisoned: false
-  prone: false
-  restrained: false
-  stunned: false
-  unconscious: false
   exhaustion:
     count: 0
     Level: false
+  concentration_spell: ""
 health:
   max: 35
-  current: 28
+  current: 35
   temp: 0
-  maxTmp: 5
+  maxTmp: 0
 Luck: {}
 Hit_Dice:
   Druid_d8-1: true

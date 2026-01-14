@@ -64,13 +64,13 @@ window.__char_rebuildHandlers = window.__char_rebuildHandlers || {};
 window.__char_rebuildHandlers[__char_file_key] = window.__char_rebuildHandlers[__char_file_key] || {};
 
 async function commitPendingChanges() {
-  const file = app.workspace.getActiveFile();
-  if (!file) return;
+	const file = app.workspace.getActiveFile();
+	if (!file) return;
 
-  await app.fileManager.processFrontMatter(file, fm => {
-    fm.health ??= {};
+	await app.fileManager.processFrontMatter(file, fm => {
+		fm.health ??= {};
 
-    Object.assign(fm.health, structuredClone(pendingState.health));
+		Object.assign(fm.health, structuredClone(pendingState.health));
 
 		// Persist inventory if present in pendingState
 		if (pendingState.inventory !== undefined) {
@@ -92,12 +92,13 @@ async function commitPendingChanges() {
 			fm.weapon_mastery = structuredClone(pendingState.weaponMastery);
 		}
 
-		// future:
-		// fm.conditions = structuredClone(pendingState.conditions);
-		// fm.spellSlots = structuredClone(pendingState.spellSlots);
-  });
-  clearDirty();
-  new Notice("All changes saved", 3000);
+		// Persist conditions if present in pendingState
+		if (pendingState.conditions !== undefined) {
+			fm.conditions = structuredClone(pendingState.conditions);
+		}
+	});
+	clearDirty();
+	new Notice("All changes saved", 3000);
 }
 
 
@@ -350,7 +351,7 @@ function formatSpellName(name) {
 // ==================================================================    Character Header
 // ======================================================================================
 //const c = dv.current();
-const condObj = c.conditions ?? {};
+const condObj = pendingState.conditions ?? c.conditions ?? {};
 const concentrationActive = condObj.concentrating === true;
 const borderColor = concentrationActive ? "#950606" : "var(--background-primary-alt)";
 
@@ -593,9 +594,50 @@ if (menuRoot && toggleBtn && !menuRoot.dataset.bound) {
 
 // Ensure UI reflects any persisted dirty state from previous runs
 updateSaveUi();
-
-
 renderHpDisplay();
+
+// Expose a header rebuild handler so conditions/other bits can update without full refresh
+try {
+	window.__char_rebuildHandlers[__char_file_key].rebuildHeader = function() {
+		try {
+			const headerDetails = document.querySelector('.character-header-block .char-details');
+			if (!headerDetails) return;
+
+			const condObjLocal = pendingState.conditions ?? c.conditions ?? {};
+			const activeLocal = [];
+
+			for (const [k, v] of Object.entries(condObjLocal)) {
+				if (k === 'concentrating' && v === true) {
+					const spellName = condObjLocal?.concentration_spell ?? '';
+					if (spellName) activeLocal.push(`Concentrating: ${spellName}`);
+					else activeLocal.push(prettyKey(k));
+					continue;
+				}
+				if (v === true) { activeLocal.push(prettyKey(k)); continue; }
+				if (v === false || v == null) continue;
+				if (typeof v === 'object') {
+					if ('count' in v && Number(v.count) > 0) { activeLocal.push(`${prettyKey(k)} (${v.count})`); continue; }
+					if (v.Level === true) { activeLocal.push(`${prettyKey(k)} (Level)`); continue; }
+					const innerTrue = Object.entries(v).filter(([k2, v2]) => k2 !== 'count' && v2 === true);
+					if (innerTrue.length) { const innerNames = innerTrue.map(([k2]) => prettyKey(k2)).join(', '); activeLocal.push(`${prettyKey(k)} (${innerNames})`); continue; }
+				}
+				if (typeof v === 'number' && v > 0) { activeLocal.push(`${prettyKey(k)} (${v})`); }
+			}
+
+			const condDisplayLocal = activeLocal.length ? activeLocal.join(', ') : 'None';
+
+			// Find the Conditions row in header and update it
+			const child = Array.from(headerDetails.children).find(el => el.textContent && el.textContent.trim().startsWith('Conditions:'));
+			if (child) {
+				child.innerHTML = `<b>Conditions:</b> ${condDisplayLocal}`;
+			}
+
+			// Keep other header UI in sync
+			try { updateSaveUi(); } catch (e) {}
+			try { renderHpDisplay(); } catch (e) {}
+		} catch (err) { console.error('rebuildHeader failed:', err); }
+	};
+} catch (e) {}
 
 
 
@@ -1603,38 +1645,82 @@ longRestBtn.onclick = async () => {
 		});
 	}
 
-	// Reset Conditions
-
-	// === 1. HANDLE EXHAUSTION (LONG REST) ===
-	if (fm.conditions.exhaustion?.Level === true) {
-		const ex = fm.conditions.exhaustion;
-
-		ex.count = Math.max(0, (ex.count ?? 0) - 1);
-
-		if (ex.count === 0) {
-			ex.Level = false;
-		}
-	}
-
-	// === 2. RESET ALL OTHER CONDITIONS ===
-	Object.entries(fm.conditions).forEach(([key, value]) => {
-		if (key === "exhaustion") return;
-
-		if (key.startsWith("heroic_inspiration")) {
-			fm.conditions[key] = (c.species === "Human");
-		} else if (key.startsWith("concentration_spell")) {
-			fm.conditions[key] = "";
-		} else {
-			fm.conditions[key] = false;
-		}
-	});
+	// Conditions are now handled in-memory (pendingState) and persisted on Save
 
 	
 	
 
   });
+	// After processing frontmatter for resources, update conditions in-memory
+	// so UI reflects resets immediately and changes are persisted on Save.
+	try {
+		pendingState.conditions = pendingState.conditions || structuredClone(dv.current().conditions ?? {});
 
-  new Notice("Long Rest Completed!", 3000);
+		// Handle exhaustion decrement
+		if (pendingState.conditions.exhaustion?.Level === true) {
+			const ex = pendingState.conditions.exhaustion;
+			ex.count = Math.max(0, (ex.count ?? 0) - 1);
+			if (ex.count === 0) ex.Level = false;
+		}
+
+		// Reset other conditions
+		Object.keys(pendingState.conditions).forEach(key => {
+			if (key === 'exhaustion') return;
+			if (key.startsWith('heroic_inspiration')) {
+				pendingState.conditions[key] = (c.species === 'Human');
+			} else if (key.startsWith('concentration_spell')) {
+				pendingState.conditions[key] = '';
+			} else {
+				delete pendingState.conditions[key];
+			}
+		});
+
+		markDirty();
+
+		// Update header display immediately
+		try { window.__char_rebuildHandlers?.[__char_file_key]?.rebuildHeader?.(); } catch (e) {}
+
+		// Update condition buttons and active list if the Conditions panel exists
+		try {
+			const panel = document.querySelector('#conditions .panel');
+			if (panel) {
+				const buttonContainer = panel.querySelector('.conditions-buttons');
+				if (buttonContainer) {
+					Array.from(buttonContainer.querySelectorAll('button')).forEach(btn => {
+						const k = btn.dataset?.condKey ?? (btn.textContent || '').toLowerCase().replace(/ /g, '_');
+						const val = pendingState.conditions?.[k] ?? false;
+						btn.style.backgroundColor = val ? 'var(--interactive-accent)' : 'var(--background-modifier-border)';
+					});
+
+					const activeContainer = buttonContainer.previousElementSibling;
+					if (activeContainer) {
+						// Rebuild active list
+						const conditions = pendingState.conditions ?? {};
+						const active = Object.entries(conditions)
+							.filter(([key, val]) => {
+								if (val === true) return true;
+								if (key === 'exhaustion' && typeof val === 'object' && val.Level === true && (val.count ?? 0) > 0) return true;
+								return false;
+							})
+							.map(([key]) => key);
+
+						activeContainer.innerHTML = '';
+						if (active.length) {
+							const items = active.map(key => {
+								const slug = key.toLowerCase().replace(/_/g, '-');
+								const target = `${BASE_FOLDER}/rules/conditions#${slug}`;
+								return dv.fileLink(target, false, key.replace(/_/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase()));
+							});
+							dv.el('ul', items, { container: activeContainer });
+						}
+					}
+				}
+			}
+		} catch (e) { console.error('Failed to update conditions panel after long rest:', e); }
+
+	} catch (e) { console.error('Failed to update pendingState.conditions after long rest:', e); }
+
+	new Notice("Long Rest Completed!", 3000);
 };
 
 updateHpButtons();
@@ -3269,24 +3355,20 @@ document.addEventListener("keydown", (e) => {
 		}
 		
 		async function setConcentrationSpell(spellName) {
-		    const file = app.workspace.getActiveFile();
-		    if (!file) return;
-		
-		    await app.fileManager.processFrontMatter(file, fm => {
-		        if (!fm.conditions) fm.conditions = {};
-		
-		        // Toggle logic:
-		        // If clicking the same spell, clear concentration.
-		        if (fm.conditions.concentration_spell === spellName) {
-		            fm.conditions.concentration_spell = "";
-		            fm.conditions.concentrating = false;
-		        } else {
-		            fm.conditions.concentration_spell = spellName;
-		            fm.conditions.concentrating = true;
-		        }
-		    });
-		
-		    app.commands.executeCommandById("dataview:refresh-views");
+			// Update concentration spell in-memory; persist on Save
+			pendingState.conditions = pendingState.conditions || {};
+			const current = pendingState.conditions.concentration_spell ?? dv.current().conditions?.concentration_spell ?? "";
+			if (current === spellName) {
+				delete pendingState.conditions.concentration_spell;
+				delete pendingState.conditions.concentrating;
+			} else {
+				pendingState.conditions.concentration_spell = spellName;
+				pendingState.conditions.concentrating = true;
+			}
+
+			markDirty();
+			try { window.__char_rebuildHandlers?.[__char_file_key]?.rebuildHeader?.(); } catch (e) {}
+			try { setTimeout(() => { app.commands.executeCommandById("dataview:refresh-views"); }, 50); } catch (e) {}
 		}
 
 
@@ -5142,6 +5224,11 @@ console.log("Rendering TAB: Conditions");
 		// Wait specifically for the Conditions panel to exist in the DOM
 		await waitForElement("#conditions .panel");
 
+		const page = dv.current();
+
+		// Initialize pending conditions from frontmatter if not already present
+		pendingState.conditions = pendingState.conditions || structuredClone(page.conditions ?? {});
+
 		const conditionsTab = tabContainer.querySelector('#conditions');
 		if (!conditionsTab) {
 			console.error("Conditions tab NOT FOUND in local dashboard.");
@@ -5183,7 +5270,10 @@ console.log("Rendering TAB: Conditions");
 		renderActiveConditions(activeConditionsContainer);
 
 		function renderActiveConditions(container) {
-			const conditions = dv.current().conditions ?? {};
+			// Ensure container is cleared to avoid duplicate lists on re-render
+			try { container.innerHTML = ""; } catch (e) {}
+
+			const conditions = pendingState.conditions ?? (dv.current().conditions ?? {});
 
 			const active = Object.entries(conditions)
 				.filter(([key, val]) => {
@@ -5247,6 +5337,7 @@ console.log("Rendering TAB: Conditions");
 				return dv.fileLink(target, false, label);
 			});
 
+			// Render the active list into the cleared container
 			dv.el("ul", items, { container });
 		}
 
@@ -5311,7 +5402,7 @@ console.log("Rendering TAB: Conditions");
 
 			const btn = document.createElement("button");
 
-			const currentVal = dv.current().conditions?.[key] ?? false;
+			const currentVal = pendingState.conditions?.[key] ?? dv.current().conditions?.[key] ?? false;
 
 			btn.textContent = label;
 			btn.style.backgroundColor = currentVal
@@ -5327,41 +5418,38 @@ console.log("Rendering TAB: Conditions");
 				const file = app.vault.getAbstractFileByPath(dv.current().file.path);
 				if (!file) return;
 
-				let togglingOn = false;
+				pendingState.conditions = pendingState.conditions || {};
+				const current = pendingState.conditions[key] ?? dv.current().conditions?.[key] ?? false;
+				let next = !current;
 
-				// === UPDATE CONDITIONS SAFELY ===
-				await app.fileManager.processFrontMatter(file, async fm => {
-					fm.conditions ??= {};
-
-					const current = fm.conditions[key] ?? false;
-					const next = !current;
-					fm.conditions[key] = next;
-					togglingOn = next;
-
-					// === RAGE SPECIAL HANDLING ===
-					if (key === "rage") {
-						if (next) {
-							const entry = Object.entries(fm.Rage ?? {})
-								.find(([_, v]) => v === true);
-							if (!entry) {
-								new Notice("No Rage uses remaining!", 3000);
-								fm.conditions[key] = false;
-								return;
-							}
-							fm.Rage[entry[0]] = false;
-						} 
+				// === RAGE SPECIAL HANDLING ===
+				if (key === "rage" && next) {
+					try {
+						await consumeRageUse(file);
+					} catch (e) {
+						new Notice("No Rage uses remaining!", 3000);
+						next = false;
 					}
+				}
 
-					// === CONCENTRATION CLEANUP ===
-					if (key === "concentrating" && !next) {
-						delete fm.concentration_spell;
-					}
-				});
+				// === CONCENTRATION CLEANUP ===
+				if (key === "concentrating" && !next) {
+					delete pendingState.concentration_spell;
+				}
 
-				// === VISUAL UPDATE ===
-				btn.style.backgroundColor = togglingOn
+				if (next) pendingState.conditions[key] = next;
+				else delete pendingState.conditions[key];
+
+				markDirty();
+
+				// Update button appearance
+				btn.style.backgroundColor = next
 					? "var(--interactive-accent)"
 					: "var(--background-modifier-border)";
+
+				// Refresh active list and header conditions display
+				renderActiveConditions(activeConditionsContainer);
+				try { window.__char_rebuildHandlers?.[__char_file_key]?.rebuildHeader?.(); } catch (e) {}
 			};
 
 			return btn;
@@ -5392,42 +5480,41 @@ console.log("Rendering TAB: Conditions");
 
 		// === Helpers ===
 		async function toggleExhaustion() {
-			const file = app.vault.getAbstractFileByPath(dv.current().file.path);
-			if (!file) return;
+			pendingState.conditions = pendingState.conditions || {};
+			pendingState.conditions.exhaustion = pendingState.conditions.exhaustion || { count: 0, Level: false };
 
-			await app.fileManager.processFrontMatter(file, fm => {
-				fm.conditions ??= {};
-				fm.conditions.exhaustion ??= { count: 0, Level: false };
+			if (pendingState.conditions.exhaustion.Level) {
+				pendingState.conditions.exhaustion.count = 0;
+				pendingState.conditions.exhaustion.Level = false;
+			} else {
+				pendingState.conditions.exhaustion.count = 1;
+				pendingState.conditions.exhaustion.Level = true;
+			}
 
-				if (fm.conditions.exhaustion.Level) {
-					fm.conditions.exhaustion.count = 0;
-					fm.conditions.exhaustion.Level = false;
-				} else {
-					fm.conditions.exhaustion.count = 1;
-					fm.conditions.exhaustion.Level = true;
-				}
-			});
+			// mark dirty and refresh header/buttons
+			markDirty();
+			renderActiveConditions(activeConditionsContainer);
+			try { window.__char_rebuildHandlers?.[__char_file_key]?.rebuildHeader?.(); } catch (e) {}
 		}
 
 		async function changeExhaustion(delta) {
-			const file = app.vault.getAbstractFileByPath(dv.current().file.path);
-			if (!file) return;
+			pendingState.conditions = pendingState.conditions || {};
+			pendingState.conditions.exhaustion = pendingState.conditions.exhaustion || { count: 0, Level: false };
 
-			await app.fileManager.processFrontMatter(file, fm => {
-				fm.conditions ??= {};
-				fm.conditions.exhaustion ??= { count: 0, Level: false };
+			let count = pendingState.conditions.exhaustion.count ?? 0;
+			count += delta;
 
-				let count = fm.conditions.exhaustion.count ?? 0;
-				count += delta;
+			if (count <= 0) {
+				pendingState.conditions.exhaustion.count = 0;
+				pendingState.conditions.exhaustion.Level = false;
+			} else {
+				pendingState.conditions.exhaustion.count = count;
+				pendingState.conditions.exhaustion.Level = true;
+			}
 
-				if (count <= 0) {
-					fm.conditions.exhaustion.count = 0;
-					fm.conditions.exhaustion.Level = false;
-				} else {
-					fm.conditions.exhaustion.count = count;
-					fm.conditions.exhaustion.Level = true;
-				}
-			});
+			markDirty();
+			renderActiveConditions(activeConditionsContainer);
+			try { window.__char_rebuildHandlers?.[__char_file_key]?.rebuildHeader?.(); } catch (e) {}
 		}
 
 		// === Attach events ===

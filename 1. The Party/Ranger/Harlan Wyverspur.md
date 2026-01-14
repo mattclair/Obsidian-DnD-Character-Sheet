@@ -63,14 +63,10 @@ conditions:
   grappled: false
   heroic_inspiration: true
   incapacitated: false
-  invisible: false
   mage_armor: false
-  paralyzed: false
-  petrified: false
   poisoned: false
   prone: false
   restrained: false
-  stunned: false
   unconscious: false
   exhaustion:
     count: 0
