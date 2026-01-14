@@ -96,6 +96,10 @@ async function commitPendingChanges() {
 		if (pendingState.conditions !== undefined) {
 			fm.conditions = structuredClone(pendingState.conditions);
 		}
+		// Persist Bastion if present in pendingState
+		if (pendingState.bastion !== undefined) {
+			fm.Bastion = structuredClone(pendingState.bastion);
+		}
 	});
 	clearDirty();
 	new Notice("All changes saved", 3000);
@@ -5568,13 +5572,18 @@ console.log("Rendering TAB: Bastions");
     // Clear panel if rerendered
     bastionPanel.innerHTML = "";
 
+
     const page = dv.current();
-		const bastion = page.Bastion ?? {
-		name: "",
-		current_day: 0,
-		defenders: 0,
-		facilities: []
-	};
+
+		// Initialize bastion in pendingState from frontmatter if not already present
+		pendingState.bastion = pendingState.bastion || structuredClone(page.Bastion ?? {
+			name: "",
+			current_day: 0,
+			defenders: 0,
+			facilities: []
+		});
+
+		const bastion = pendingState.bastion;
     
 
 	/* ---------------------------
@@ -5606,10 +5615,7 @@ console.log("Rendering TAB: Bastions");
 	}
 
 	async function upgradeFacilitySize(facilityName) {
-		const file = app.vault.getAbstractFileByPath(dv.current().file.path);
-		const bastion = structuredClone(dv.current().Bastion);
-
-		const facility = bastion.facilities.find(f => f.name === facilityName);
+		const facility = (pendingState.bastion.facilities || []).find(f => f.name === facilityName);
 		if (!facility) return;
 
 		const nextSize = getNextFacilitySize(facility.size);
@@ -5617,10 +5623,7 @@ console.log("Rendering TAB: Bastions");
 
 		facility.size = nextSize;
 
-		await app.fileManager.processFrontMatter(file, fm => {
-			fm.Bastion = bastion;
-		});
-
+		markDirty();
 		new Notice(`${facility.name} upgraded to ${nextSize}`);
 		renderBastionsTab();
 	}
@@ -5645,36 +5648,15 @@ console.log("Rendering TAB: Bastions");
 	}
 
 	async function createBasicFacility(name, size) {
-		const page = dv.current();
-		const file = app.vault.getAbstractFileByPath(page.file.path);
-
-		await app.fileManager.processFrontMatter(file, fm => {
-			if (!fm.Bastion) {
-			fm.Bastion = {
-				name: "",
-				current_day: 0,
-				defenders: 0,
-				facilities: []
-			};
-			}
-
-			if (!Array.isArray(fm.Bastion.facilities)) {
-			fm.Bastion.facilities = [];
-			}
-
-			fm.Bastion.facilities.push({
-			name,
-			type: "basic",
-			size,
-			status: "operational",
-			hirelings: 0
-			});
-		});
+		pendingState.bastion = pendingState.bastion || { name: '', current_day: 0, defenders: 0, facilities: [] };
+		pendingState.bastion.facilities = pendingState.bastion.facilities || [];
+		pendingState.bastion.facilities.push({ name, type: 'basic', size, status: 'operational', hirelings: 0 });
+		markDirty();
 	}
 
 
 	function showCreateBasicFacilityModal() {
-		const bastion = dv.current().Bastion;
+		const bastion = pendingState.bastion || dv.current().Bastion;
 		if (!bastion) return;
 
 		const crampedExists = countBasicBySize(bastion, "cramped") >= 1;
@@ -5852,58 +5834,33 @@ console.log("Rendering TAB: Bastions");
 
 
 	async function resolveBastionAttack(losses) {
-		const file = app.vault.getAbstractFileByPath(dv.current().file.path);
-		const bastion = structuredClone(dv.current().Bastion);
+		pendingState.bastion.defenders = Math.max((pendingState.bastion.defenders ?? 0) - losses, 0);
+		pendingState.bastion.defenders = Math.min(pendingState.bastion.defenders, getMaxDefenders(pendingState.bastion));
 
-		// Apply losses
-		bastion.defenders = Math.max(
-			(bastion.defenders ?? 0) - losses,
-			0
-		);
-
-		// Clamp to current capacity (in case barracks were lost)
-		bastion.defenders = Math.min(
-			bastion.defenders,
-			getMaxDefenders(bastion)
-		);
-
-		if (bastion.defenders === 0) {
-			bastion.facilities.forEach(f => {
-				f.status = "inactive";
-			});
+		if (pendingState.bastion.defenders === 0) {
+			(pendingState.bastion.facilities || []).forEach(f => { f.status = 'inactive'; });
 		}
 
-		await app.fileManager.processFrontMatter(file, fm => {
-			fm.Bastion = bastion;
-		});
-
+		markDirty();
 		new Notice(`Bastion attacked! ${losses} defenders lost.`);
 		renderBastionsTab();
 	}
 
 	async function toggleFacilityStatus(facilityName) {
-		const file = app.vault.getAbstractFileByPath(dv.current().file.path);
-		const bastion = structuredClone(dv.current().Bastion);
-
-		const facility = bastion.facilities.find(f => f.name === facilityName);
+		const facility = (pendingState.bastion.facilities || []).find(f => f.name === facilityName);
 		if (!facility) return;
 
-		if (facility.status === "inactive") {
-			// Reactivate
-			facility.status = "operational";
+		if (facility.status === 'inactive') {
+			facility.status = 'operational';
 		} else {
-			// Deactivate + cancel order
-			facility.status = "inactive";
-			facility.order = "None";
+			facility.status = 'inactive';
+			facility.order = 'None';
 			delete facility.order_started_day;
 			delete facility.order_duration;
 			delete facility.order_result;
 		}
 
-		await app.fileManager.processFrontMatter(file, fm => {
-			fm.Bastion = bastion;
-		});
-
+		markDirty();
 		renderBastionsTab();
 	}
 
@@ -6372,89 +6329,49 @@ console.log("Rendering TAB: Bastions");
 		const def = SPECIAL_FACILITIES[name];
 		if (!def) return;
 
-		const page = dv.current();
-		const file = app.vault.getAbstractFileByPath(page.file.path);
-
-		await app.fileManager.processFrontMatter(file, fm => {
-			if (!fm.Bastion) {
-			fm.Bastion = {
-				name: "",
-				current_day: 0,
-				defenders: 0,
-				facilities: []
-			};
-			}
-
-			fm.Bastion.facilities ??= [];
-
-			fm.Bastion.facilities.push({
-			name,
-			type: "special",
-			size: def.size,
-			hirelings: def.hirelings,
-			order: "None",
-			status: "operational"
-			});
-		});
+		pendingState.bastion.facilities = pendingState.bastion.facilities || [];
+		pendingState.bastion.facilities.push({ name, type: 'special', size: def.size, hirelings: def.hirelings, order: 'None', status: 'operational' });
+		markDirty();
 	}
 
 
 
 
 	async function setFacilityOrder(facilityName, order) {
-		const file = dv.current().file.path;
-		const bastion = structuredClone(dv.current().Bastion);
-
-		const facility = bastion.facilities.find(f => f.name === facilityName);
+		const facility = (pendingState.bastion.facilities || []).find(f => f.name === facilityName);
 		if (!facility) return;
 
 		const orderDef = ORDER_OPTIONS[facility.name]?.[order];
 		if (!orderDef) return;
 
 		facility.order = order;
-		facility.order_started_day = bastion.current_day ?? 1;
+		facility.order_started_day = pendingState.bastion.current_day ?? 1;
 		facility.order_duration = orderDef.duration;
 		facility.order_result = orderDef.result;
 
-		await app.fileManager.processFrontMatter(
-			app.vault.getAbstractFileByPath(file),
-			fm => {
-				fm.Bastion = bastion;
-			}
-		);
-	}	
+		markDirty();
+	}
 	
 
 	async function completeOrder(facilityName) {
-		const file = app.vault.getAbstractFileByPath(dv.current().file.path);
-		const bastion = structuredClone(dv.current().Bastion);
-
-		const facility = bastion.facilities.find(f => f.name === facilityName);
+		const facility = (pendingState.bastion.facilities || []).find(f => f.name === facilityName);
 		if (!facility) return;
 
 		// --- Apply order effects ---
-		if (facility.name === "Barrack" && facility.order === "Recruit Bastion Defenders") {
-			const maxDefenders = getMaxDefenders(bastion);
-			bastion.defenders = Math.min(
-				(bastion.defenders ?? 0) + 4,
-				maxDefenders
-			);
+		if (facility.name === 'Barrack' && facility.order === 'Recruit Bastion Defenders') {
+			const maxDefenders = getMaxDefenders(pendingState.bastion);
+			pendingState.bastion.defenders = Math.min((pendingState.bastion.defenders ?? 0) + 4, maxDefenders);
 		}
 
-		// Record result
-		facility.last_result = "Completed";
+		facility.last_result = 'Completed';
 		facility.last_result_note = facility.order_result;
 
-		// Clear active order
-		facility.order = "None";
+		facility.order = 'None';
 		delete facility.order_started_day;
 		delete facility.order_duration;
 		delete facility.order_result;
 
-		await app.fileManager.processFrontMatter(file, fm => {
-			fm.Bastion = bastion;
-		});
-
+		markDirty();
 		new Notice(`${facility.name}: Order completed`);
 		renderBastionsTab();
 	}
@@ -6490,15 +6407,8 @@ console.log("Rendering TAB: Bastions");
 	}
 
 	async function advanceBastionTime(days) {
-		const file = app.vault.getAbstractFileByPath(dv.current().file.path);
-		const bastion = structuredClone(dv.current().Bastion);
-
-		bastion.current_day = (bastion.current_day ?? 1) + days;
-
-		await app.fileManager.processFrontMatter(file, fm => {
-			fm.Bastion = bastion;
-		});
-
+		pendingState.bastion.current_day = (pendingState.bastion.current_day ?? 1) + days;
+		markDirty();
 		renderBastionsTab();
 	}
 
@@ -6583,7 +6493,7 @@ console.log("Rendering TAB: Bastions");
 			return true; // repeatable facilities always allowed
 		});
 
-	if (!page.Bastion) {
+	if (!(page.Bastion || (pendingState.bastion && pendingState.bastion.name))) {
 		const card = bastionPanel.createEl("div", {
 			cls: "bastion-card bastion-empty"
 		});
@@ -6607,24 +6517,10 @@ console.log("Rendering TAB: Bastions");
 		} else {
 			btn.onclick = () => {
 				showBastionNamePicker(async (name) => {
-					const file = app.workspace.getActiveFile();
-					const fm = app.metadataCache.getFileCache(file)?.frontmatter;
-
-					const newFm = {
-						...(fm ?? {}),
-						Bastion: {
-							name,
-							current_day: 0,
-							defenders: 0,
-							facilities: []
-						}
-					};
-
-					await app.fileManager.processFrontMatter(file, f => {
-						Object.assign(f, newFm);
-					});
-
+					pendingState.bastion = { name, current_day: 0, defenders: 0, facilities: [] };
+					markDirty();
 					new Notice(`Bastion "${name}" created`);
+					renderBastionsTab();
 				});
 			};
 		}
