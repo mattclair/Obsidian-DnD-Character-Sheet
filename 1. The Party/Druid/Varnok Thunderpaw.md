@@ -208,6 +208,7 @@ Spells:
       - Water Walk
       - Animal Friendship
       - Speak With The Dead
+      - DoomTide
 Wild_Shape:
   wild_shape-1: true
   wild_shape-2: true

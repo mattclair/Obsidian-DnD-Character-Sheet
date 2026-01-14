@@ -141,6 +141,9 @@ Spells:
       - Druidcraft
     Spells:
       - Disguise Self
+      - DoomTide
+      - Firebolt
+      - Animal Messenger
   Known:
     Cantrips: []
     Spells:
@@ -188,6 +191,10 @@ weapon_mastery:
   "1":
     weapon: Spear
     mastery: Sap
+  "2":
+    weapon: Morningstar
+    mastery: Sap
+wild-shape-options: []
 ---
 
 

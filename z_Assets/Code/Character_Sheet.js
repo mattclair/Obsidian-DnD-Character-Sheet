@@ -3870,24 +3870,42 @@ document.addEventListener("keydown", (e) => {
 		        .replace(/\b\w/g, c => c.toUpperCase());
 		}
 		
+		// Always Prepared checkbox (left of input)
+		const alwaysLabel = document.createElement("label");
+		alwaysLabel.style.marginRight = "8px";
+		const alwaysPreparedCheckbox = document.createElement("input");
+		alwaysPreparedCheckbox.type = "checkbox";
+		alwaysPreparedCheckbox.style.marginRight = "4px";
+		alwaysLabel.appendChild(alwaysPreparedCheckbox);
+		alwaysLabel.appendChild(document.createTextNode("Always Prepared?"));
+
 		// ADD button
 		const addBtn = document.createElement("button");
 		addBtn.textContent = "Add Spell";
 		addBtn.style.padding = "6px 10px";
 		addBtn.onclick = async () => {
-		    const raw = spellInput.value.trim();
-		    if (!raw) return;
-		
-		    const formatted = normalizeSpellName(raw);
+			const raw = spellInput.value.trim();
+			if (!raw) return;
+
+			const formatted = normalizeSpellName(raw);
 			pendingState.spells = pendingState.spells || structuredClone(dv.current().Spells ?? { Prepared: { Cantrips: [], Spells: [] }, Always_Prepared: { Cantrips: [], Spells: [] }, Known: { Cantrips: [], Spells: [] } });
 			const spellsObj = pendingState.spells;
-		
 
-			if (!spellsObj.Known.Spells.some(s => s.toLowerCase() === formatted.toLowerCase())) {
-				spellsObj.Known.Spells.push(formatted);
-				await updateSpellLists(spellsObj);
-				rebuildSpellUI();
-				spellInput.value = "";
+			if (alwaysPreparedCheckbox.checked) {
+				if (!spellsObj.Always_Prepared.Spells.some(s => s.toLowerCase() === formatted.toLowerCase())) {
+					spellsObj.Always_Prepared.Spells.push(formatted);
+					await updateSpellLists(spellsObj);
+					rebuildSpellUI();
+					spellInput.value = "";
+					alwaysPreparedCheckbox.checked = false;
+				}
+			} else {
+				if (!spellsObj.Known.Spells.some(s => s.toLowerCase() === formatted.toLowerCase())) {
+					spellsObj.Known.Spells.push(formatted);
+					await updateSpellLists(spellsObj);
+					rebuildSpellUI();
+					spellInput.value = "";
+				}
 			}
 		};
 		
@@ -3902,17 +3920,30 @@ document.addEventListener("keydown", (e) => {
 			const formatted = normalizeSpellName(raw);
 			pendingState.spells = pendingState.spells || structuredClone(dv.current().Spells ?? { Prepared: { Cantrips: [], Spells: [] }, Always_Prepared: { Cantrips: [], Spells: [] }, Known: { Cantrips: [], Spells: [] } });
 			const spellsObj = pendingState.spells;
-			const list = spellsObj.Known.Spells;
 
-			const idx = list.findIndex(s => s.toLowerCase() === formatted.toLowerCase());
+			// Try removing from Known first
+			const knownList = spellsObj.Known.Spells || [];
+			let idx = knownList.findIndex(s => s.toLowerCase() === formatted.toLowerCase());
 			if (idx !== -1) {
-				list.splice(idx, 1);
+				knownList.splice(idx, 1);
+				await updateSpellLists(spellsObj);
+				rebuildSpellUI();
+				spellInput.value = "";
+				return;
+			}
+
+			// Otherwise, try Always_Prepared
+			const alwaysList = spellsObj.Always_Prepared?.Spells || [];
+			idx = alwaysList.findIndex(s => s.toLowerCase() === formatted.toLowerCase());
+			if (idx !== -1) {
+				alwaysList.splice(idx, 1);
 				await updateSpellLists(spellsObj);
 				rebuildSpellUI();
 				spellInput.value = "";
 			}
 		};
-		// Ensure the input field is visible before buttons
+		// Ensure the input field is visible before buttons (checkbox first)
+		spellInputWrapper.appendChild(alwaysLabel);
 		spellInputWrapper.appendChild(spellInput);
 		spellInputWrapper.appendChild(addBtn);
 		spellInputWrapper.appendChild(removeBtn);
