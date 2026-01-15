@@ -76,10 +76,6 @@ Hit_Dice:
   Rogue_d8-3: true
   Rogue_d8-4: true
   Rogue_d8-5: true
-  Rogue_d8-6: true
-  Rogue_d8-7: true
-  Rogue_d8-8: true
-  Rogue_d8-9: true
 inventory:
   Cloak of Stealth: 1
   Sylvan Talon: 1
@@ -125,7 +121,7 @@ Spells:
 feats:
   - Alert
   - Speedy
-energy_dice:
+Energy_Dice:
   energy_die_1: true
   energy_die_2: true
   energy_die_3: true
@@ -150,6 +146,17 @@ weapon_mastery:
   "2":
     weapon: Dagger
     mastery: Nick
+Bastion:
+  name: ""
+  current_day: 0
+  defenders: 0
+  facilities: []
+Sorcery_Points:
+  sorcery_points-1: false
+  sorcery_points-2: false
+  sorcery_points-3: false
+  sorcery_points-4: false
+  sorcery_points-5: false
 ---
 ```dataviewjs
 // Load full cahracter sheet

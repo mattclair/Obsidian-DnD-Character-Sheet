@@ -74,11 +74,6 @@ Hit_Dice:
   Druid_d8-3: true
   Druid_d8-4: true
   Druid_d8-5: true
-  Ranger_d10-1: true
-  Ranger_d10-2: true
-  Ranger_d10-3: true
-  Ranger_d10-4: true
-  Ranger_d10-5: true
 inventory:
   HandAxe: 1
   Javelin: 4
@@ -86,7 +81,7 @@ inventory:
   Rope: 1
   Bedroll: 1
   Riding Horse: 1
-  Rations: 9
+  Rations: 10
   Climbers Kit: 1
   Tinker Tools: 1
   Woodcarvers Tools: 1
@@ -211,12 +206,17 @@ Spells:
       - DoomTide
 Wild_Shape:
   wild_shape-1: true
-  wild_shape-2: true
+  wild_shape-2: false
 mastery:
 wild-shape-options: []
 purse: 1615.5
 BASE_FOLDER: 3. Mechanics/CLI
 weapon_mastery: {}
+Bastion:
+  name: ""
+  current_day: 0
+  defenders: 0
+  facilities: []
 ---
 ```dataviewjs
 // Load full cahracter sheet

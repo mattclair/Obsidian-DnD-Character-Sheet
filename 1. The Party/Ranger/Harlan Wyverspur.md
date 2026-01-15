@@ -73,9 +73,9 @@ conditions:
     Level: false
 health:
   max: 35
-  current: 23
-  temp: 12
-  maxTmp: 12
+  current: 35
+  temp: 0
+  maxTmp: 0
 Luck:
 Hit_Dice:
   Ranger_d10-1: true
@@ -100,10 +100,11 @@ inventory:
   Cloak of Billowing: 1
   Sack: 8
   Boots of Striding and Springing: 1
+  Rations: 2
 attuned:
   - Cloak of Billowing
 ammunition:
-  arrow: d12
+  arrow: d10
 spell_slot:
   druid: true
   level_1_1: true
@@ -144,6 +145,7 @@ Spells:
       - DoomTide
       - Firebolt
       - Animal Messenger
+      - Mage Hand
   Known:
     Cantrips: []
     Spells:
@@ -187,13 +189,25 @@ Bastion:
       hirelings: 2
       order: None
       status: operational
+    - name: Armory
+      type: special
+      size: roomy
+      hirelings: 1
+      order: None
+      status: operational
+    - name: Storehouse
+      type: special
+      size: roomy
+      hirelings: 1
+      order: None
+      status: operational
 weapon_mastery:
   "1":
-    weapon: Spear
-    mastery: Sap
+    weapon: Club
+    mastery: Slow
   "2":
-    weapon: Morningstar
-    mastery: Sap
+    weapon: Scimitar
+    mastery: Nick
 wild-shape-options: []
 ---
 

@@ -1,5 +1,5 @@
 ---
-Level: 1
+Level: 15
 STR: 
 DEX: 
 CON: 
@@ -7,7 +7,7 @@ INT:
 WIS: 
 CHA: 
 name: 
-dndClass: Barbarian
+dndClass: Bard
 subclass:
 background: Wayfarer
 species: Human
@@ -78,6 +78,8 @@ Eldritch_Invocations:
 mastery:
 purse: 20
 BASE_FOLDER: 3. Mechanics/CLI
+Bardic_Inspiration:
+  bardic_insp_1: true
 ---
 ```dataviewjs
 // Load full cahracter sheet

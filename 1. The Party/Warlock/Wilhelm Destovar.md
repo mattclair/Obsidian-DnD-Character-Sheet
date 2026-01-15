@@ -51,23 +51,7 @@ Stat_Bonus:
     value: 1
     source: 1 Rod of the Pact Keeper
 conditions:
-  blinded: false
-  charmed: false
-  concentrating: true
-  deafened: false
-  frightened: false
-  grappled: false
   heroic_inspiration: false
-  incapacitated: false
-  invisible: false
-  mage_armor: true
-  paralyzed: false
-  petrified: false
-  poisoned: false
-  prone: false
-  restrained: false
-  stunned: false
-  unconscious: false
   exhaustion:
     count: 0
     Level: false
@@ -207,6 +191,7 @@ Bastion:
       order_duration: 7
       order_result: A blank book is carefully prepared and ready for use.
 BASE_FOLDER: 3. Mechanics/CLI
+weapon_mastery: {}
 ---
 ```dataviewjs
 // Load full cahracter sheet

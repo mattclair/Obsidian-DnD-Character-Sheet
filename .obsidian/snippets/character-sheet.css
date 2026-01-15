@@ -329,10 +329,57 @@
   animation: pulse 1.2s infinite;
 }
 
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
+@keyframes dirty-pulse {
+  0%   { transform: scale(1); opacity: 1; }
+  70%  { transform: scale(1.6); opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.char-menu-toggle.dirty::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-accent);
+  animation: dirty-pulse 1.5s infinite;
+}
+
+/* Ensure positioning context */
+.char-menu-toggle {
+  position: relative;
+}
+
+/* Dirty badge */
+.char-menu-toggle.dirty::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  right: 4px;
+
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+
+  background-color: var(--text-accent);
+  box-shadow: 0 0 0 2px var(--background-primary);
+
+  pointer-events: none;
+}
+
+.char-menu-toggle.dirty::after {
+  content: "!";
+  font-size: 10px;
+  font-weight: bold;
+  color: white;
+  background: var(--text-error);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
 }
 
 
@@ -365,7 +412,7 @@
 .mb-input-wrapper.cssnumber > input {
   width: 10ch;          /* fits 2–3 digits comfortably */
   text-align: center;  /* keeps the number visually centered */
-  padding: 2px 4px;    /* minimal padding for compactness */
+  padding: 2px 4px;    /* minimal padding for compactness */ 
   font-size: 0.9em;    /* slightly smaller text for subtle integration */
 }
 
@@ -557,6 +604,37 @@
   background-color: rgba(100, 200, 255, 0.15);
 }
 
+
+
+/* toggles styled like meta-bind */
+.char-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  cursor: pointer;
+}
+
+.char-toggle input[type="checkbox"] {
+  accent-color: var(--text-accent);
+  cursor: pointer;
+}
+
+.resource-toggle-row {
+  display: flex;
+  gap: 0.4em;
+  flex-wrap: wrap;
+}
+
+.resource-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+  cursor: pointer;
+}
+
+.resource-toggle input {
+  accent-color: var(--text-accent);
+}
 
 
 

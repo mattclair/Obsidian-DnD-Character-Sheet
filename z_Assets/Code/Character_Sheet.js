@@ -87,6 +87,11 @@ async function commitPendingChanges() {
 			fm["wild-shape-options"] = structuredClone(pendingState.wildShapeOptions);
 		}
 
+		// Persist Wild Shape uses if present in pendingState
+		if (pendingState.Wild_Shape !== undefined) {
+			fm.Wild_Shape = structuredClone(pendingState.Wild_Shape);
+		}
+
 		// Persist weapon mastery if present in pendingState
 		if (pendingState.weaponMastery !== undefined) {
 			fm.weapon_mastery = structuredClone(pendingState.weaponMastery);
@@ -96,9 +101,95 @@ async function commitPendingChanges() {
 		if (pendingState.conditions !== undefined) {
 			fm.conditions = structuredClone(pendingState.conditions);
 		}
+
 		// Persist Bastion if present in pendingState
 		if (pendingState.bastion !== undefined) {
 			fm.Bastion = structuredClone(pendingState.bastion);
+		}
+
+		// Persist Luck if present in pendingState
+		if (pendingState.Luck !== undefined) {
+			fm.Luck = structuredClone(pendingState.Luck);
+		}
+
+		// Persist Feats if present in pendingState
+		if (pendingState.Feats !== undefined) {
+			fm.Feats = structuredClone(pendingState.Feats);
+		}
+
+		// Persist Rage if present in pendingState
+		if (pendingState.Rage !== undefined) {
+			fm.Rage = structuredClone(pendingState.Rage);
+		}
+
+		// Persist Bardic Inspiration if present in pendingState
+		if (pendingState.Bardic_Inspiration !== undefined) {
+			fm.Bardic_Inspiration = structuredClone(pendingState.Bardic_Inspiration);
+		}
+
+		// Persist Channel Divinity if present in pendingState
+		if (pendingState.Channel_Divinity !== undefined) {
+			fm.Channel_Divinity = structuredClone(pendingState.Channel_Divinity);
+		}
+
+		// Persist Second Wind if present in pendingState
+		if (pendingState.Second_Wind !== undefined) {
+			fm.Second_Wind = structuredClone(pendingState.Second_Wind);
+		}
+
+		// Persist Action Surge if present in pendingState
+		if (pendingState.Action_Surge !== undefined) {
+			fm.Action_Surge = structuredClone(pendingState.Action_Surge);
+		}
+
+		// Persist Superiority Dice if present in pendingState
+		if (pendingState.Superiority_Dice !== undefined) {
+			fm.Superiority_Dice = structuredClone(pendingState.Superiority_Dice);
+		}
+
+		// Persist PSI Energy Dice if present in pendingState
+		if (pendingState.PSIenergy_dice !== undefined) {
+			fm.PSIenergy_dice = structuredClone(pendingState.PSIenergy_dice);
+		}
+
+		// Persist Focus Points if present in pendingState
+		if (pendingState.Focus_Points !== undefined) {
+			fm.Focus_Points = structuredClone(pendingState.Focus_Points);
+		}
+
+		// Persist Energy Dice if present in pendingState
+		if (pendingState.Energy_Dice !== undefined) {
+			fm.Energy_Dice = structuredClone(pendingState.Energy_Dice);
+		}
+
+		// Persist Sorcery Points if present in pendingState
+		if (pendingState.Sorcery_Points !== undefined) {
+			fm.Sorcery_Points = structuredClone(pendingState.Sorcery_Points);
+		}
+
+		// Persist Magical Cunning if present in pendingState
+		if (pendingState.Magical_Cunning !== undefined) {
+			fm.Magical_Cunning = structuredClone(pendingState.Magical_Cunning);
+		}
+
+		// Persist Adrenaline Rush if present in pendingState
+		if (pendingState.Adrenaline_Rush !== undefined) {
+			fm.Adrenaline_Rush = structuredClone(pendingState.Adrenaline_Rush);
+		}
+
+		// Persist Relentless Endurance if present in pendingState
+		if (pendingState.Relentless_Endurance !== undefined) {
+			fm.Relentless_Endurance = structuredClone(pendingState.Relentless_Endurance);
+		}
+
+		// Persist Hit Dice if present in pendingState
+		if (pendingState.Hit_Dice !== undefined) {
+			fm.Hit_Dice = structuredClone(pendingState.Hit_Dice);
+		}
+
+		// Persist Death Saves if present in pendingState
+		if (pendingState.Death_Saves !== undefined) {
+			fm.Death_Saves = structuredClone(pendingState.Death_Saves);
 		}
 	});
 	clearDirty();
@@ -154,18 +245,68 @@ function addResourceToggles({
   parent,
   label,
   namespace,
-  prefix,
-  count,
-  suffix = ""
+  prefix = "",
+  count = 1,
+  suffix = "",
+  key = null,
+  showIndex = true,
+  single = false
 }) {
+  // Ensure namespace exists
+  pendingState[namespace] ??= structuredClone(c[namespace] ?? {});
+
   const wrap = parent.createEl("div", { cls: "char-header-block" });
   wrap.createEl("strong", { text: label });
-  const arr = [...Array(count).keys()];
-  wrap.appendChild(
-    dv.el("span",
-      arr.map((_, i) => `\`INPUT[toggle:${namespace}.${prefix}${i+1}${suffix}]\``).join(" ")
-    )
-  );
+
+  const togglesWrap = wrap.createDiv({ cls: "resource-toggle-row" });
+
+  // ---- SINGLE BOOLEAN MODE (Heroic Inspiration, Rage, etc.) ----
+  if (single) {
+    const finalKey = key ?? prefix;
+
+    if (pendingState[namespace][finalKey] === undefined) {
+      pendingState[namespace][finalKey] = false;
+    }
+
+    const labelEl = togglesWrap.createEl("label", {
+      cls: "resource-toggle"
+    });
+
+    const input = labelEl.createEl("input", { type: "checkbox" });
+    input.checked = !!pendingState[namespace][finalKey];
+
+    input.addEventListener("change", () => {
+      pendingState[namespace][finalKey] = input.checked;
+      markDirty();
+    });
+
+    return;
+  }
+
+  // ---- MULTI-USE MODE (Wild Shape, Luck, etc.) ----
+  for (let i = 1; i <= count; i++) {
+    const finalKey = `${prefix}${i}${suffix}`;
+
+    if (pendingState[namespace][finalKey] === undefined) {
+      pendingState[namespace][finalKey] = false;
+    }
+
+    const labelEl = togglesWrap.createEl("label", {
+      cls: "resource-toggle"
+    });
+
+    const input = labelEl.createEl("input", { type: "checkbox" });
+    input.checked = !!pendingState[namespace][finalKey];
+
+    input.addEventListener("change", () => {
+      pendingState[namespace][finalKey] = input.checked;
+      markDirty();
+    });
+
+    if (showIndex) {
+      labelEl.appendText(` ${i}`);
+    }
+  }
 }
 
 // Helper: Get level of a specific class (e.g., "Rogue")
@@ -435,23 +576,16 @@ const hpPercent = Math.max(0, Math.min(100, (currentHP / maxHP) * 100));
 const tempPercent = Math.max(0, Math.min(100, (tempHP / maxTemp) * 100));
 
 function updateMenuDirtyState() {
-  const icon = document.querySelector(".menu-icon");
-  const dirtyIndicator = document.querySelector(".dirty-indicator");
-  const saveBtn = document.querySelector(".save-btn");
+  const btn = root.querySelector(".char-menu-toggle");
+  const dirtyIndicator = root.querySelector(".dirty-indicator");
+  const saveBtn = root.querySelector(".save-btn");
 
-  if (!icon) return;
+  if (!btn) return;
 
-  if (isDirty) {
-    icon.textContent = "☰ !";
-    icon.classList.add("dirty");
-    dirtyIndicator.hidden = false;
-    saveBtn.disabled = false;
-  } else {
-    icon.textContent = "☰";
-    icon.classList.remove("dirty");
-    dirtyIndicator.hidden = true;
-    saveBtn.disabled = true;
-  }
+  btn.classList.toggle("dirty", isDirty);
+
+  if (dirtyIndicator) dirtyIndicator.hidden = !isDirty;
+  if (saveBtn) saveBtn.disabled = !isDirty;
 }
 
 function resolveImageSrc(path) {
@@ -599,6 +733,7 @@ if (menuRoot && toggleBtn && !menuRoot.dataset.bound) {
 // Ensure UI reflects any persisted dirty state from previous runs
 updateSaveUi();
 renderHpDisplay();
+updateMenuDirtyState();
 
 // Expose a header rebuild handler so conditions/other bits can update without full refresh
 try {
@@ -653,12 +788,13 @@ try {
 const bottomBar = root.createEl("div", { cls: "char-header-bottom" });
 
 /* ===== Heroic Inspiration ===== */
-const inspWrap = bottomBar.createEl("div", { cls: "char-header-block" });
-inspWrap.createEl("strong", { text: "Inspiration:" });
-
-inspWrap.appendChild(
-  dv.el("span", `\`INPUT[toggle:conditions.heroic_inspiration]\``)
-);
+addResourceToggles({
+  parent: bottomBar,
+  label: "Heroic Inspiration",
+  namespace: "conditions",
+  key: "heroic_inspiration",
+  single: true
+});
 
 // Only display Luck Points if character has the Lucky feat
 if (feats.includes("Lucky")) {
@@ -667,7 +803,8 @@ if (feats.includes("Lucky")) {
 	  label: "Luck:",
 	  namespace: "Luck",
 	  prefix: "luck_point_",
-	  count: pb
+	  count: pb,
+	  showIndex: false
 	});
 }
 
@@ -678,7 +815,8 @@ if (feats.includes("Mage Slayer")) {
 	  label: "Mage Slayer:",
 	  namespace: "Mage_Slayer",
 	  prefix: "guarded_mind_",
-	  count: 1
+	  count: 1,
+	  showIndex: false
 	});
 }
 
@@ -689,7 +827,8 @@ if (feats.includes("Ritual Caster")) {
 	  label: "Quick Ritual:",
 	  namespace: "Ritual_Caster",
 	  prefix: "quick_ritual_",
-	  count: 1
+	  count: 1,
+	  showIndex: false
 	});
 }
 
@@ -713,57 +852,44 @@ if (hasBarbarian) {
 	  label: "Rage:",
 	  namespace: "Rage",
 	  prefix: "rage-",
-	  count: rageFromLevel(barbarianLevel)
+	  count: rageFromLevel(barbarianLevel),
+	  showIndex: false
 	});
 }
 
 // Only display Bardic Inspiration if character is a Bard
 if (hasBard) {
-	let biDie = CHA_MOD
-	if (biDie <= 0) { biDie = 1 };
-  function bInspFromLevel(lvl) {
-	  if (lvl >= 15) return [biDie, "d12"];
-	  if (lvl >= 9) return [biDie, "d10"];
-	  if (lvl >= 4) return [biDie, "d8"];
-	  return [biDie, "d6"];
-	}
-	const bardWrap= bottomBar.createEl("div", { cls: "char-header-block" });
-	const [bi, value] = bInspFromLevel(bardLevel);
-	
-	bardWrap.createEl("strong", { text: "Bardic Inspiration:" });
-	
-	const bardicInspVal = `${value}`;
-	bardWrap.createEl("span", { text: bardicInspVal });
-	
-	const biArr = [...Array(bi).keys()];
-	bardWrap.appendChild(dv.el("span",
-	  biArr.map((e,i) => `\`INPUT[toggle:Bardic-Insp.bardic_insp_die_${i + 1}]\``).join(" ")
-		));
-}
 
-// Only display Channel Divinity if character is a Cleric
+  let biUses = Math.max(1, CHA_MOD);
 
-if (clericLevel >= 2) {
-  function cdFromLevel(lvl) {
-    if (lvl >= 17) return 4;
-    if (lvl >= 6) return 3;
-    if (lvl >= 2) return 2;
-    return 0;
+  function bardicDieFromLevel(lvl) {
+    if (lvl >= 15) return "d12";
+    if (lvl >= 9) return "d10";
+    if (lvl >= 4) return "d8";
+    return "d6";
   }
-  
-  let cdText = "Channel Divinity";
-  if (hasPaladin) cdText += " (Cleric)";
-  const cdWrap = bottomBar.createEl("div", { cls: "char-header-block" });
-  cdWrap.createEl("strong", { text: cdText });
 
-  const cdArr = [...Array(cdFromLevel(clericLevel)).keys()];
+  const bardWrap = bottomBar.createEl("div", { cls: "char-header-block" });
 
-  cdWrap.appendChild(
-    dv.el("span",
-      cdArr.map((e,i) => `\`INPUT[toggle:Channel_Divinity.divinity-${i+1}]\``).join(" ")
-    )
-  );
+  bardWrap.createEl("strong", { text: "Bardic Inspiration:" });
+
+  // Die value (shown once)
+  bardWrap.createEl("span", {
+    cls: "bardic-die",
+    text: bardicDieFromLevel(bardLevel)
+  });
+
+  addResourceToggles({
+    parent: bardWrap,
+    label: "",
+    namespace: "Bardic_Inspiration",
+    prefix: "bardic_insp_",
+    count: biUses,
+    showIndex: false
+  });
 }
+
+
 
 // Only display Wild Shape if character is a Druid
 if (hasDruid) {
@@ -775,13 +901,14 @@ if (hasDruid) {
     return 0;
   }
 
-  addResourceToggles({
-	  parent: bottomBar,
-	  label: "Wild Shape:",
-	  namespace: "Wild_Shape",
-	  prefix: "wild_shape-",
-	  count: wsFromLevel(druidLevel)
-	});
+	addResourceToggles({
+	parent: bottomBar,
+	label: "Wild Shape:",
+	namespace: "Wild_Shape",
+	prefix: "wild_shape-",
+	count: wsFromLevel(druidLevel),
+	showIndex: false   // 👈 keys are numbered, UI is not
+});
 }
 
 // Only display Second Wind if character is a Fighter
@@ -798,7 +925,8 @@ if (hasFighter) {
 	  label: "Second Wind:",
 	  namespace: "Second_Wind",
 	  prefix: "second_wind-",
-	  count: swFromLevel(fighterLevel)
+	  count: swFromLevel(fighterLevel),
+	  showIndex: false
 	});
 
     if( fighterLevel >= 2 ) {
@@ -809,59 +937,69 @@ if (hasFighter) {
 		label: "Action Surge:",
 		namespace: "Action_Surge",
 		prefix: "action_surge-",
-		count: swFromLevel(ammount)
+		count: swFromLevel(ammount),
+		showIndex: false
 		});
 	}
 	
 }
 
-// Only  Superiority Die if character is a Champion Fighter
-if (subclass.includes("Champion")) {
+// Only Superiority Dice if character is a Battle Master Fighter
+if (subclass.includes("Battle Master")) {
 
   function supDieFromLevel(lvl) {
-	  if (lvl >= 15)  return [7, "d8"];
-	  if (lvl >= 7)  return [5, "d8"];
-	  return [4, "d8"];
-	}
+    if (lvl >= 15) return [7, "d8"];
+    if (lvl >= 7)  return [5, "d8"];
+    return [4, "d8"];
+  }
 
-  const supWrap= bottomBar.createEl("div", { cls: "char-header-block" });
-	const [sd, value] = supDieFromLevel(fighterLevel);
-	
+  const supWrap = bottomBar.createEl("div", { cls: "char-header-block" });
+
+  const [sd, value] = supDieFromLevel(fighterLevel);
+
   supWrap.createEl("strong", { text: "Superiority Dice:" });
+  supWrap.createEl("span", { text: `${sd} × ${value}` });
 
-  const supDiceVal = `${sd} × ${value}`;
-	supWrap.createEl("span", { text: supDiceVal });
-
-  const sdArr = [...Array(sd).keys()];
-	supWrap.appendChild(dv.el("span",
-	  sdArr.map((e,i) => `\`INPUT[toggle:Superiority_dice.superiority_die_${i + 1}]\``).join(" ")
-		));;
+  addResourceToggles({
+    parent: supWrap,
+    label: "",
+    namespace: "Superiority_dice",
+    prefix: "superiority_die_",
+    count: sd,
+    showIndex: false
+  });
 }
 
-// Only display Energy Dice Dice if character is a Psi Warrior Fighter
+// Only display Energy Dice if character is a Psi Warrior Fighter
 if (subclass.includes("Psi Warrior")) {
+
   function pwenergyDieFromLevel(lvl) {
-	  if (lvl >= 17) return [12, "d12"];
-	  if (lvl >= 13) return [10, "d10"];
-	  if (lvl >= 11) return [8, "d10"];
-	  if (lvl >= 9)  return [8, "d8"];
-	  if (lvl >= 5)  return [6, "d8"];
-	  if (lvl >= 3)  return [4, "d6"];
-	  return [0, "d6"];
-	}
-	
-	const pwWrap= bottomBar.createEl("div", { cls: "char-header-block" });
-	const [pwed, value] = pwenergyDieFromLevel(fighterLevel);
-	
-	pwWrap.createEl("strong", { text: "Energy Dice:" });
-	
-	const pwenergyDiceVal = `(${value})`;
-	pwWrap.createEl("span", { text: pwenergyDiceVal });
-	
-	const pwArr = [...Array(pwed).keys()];
-	pwWrap.appendChild(dv.el("span",
-	  pwArr.map((e,i) => `\`INPUT[toggle:PSIenergy_dice.psienergy_die_${i + 1}]\``).join(" ")
-		));
+    if (lvl >= 17) return [12, "d12"];
+    if (lvl >= 13) return [10, "d10"];
+    if (lvl >= 11) return [8,  "d10"];
+    if (lvl >= 9)  return [8,  "d8"];
+    if (lvl >= 5)  return [6,  "d8"];
+    if (lvl >= 3)  return [4,  "d6"];
+    return [0, "d6"];
+  }
+
+  const pwWrap = bottomBar.createEl("div", { cls: "char-header-block" });
+
+  const [pwed, value] = pwenergyDieFromLevel(fighterLevel);
+
+  pwWrap.createEl("strong", { text: "Energy Dice:" });
+  pwWrap.createEl("span", { text: `(${value})` });
+
+  if (pwed > 0) {
+    addResourceToggles({
+      parent: pwWrap,
+      label: "",
+      namespace: "PSIenergy_dice",
+      prefix: "psienergy_die_",
+      count: pwed,
+      showIndex: false
+    });
+  }
 }
 
 // Only display Focus Points if character is a Monk
@@ -878,32 +1016,57 @@ if (hasMonk) {
 	  label: "Focus Points:",
 	  namespace: "Focus_Points",
 	  prefix: "focus_points-",
-	  count: fpFromLevel(monkLevel)
+	  count: fpFromLevel(monkLevel),
+	  showIndex: false
 	});
 }
 
-// Only display Channel Divinity if character is a Paladin
-if (paladinLevel >= 3) {
-
-  function paladinCDFromLevel(lvl) {
-    if (lvl >= 11) return 3;
-    if (lvl >= 3) return 2;
+// Combined Channel Divinity for Cleric and Paladin
+function addChannelDivinityToggles({ parent, clericLevel, paladinLevel, hasCleric, hasPaladin }) {
+  // Determine total CD uses
+  function clericCD(lvl) {
+    if (lvl >= 17) return 4;
+    if (lvl >= 6)  return 3;
+    if (lvl >= 2)  return 2;
     return 0;
   }
-  
+
+  function paladinCD(lvl) {
+    if (lvl >= 11) return 3;
+    if (lvl >= 3)  return 2;
+    return 0;
+  }
+
+  const totalCD = (hasCleric ? clericCD(clericLevel) : 0) +
+                  (hasPaladin ? paladinCD(paladinLevel) : 0);
+
+  if (totalCD <= 0) return; // nothing to display
+
   let cdText = "Channel Divinity";
-  if (hasCleric) cdText += " (Paladin)";
-  const cdWrap = bottomBar.createEl("div", { cls: "char-header-block" });
+  if (hasCleric && hasPaladin) cdText += " (Cleric + Paladin)";
+  else if (hasCleric) cdText += " (Cleric)";
+  else if (hasPaladin) cdText += " (Paladin)";
+
+  const cdWrap = parent.createEl("div", { cls: "char-header-block" });
   cdWrap.createEl("strong", { text: cdText });
 
-  const cdArr = [...Array(paladinCDFromLevel(paladinLevel)).keys()];
-
-  cdWrap.appendChild(
-    dv.el("span",
-      cdArr.map((e,i) => `\`INPUT[toggle:Channel_Divinity.divinity-${i+1}]\``).join(" ")
-    )
-  );
+  addResourceToggles({
+    parent: cdWrap,
+    label: "",
+    namespace: "Channel_Divinity",
+    prefix: "divinity-",
+    count: totalCD,
+    showIndex: false
+  });
 }
+addChannelDivinityToggles({
+  parent: bottomBar,
+  clericLevel: clericLevel,
+  paladinLevel: paladinLevel,
+  hasCleric: hasCleric,
+  hasPaladin: hasPaladin
+});
+
 
 // Only  Display Dreadful Strike if character is a Gloom Stalker Ranger
 if (subclass.includes("Gloom Stalker" )) {
@@ -913,34 +1076,41 @@ if (subclass.includes("Gloom Stalker" )) {
 	  label: "Dreadful Strike:",
 	  namespace: "Dreadful_Strike",
 	  prefix: "dreadful_strike-",
-	  count: WIS_MOD
+	  count: WIS_MOD,
+	  showIndex: false
 	});
 }
 
-// Only display Soul Knife Dice if character is a Soul Knife Rogue
-if (subclass.includes("Soulknife" )) {
+// Only display Energy Dice if character is a Soul Knife Rogue
+if (subclass.includes("Soulknife")) {
+
   function energyDieFromLevel(lvl) {
-	  if (lvl >= 17) return [12, "d12"];
-	  if (lvl >= 13) return [10, "d10"];
-	  if (lvl >= 11) return [8, "d10"];
-	  if (lvl >= 9)  return [8, "d8"];
-	  if (lvl >= 5)  return [6, "d8"];
-	  if (lvl >= 3)  return [4, "d6"];
-	  return [0, "d6"];
-	}
-	
-	const SkWrap= bottomBar.createEl("div", { cls: "char-header-block" });
-	const [ed, value] = energyDieFromLevel(rogueLevel);
-	
-	SkWrap.createEl("strong", { text: "Energy Dice:" });
-	
-	const energyDiceVal = `(${value})`;
-	SkWrap.createEl("span", { text: energyDiceVal });
-	
-	const edArr = [...Array(ed).keys()];
-	SkWrap.appendChild(dv.el("span",
-	  edArr.map((e,i) => `\`INPUT[toggle:energy_dice.energy_die_${i + 1}]\``).join(" ")
-		));
+    if (lvl >= 17) return [12, "d12"];
+    if (lvl >= 13) return [10, "d10"];
+    if (lvl >= 11) return [8,  "d10"];
+    if (lvl >= 9)  return [8,  "d8"];
+    if (lvl >= 5)  return [6,  "d8"];
+    if (lvl >= 3)  return [4,  "d6"];
+    return [0, "d6"];
+  }
+
+  const skWrap = bottomBar.createEl("div", { cls: "char-header-block" });
+
+  const [sked, value] = energyDieFromLevel(rogueLevel);
+
+  skWrap.createEl("strong", { text: "Energy Dice:" });
+  skWrap.createEl("span", { text: `(${value})` });
+
+  if (sked > 0) {
+    addResourceToggles({
+      parent: skWrap,
+      label: "",
+      namespace: "Energy_Dice",
+      prefix: "energy_die_",
+      count: sked,
+      showIndex: false
+    });
+  }
 }
 
 // Only display Sorcery Points if character is a Sorcerer
@@ -957,7 +1127,8 @@ if (hasSorcerer) {
 	  label: "Sorcery Points:",
 	  namespace: "Sorcery_Points",
 	  prefix: "sorcery_points-",
-	  count: spFromLevel(sorcererLevel)
+	  count: spFromLevel(sorcererLevel),
+	  showIndex: false
 	});
 }
 
@@ -969,7 +1140,8 @@ if (hasWarlock) {
 	  label: "Magical Cunning:",
 	  namespace: "Magical_Cunning",
 	  prefix: "magical_cunning-",
-	  count: 1
+	  count: 1,
+	  showIndex: false
 	});
 }
 
@@ -984,14 +1156,16 @@ if (c.species === "Orc") {
 	  label: "Adrenaline Rush:",
 	  namespace: "Adrenaline_Rush",
 	  prefix: "adrenaline_rush-",
-	  count: pb
+	  count: pb,
+	  showIndex: false
 	});
 	addResourceToggles({
 	  parent: bottomBar,
 	  label: "Relentless Endurance:",
 	  namespace: "Relentless_Endurance",
 	  prefix: "relentless_endurance-",
-	  count: 1
+	  count: 1,
+	  showIndex: false
 	});
 	
 }
@@ -999,7 +1173,10 @@ if (c.species === "Orc") {
 
 
 
-/* ===== Hit Dice (Multiclass Compatible) ===== */
+/* ===== Hit Dice (Multiclass Compatible, Memory-driven) ===== */
+
+// Ensure Hit_Dice namespace exists in pendingState
+pendingState.Hit_Dice ??= structuredClone(c.Hit_Dice ?? {});
 
 // Hit die values by class
 const hitDieByClass = {
@@ -1010,23 +1187,15 @@ const hitDieByClass = {
     Wizard: "d6", Sorcerer: "d6"
 };
 
-// Read frontmatter
-const fm = dv.current();
-
 // Normalize dndClass into a dictionary: { ClassName: Levels }
 let classDict = {};
-
-if (typeof fm.dndClass === "string") {
-    // Single-class format
-    classDict[fm.dndClass] = fm.Level ?? 1;
-} else if (Array.isArray(fm.dndClass)) {
-    // Multiclass array of objects
-    fm.dndClass.forEach(obj => {
+if (typeof c.dndClass === "string") {
+    classDict[c.dndClass] = c.Level ?? 1;
+} else if (Array.isArray(c.dndClass)) {
+    c.dndClass.forEach(obj => {
         const [cls, lvl] = Object.entries(obj)[0];
         classDict[cls] = lvl;
     });
-} else {
-    classDict = {};
 }
 
 // Create wrapper
@@ -1039,43 +1208,74 @@ Object.entries(classDict).forEach(([cls, lvl]) => {
     const die = hitDieByClass[cls] ?? "d8"; // default fallback
 
     // Label
-    hdWrap.createEl("div", { text: `${cls} (${die}):`, cls: "hd-class-label" });
+    hdWrap.createEl("div", { text: `(${die}):`, cls: "hd-class-label" });
 
-    // Build toggles: one per level for this class
-    const toggles = [...Array(lvl).keys()]
-        .map((i) => `\`INPUT[toggle:Hit_Dice.${cls}_${die}-${i+1}]\``)
-        .join(" ");
+    // Create toggle row
+    const toggleRow = hdWrap.createDiv({ cls: "resource-toggle-row" });
 
-    // Insert toggles as DV inline elements
-    hdWrap.appendChild(dv.el("div", toggles));
+    for (let i = 1; i <= lvl; i++) {
+        const key = `${cls}_${die}-${i}`;
+
+        const labelEl = toggleRow.createEl("label", { cls: "resource-toggle" });
+        const input = labelEl.createEl("input", { type: "checkbox" });
+
+        // Set checked state based on pendingState (which now reflects frontmatter)
+        input.checked = !!pendingState.Hit_Dice[key];
+
+        input.addEventListener("change", () => {
+            pendingState.Hit_Dice[key] = input.checked;
+            markDirty();
+        });
+    }
 });
 
 
 /* ===== Death Saves ===== */
 
+// Ensure Death_Save exists in pendingState
+pendingState.Death_Save ??= structuredClone(c.Death_Save ?? {});
+
+// ----- Successes -----
 const dSaveSuccessWrap = bottomBar.createEl("div", { cls: "char-header-block" });
 dSaveSuccessWrap.createEl("strong", { text: "💀 - Successes:" });
-//proficiency bonus times/day
+
+const sucRow = dSaveSuccessWrap.createDiv({ cls: "resource-toggle-row" });
 const dSaveSuccessArr = [...Array(3).keys()];
 
-dSaveSuccessWrap.appendChild(
-dv.el("span",
-	  dSaveSuccessArr.map((e,i) => `\`INPUT[toggle:Death_Save.success-${i+1}]\``).join(" ")
-	)
-);
+dSaveSuccessArr.forEach(i => {
+    const key = `success-${i+1}`;
+    if (pendingState.Death_Save[key] === undefined) pendingState.Death_Save[key] = false;
 
-/* ===== Death Saves ===== */
+    const labelEl = sucRow.createEl("label", { cls: "resource-toggle" });
+    const input = labelEl.createEl("input", { type: "checkbox" });
+    input.checked = !!pendingState.Death_Save[key];
 
+    input.addEventListener("change", () => {
+        pendingState.Death_Save[key] = input.checked;
+        markDirty();
+    });
+});
+
+// ----- Failures -----
 const dSaveFailWrap = bottomBar.createEl("div", { cls: "char-header-block" });
 dSaveFailWrap.createEl("strong", { text: "☠️ - Failures:" });
-//proficiency bonus times/day
+
+const failRow = dSaveFailWrap.createDiv({ cls: "resource-toggle-row" });
 const dSavFailArr = [...Array(3).keys()];
 
-dSaveFailWrap.appendChild(
-dv.el("span",
-	  dSavFailArr.map((e,i) => `\`INPUT[toggle:Death_Save.fail-${i+1}]\``).join(" ")
-	)
-);
+dSavFailArr.forEach(i => {
+    const key = `fail-${i+1}`;
+    if (pendingState.Death_Save[key] === undefined) pendingState.Death_Save[key] = false;
+
+    const labelEl = failRow.createEl("label", { cls: "resource-toggle" });
+    const input = labelEl.createEl("input", { type: "checkbox" });
+    input.checked = !!pendingState.Death_Save[key];
+
+    input.addEventListener("change", () => {
+        pendingState.Death_Save[key] = input.checked;
+        markDirty();
+    });
+});
 
 // === Health tracking buttons ===
 
