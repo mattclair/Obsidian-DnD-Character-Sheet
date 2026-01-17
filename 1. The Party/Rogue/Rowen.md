@@ -58,8 +58,6 @@ Stat_Bonus:
     source: Speedy Feat
 conditions:
   heroic_inspiration: false
-  concentration_spell: Faerie Fire
-  concentrating: true
 resistances:
   - Advantage when rolling saving throws against the Charmed condition
   - Immune to Sleep

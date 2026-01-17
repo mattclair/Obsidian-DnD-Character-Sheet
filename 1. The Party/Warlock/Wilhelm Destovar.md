@@ -52,6 +52,7 @@ Stat_Bonus:
     source: 1 Rod of the Pact Keeper
 conditions:
   heroic_inspiration: false
+  mage_armor: true
 health:
   max: 39
   current: 11
@@ -97,7 +98,7 @@ attuned:
 spell_slot:
   druid: false
   pact1: false
-  pact2: false
+  pact2: true
   misty_step1: false
   misty_step2: true
   misty_step3: true

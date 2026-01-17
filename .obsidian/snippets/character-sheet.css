@@ -84,10 +84,6 @@
   border-color: #1aa3c8 !important;
 }
 
-.character-header-block.is-concentrating .char-header {
-  border-color: #950606 !important;
-}
-
 /* Ensure .char-header never shows a red border */
 .char-header[style*="#950606"] {
   border-color: transparent !important;
@@ -159,18 +155,20 @@
   border-top: 1px solid var(--background-modifier-border);
 }
 
-/* Individual blocks: Luck | Hit Dice | Inspiration */
-.char-header-block {
+/* Individual stat blocks in bottom bar */
+.char-header-stat {
   display: flex;
   align-items: center;
-  gap: 0.5rem;             /* space between label + toggles */
-  white-space: nowrap;     /* prevent wrapping */
+  gap: 0.5rem;
+  white-space: nowrap;
 }
 
-.char-header-block strong {
+.char-header-stat strong {
   font-weight: 600;
   opacity: 0.8;
 }
+
+
 
 
 

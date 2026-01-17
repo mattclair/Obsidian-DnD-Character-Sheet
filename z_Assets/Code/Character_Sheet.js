@@ -416,6 +416,13 @@ const hasCircleOfTheMoon = Array.isArray(c.subclass)
 // ======================
 const feats = dv.current().feats ?? [];
 
+// Check for Eldritch Invocation: Armor of Shadows
+function hasArmorOfShadows() {
+  const invocations = c.Eldritch_Invocations ?? [];
+  return invocations.includes("Armor of Shadows") ||
+         invocations.includes("Armour of Shadows");
+}
+
 // Optional: debug info suppressed
 
 // Functions
@@ -430,10 +437,9 @@ function formatSpellName(name) {
 // ======================================================================================
 // ==================================================================    Character Header
 // ======================================================================================
-//const c = dv.current();
+const active = [];
 const condObj = getConditionsState();
 const concentrationActive = condObj.concentrating === true;
-//const borderColor = concentrationActive ? "#950606" : "var(--background-primary-alt)";
 
 function addResourceToggles({
   parent,
@@ -447,7 +453,7 @@ function addResourceToggles({
   // Ensure the namespace exists in pendingState
   pendingState[namespace] ??= {};
 
-  const wrap = parent.createEl("div", { cls: "char-header-block" });
+  const wrap = parent.createEl("div", { cls: "char-header-stat" });
   if (label) wrap.createEl("strong", { text: label });
 
   const row = wrap.createDiv({ cls: "resource-toggle-row" });
@@ -497,6 +503,18 @@ function addResourceToggles({
   return row; // return the row if needed later
 }
 
+function updateSaveUi() {
+  if (!saveBtn) return;
+
+  saveBtn.disabled = !isDirty;
+  saveBtn.classList.toggle("disabled", !isDirty);
+
+  const dirtyEl = root.querySelector(".dirty-indicator");
+  if (dirtyEl) {
+    dirtyEl.hidden = !isDirty;
+  }
+}
+
 function rebuildHeader() {
   try {
 		console.log("rebuildHeader() wrapper called; pendingState.conditions:", pendingState.conditions);
@@ -507,16 +525,27 @@ function rebuildHeader() {
   }
 }
 
-function syncConcentrationCSS(rootEl = document) {
-  const headerBlock =
-    rootEl.classList?.contains("character-header-block")
-      ? rootEl
-      : rootEl.querySelector?.(".character-header-block");
+function syncConcentrationCSS() {
+  const cond =
+    pendingState.conditions ??
+    dv.current().conditions ??
+    {};
 
-  if (!headerBlock) return;
+  const isConcentrating =
+    cond.concentrating === true &&
+    !!cond.concentration_spell;
 
-  const concentrating = pendingState.conditions?.concentrating === true;
-  headerBlock.classList.toggle("is-concentrating", concentrating);
+  const headers = document.querySelectorAll('.character-header-block');
+
+  headers.forEach(root => {
+    if (isConcentrating) {
+      root.classList.add('is-concentrating');
+      root.dataset.concentrationSpell = cond.concentration_spell;
+    } else {
+      root.classList.remove('is-concentrating');
+      delete root.dataset.concentrationSpell;
+    }
+  });
 }
 
 function refreshResourceToggles() {
@@ -548,12 +577,66 @@ function refreshSpellSlotToggles() {
     });
 }
 
+function syncAfterSpellCast() {
+  refreshSpellSlotToggles();
+  refreshConditionsTabUI();
+  rebuildHeader();
+  syncConcentrationCSS();
+}
+
 function getConditionsState() {
   pendingState.conditions ??= structuredClone(c.conditions ?? {});
   return pendingState.conditions;
 }
 
-const active = [];
+function getHpUiState() {
+  const h = pendingState.health;
+
+  const maxHP     = Number(h.max ?? 0);
+  const currentHP = Number(h.current ?? 0);
+  const tempHP    = Number(h.temp ?? 0);
+  const maxTemp   = Number((h.maxTmp ?? maxHP) || 1);
+
+  const hpPercent = maxHP > 0
+    ? Math.max(0, Math.min(100, (currentHP / maxHP) * 100))
+    : 0;
+
+  const tempPercent = tempHP > 0
+    ? Math.max(0, Math.min(100, (tempHP / maxTemp) * 100))
+    : 0;
+
+  return {
+    maxHP,
+    currentHP,
+    tempHP,
+    hpPercent,
+    tempPercent
+  };
+}
+
+function updateMenuDirtyState() {
+  const btn = root.querySelector(".char-menu-toggle");
+  const dirtyIndicator = root.querySelector(".dirty-indicator");
+  const saveBtn = root.querySelector(".save-btn");
+
+  if (!btn) return;
+
+  btn.classList.toggle("dirty", isDirty);
+
+  if (dirtyIndicator) dirtyIndicator.hidden = !isDirty;
+  if (saveBtn) saveBtn.disabled = !isDirty;
+}
+
+function resolveImageSrc(path) {
+  if (!path) return "";
+  const file = app.vault.getAbstractFileByPath(path);
+  if (!file) {
+    console.warn("Image not found in vault:", path);
+    return "";
+  }
+  return app.vault.getResourcePath(file);
+}
+
 function prettyKey(k) {
   return k.replace(/_/g, " ").replace(/\b\w/g, ch => ch.toUpperCase());
 }
@@ -594,30 +677,7 @@ for (const [key, val] of Object.entries(condObj)) {
   }
 }
 
-function getHpUiState() {
-  const h = pendingState.health;
 
-  const maxHP     = Number(h.max ?? 0);
-  const currentHP = Number(h.current ?? 0);
-  const tempHP    = Number(h.temp ?? 0);
-  const maxTemp   = Number((h.maxTmp ?? maxHP) || 1);
-
-  const hpPercent = maxHP > 0
-    ? Math.max(0, Math.min(100, (currentHP / maxHP) * 100))
-    : 0;
-
-  const tempPercent = tempHP > 0
-    ? Math.max(0, Math.min(100, (tempHP / maxTemp) * 100))
-    : 0;
-
-  return {
-    maxHP,
-    currentHP,
-    tempHP,
-    hpPercent,
-    tempPercent
-  };
-}
 
 
 const condDisplay = active.length ? active.join(", ") : "None";
@@ -627,30 +687,6 @@ const tempHP = pendingState.health.temp;
 const maxTemp = pendingState.health.maxTmp ?? maxHP;
 const hpPercent = Math.max(0, Math.min(100, (currentHP / maxHP) * 100));
 const tempPercent = Math.max(0, Math.min(100, (tempHP / maxTemp) * 100));
-
-function updateMenuDirtyState() {
-  const btn = root.querySelector(".char-menu-toggle");
-  const dirtyIndicator = root.querySelector(".dirty-indicator");
-  const saveBtn = root.querySelector(".save-btn");
-
-  if (!btn) return;
-
-  btn.classList.toggle("dirty", isDirty);
-
-  if (dirtyIndicator) dirtyIndicator.hidden = !isDirty;
-  if (saveBtn) saveBtn.disabled = !isDirty;
-}
-
-function resolveImageSrc(path) {
-  if (!path) return "";
-  const file = app.vault.getAbstractFileByPath(path);
-  if (!file) {
-    console.warn("Image not found in vault:", path);
-    return "";
-  }
-  return app.vault.getResourcePath(file);
-}
-
 let images = [];
 
 if (Array.isArray(c.image)) {
@@ -681,21 +717,6 @@ const menuHtml = `
   </div>
 </div>
 `;
-
-
-
-function updateSaveUi() {
-  if (!saveBtn) return;
-
-  saveBtn.disabled = !isDirty;
-  saveBtn.classList.toggle("disabled", !isDirty);
-
-  const dirtyEl = root.querySelector(".dirty-indicator");
-  if (dirtyEl) {
-    dirtyEl.hidden = !isDirty;
-  }
-}
-
 	let html = `
 <div class="char-header">
 	${menuHtml}
@@ -749,7 +770,7 @@ function updateSaveUi() {
 const root = dv.container.createEl("div");
 root.classList.add("character-header-block");
 root.innerHTML = html;
-syncConcentrationCSS(root);
+syncConcentrationCSS();
 
 const hpFill   = root.querySelector(".hp-fill");
 const tempFill = root.querySelector(".temp-fill");
@@ -928,9 +949,9 @@ if (hasBard) {
     return "d6";
   }
 
-  const bardWrap = bottomBar.createEl("div", { cls: "char-header-block" });
+  const bardWrap = bottomBar.createEl("div", { cls: "char-header-stat" });
 
-  bardWrap.createEl("strong", { text: "Bardic Inspiration:" });
+  bardWrap.createEl("strong", { text: "Bardic Inspiration: " });
 
   // Die value (shown once)
   bardWrap.createEl("span", {
@@ -1012,7 +1033,7 @@ if (subclass.includes("Battle Master")) {
     return [4, "d8"];
   }
 
-  const supWrap = bottomBar.createEl("div", { cls: "char-header-block" });
+  const supWrap = bottomBar.createEl("div", { cls: "char-header-stat" });
 
   const [sd, value] = supDieFromLevel(fighterLevel);
 
@@ -1042,7 +1063,7 @@ if (subclass.includes("Psi Warrior")) {
     return [0, "d6"];
   }
 
-  const pwWrap = bottomBar.createEl("div", { cls: "char-header-block" });
+  const pwWrap = bottomBar.createEl("div", { cls: "char-header-stat" });
 
   const [pwed, value] = pwenergyDieFromLevel(fighterLevel);
 
@@ -1106,7 +1127,7 @@ function addChannelDivinityToggles({ parent, clericLevel, paladinLevel, hasCleri
   else if (hasCleric) cdText += " (Cleric)";
   else if (hasPaladin) cdText += " (Paladin)";
 
-  const cdWrap = parent.createEl("div", { cls: "char-header-block" });
+  const cdWrap = parent.createEl("div", { cls: "char-header-stat" });
   cdWrap.createEl("strong", { text: cdText });
 
   addResourceToggles({
@@ -1153,7 +1174,7 @@ if (subclass.includes("Soulknife")) {
     return [0, "d6"];
   }
 
-  const skWrap = bottomBar.createEl("div", { cls: "char-header-block" });
+  const skWrap = bottomBar.createEl("div", { cls: "char-header-stat" });
 
   const [sked, value] = energyDieFromLevel(rogueLevel);
 
@@ -1258,7 +1279,7 @@ if (typeof c.dndClass === "string") {
 }
 
 // Create wrapper
-const hdWrap = bottomBar.createEl("div", { cls: "char-header-block" });
+const hdWrap = bottomBar.createEl("div", { cls: "char-header-stat" });
 hdWrap.createEl("strong", { text: "Hit Dice:" });
 hdWrap.createEl("br");
 
@@ -1267,7 +1288,7 @@ Object.entries(classDict).forEach(([cls, lvl]) => {
     const die = hitDieByClass[cls] ?? "d8";
 
     const rowWrap = hdWrap.createEl("div", { cls: "resource-toggle-row" });
-    rowWrap.createEl("strong", { text: `${cls} (${die}):` });
+    rowWrap.createEl("strong", { text: `(${die}):` });
 
     // Use addResourceToggles
     addResourceToggles({
@@ -1292,7 +1313,7 @@ Object.entries(classDict).forEach(([cls, lvl]) => {
 pendingState.Death_Save ??= structuredClone(c.Death_Save ?? {});
 
 // ----- Successes -----
-const dSaveSuccessWrap = bottomBar.createEl("div", { cls: "char-header-block" });
+const dSaveSuccessWrap = bottomBar.createEl("div", { cls: "char-header-stat" });
 dSaveSuccessWrap.createEl("strong", { text: "💀 - Successes:" });
 
 const sucRow = dSaveSuccessWrap.createDiv({ cls: "resource-toggle-row" });
@@ -1313,7 +1334,7 @@ dSaveSuccessArr.forEach(i => {
 });
 
 // ----- Failures -----
-const dSaveFailWrap = bottomBar.createEl("div", { cls: "char-header-block" });
+const dSaveFailWrap = bottomBar.createEl("div", { cls: "char-header-stat" });
 dSaveFailWrap.createEl("strong", { text: "☠️ - Failures:" });
 
 const failRow = dSaveFailWrap.createDiv({ cls: "resource-toggle-row" });
@@ -1950,6 +1971,7 @@ longRestBtn.onclick = async () => {
 	rebuildHeader();
 	refreshConditionsTabUI();
 	syncConcentrationCSS();
+	syncAfterSpellCast();
 
 	new Notice("Long Rest Completed!", 3000);
 };
@@ -2505,6 +2527,14 @@ document.addEventListener("keydown", (e) => {
 		const spellsPanel = container.querySelector("#spells .panel");
 		if (!spellsPanel) {
 			console.error("Spell panel not found!");
+			return;
+		}
+		// no spellcasting ability
+		if (!c.Spellcasting_Ability){
+			spellsPanel.createEl("div", {
+				text: "This character does not have spellcasting abilities.",
+				cls: "no-spellcasting-ability"
+			});
 			return;
 		}
 
@@ -3663,73 +3693,17 @@ document.addEventListener("keydown", (e) => {
 		}
 		
 		async function setConcentrationSpell(spellName) {
-			console.log('setConcentrationSpell called with', spellName, 'pendingState.conditions (before):', pendingState.conditions);
-			// Update concentration spell in-memory; persist on Save
-			pendingState.conditions = pendingState.conditions || {};
-			const current = pendingState.conditions.concentration_spell ?? dv.current().conditions?.concentration_spell ?? "";
-			if (current === spellName) {
-				delete pendingState.conditions.concentration_spell;
-				delete pendingState.conditions.concentrating;
-				markDirty();
-  				rebuildHeader();
-				refreshConditionsTabUI();
-				syncConcentrationCSS();
-			} else {
-				pendingState.conditions.concentration_spell = spellName;
-				pendingState.conditions.concentrating = true;
-				markDirty();
-  				rebuildHeader();
-				refreshConditionsTabUI();
-				syncConcentrationCSS();
-			}
-			console.log('setConcentrationSpell pendingState.conditions (after):', pendingState.conditions);
+			pendingState.conditions ??= {};
+
+			pendingState.conditions.concentration_spell = spellName;
+			pendingState.conditions.concentrating = true;
 
 			markDirty();
-			// Try to invoke the registered rebuild handler; if not present, update header DOM directly.
-			try {
-				if (window.__char_rebuildHandlers?.[__char_file_key]?.rebuildHeader) {
-					window.__char_rebuildHandlers[__char_file_key].rebuildHeader();
-					// schedule a delayed rebuild to cover cases where DOM isn't ready yet
-					setTimeout(() => { try { window.__char_rebuildHandlers[__char_file_key].rebuildHeader(); } catch(e){} }, 100);
-					setTimeout(() => { try { window.__char_rebuildHandlers[__char_file_key].rebuildHeader(); } catch(e){} }, 300);
-					refreshConditionsTabUI();
-				} else {
-					// Fallback: update Conditions text in header directly
-					try {
-						const headerDetails = document.querySelector('.character-header-block .char-details');
-						if (headerDetails) {
-							const condObjLocal = pendingState.conditions ?? dv.current().conditions ?? {};
-							const activeLocal = [];
-							for (const [k, v] of Object.entries(condObjLocal)) {
-								if (k === 'concentrating' && v === true) {
-									const spellNameLocal = condObjLocal?.concentration_spell ?? '';
-									if (spellNameLocal) activeLocal.push(`Concentrating: ${formatSpellName(spellNameLocal)}`);
-									else activeLocal.push(prettyKey(k));
-									continue;
-								}
-								if (v === true) { activeLocal.push(prettyKey(k)); continue; }
-								if (v === false || v == null) continue;
-								if (typeof v === 'object') {
-									if ('count' in v && Number(v.count) > 0) { activeLocal.push(`${prettyKey(k)} (${v.count})`); continue; }
-									if (v.Level === true) { activeLocal.push(`${prettyKey(k)} (Level)`); continue; }
-									const innerTrue = Object.entries(v).filter(([k2, v2]) => k2 !== 'count' && v2 === true);
-									if (innerTrue.length) { const innerNames = innerTrue.map(([k2]) => prettyKey(k2)).join(', '); activeLocal.push(`${prettyKey(k)} (${innerNames})`); continue; }
-								}
-								if (typeof v === 'number' && v > 0) { activeLocal.push(`${prettyKey(k)} (${v})`); }
-							}
-							const condDisplayLocal = activeLocal.length ? activeLocal.join(', ') : 'None';
-							const child = Array.from(headerDetails.children).find(el => el.textContent && el.textContent.trim().startsWith('Conditions:'));
-							if (child) child.innerHTML = `<b>Conditions:</b> ${condDisplayLocal}`;
-						}
-					} catch (err) { /* ignore fallback DOM update errors */ }
-				}
-			} catch (e) { /* ignore */ }
-			try { rebuildHeader(); 
-				refreshConditionsTabUI();
-				syncConcentrationCSS();
-			} catch (e) {}
-			try { setTimeout(() => { rebuildHeader(); }, 100); } catch (e) {}
-			try { setTimeout(() => { app.commands.executeCommandById("dataview:refresh-views"); }, 50); } catch (e) {}
+
+			// Immediate UI sync (memory-driven)
+			//refreshConditionsTabUI();
+			//rebuildHeader();
+			//syncConcentrationCSS();
 		}
 
 
@@ -3882,7 +3856,7 @@ document.addEventListener("keydown", (e) => {
 			return defs;
 		}
 
-		function spendSpellSlot(key) {
+		async function spendSpellSlot(key) {
 			pendingState.spell_slot ??= {};
 
 			// Resolve grouped key (e.g., 'level_3') to a concrete numbered key (e.g., 'level_3_1').
@@ -3908,11 +3882,24 @@ document.addEventListener("keydown", (e) => {
 			return true;
 		}
 
+		const nextFrame = () => new Promise(r => requestAnimationFrame(r));
+
 		function showSpellSlotPicker(spell) {
+			// Don't consume spell slot for Eldritch Invocation Armour of Shadows
+			if (hasArmorOfShadows() && slugifyName(spell.Name) === 'mage-armor') {
+				new Notice(`Cast ${spell.Name} (no slot consumed)`);
+				pendingState.conditions.mage_armor = true;
+  				markDirty();
+				syncAfterSpellCast();
+				return;
+			}
 			// Cantrips don't consume slots
 			if ((spell.LevelNum ?? 0) === 0) {
-				if (spell.IsConcentration) setConcentrationSpell(spell.Name);
+				if (spell.IsConcentration) {
+					setConcentrationSpell(spell.Name);
+				}
 				new Notice(`Cast ${spell.Name} (cantrip)`);
+				syncAfterSpellCast();
 				return;
 			}
 
@@ -4007,17 +3994,30 @@ document.addEventListener("keydown", (e) => {
 				btn.textContent = label;
 				btn.disabled = !usable;
 				btn.onclick = async () => {
-					overlay.remove();
-					const ok = spendSpellSlot(d.key);
-					if (ok) {
-						if (spell.IsConcentration) await setConcentrationSpell(spell.Name);
-						new Notice(`Expended ${d.label} for ${spell.Name}`, 3000);
-						markDirty();
-						refreshSpellSlotToggles();
-						rebuildHeader();
-						refreshConditionsTabUI();
-						syncConcentrationCSS();
-					}
+				overlay.remove();
+
+				// Allow DOM + focus to settle
+				await nextFrame();
+
+				const ok = await spendSpellSlot(d.key);
+				if (!ok) return;
+
+				if (spell.IsConcentration) {
+					await setConcentrationSpell(spell.Name);
+				}
+
+				markDirty();
+
+				// UI updates AFTER memory is correct
+				refreshSpellSlotToggles();
+				refreshConditionsTabUI();
+				rebuildHeader();
+				syncAfterSpellCast();
+				// Always target the actual header root
+				const headerRoot = document.querySelector('.character-header-block');
+				if (headerRoot) syncConcentrationCSS();
+
+				new Notice(`Expended ${d.label} for ${spell.Name}`, 3000);
 				};
 				list.appendChild(btn);
 			}
@@ -5651,8 +5651,10 @@ function refreshConditionsTabUI() {
     // Update active conditions list
     const activeListContainer = panel.querySelector(".conditions-active-list");
     if (activeListContainer && typeof window.__renderActiveConditions === "function") {
-      window.__renderActiveConditions(activeListContainer);
-    }
+		const fresh = activeListContainer.cloneNode(false);
+		activeListContainer.replaceWith(fresh);
+		window.__renderActiveConditions(fresh);
+	}
   } catch (e) {
     console.warn("refreshConditionsTabUI failed", e);
   }
@@ -5902,7 +5904,6 @@ function refreshConditionsTabUI() {
 				markDirty();
 				rebuildHeader();
 				refreshConditionsTabUI();
-				refreshConditionsTabUI();
 				syncConcentrationCSS();
 				// Update button appearance
 				btn.style.backgroundColor = next
@@ -5912,6 +5913,7 @@ function refreshConditionsTabUI() {
 				// Refresh active list and header conditions display
 				renderActiveConditions(activeConditionsContainer);
 				try { rebuildHeader(); 
+					rebuildHeader();
 					refreshConditionsTabUI();
 					syncConcentrationCSS();
 				} catch (e) { try { window.__char_rebuildHandlers?.[__char_file_key]?.rebuildHeader?.(); } catch(e){} }

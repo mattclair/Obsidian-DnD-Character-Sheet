@@ -5,10 +5,13 @@ DEX: 15
 CON: 15
 INT: 14
 WIS: 12
-CHA: 22
+CHA: 8
 name: Carmac the Lucky
-dndClass: Barbarian
-subclass: Path of the Berserker
+dndClass: 
+  - Barbarian: 3
+  - Bard: 2
+subclass: 
+  - Path of the Berserker
 background: Wayfarer
 species: Dwarf
 species_traits:

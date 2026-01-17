@@ -95,7 +95,7 @@ spell_slot:
   hunters_mark1: true
   hunters_mark2: true
   hunters_mark3: true
-  level_1_1: true
+  level_1_1: false
   level_1_2: true
   level_1_3: true
   level_1_4: true
