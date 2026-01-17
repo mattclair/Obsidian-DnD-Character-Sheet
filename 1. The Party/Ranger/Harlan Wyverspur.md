@@ -55,22 +55,7 @@ Stat_Bonus:
     value: WIS_MOD
     source: Dread Ambusher
 conditions:
-  blinded: false
-  charmed: false
-  concentrating: false
-  deafened: false
-  frightened: false
-  grappled: false
   heroic_inspiration: true
-  incapacitated: false
-  mage_armor: false
-  poisoned: false
-  prone: false
-  restrained: false
-  unconscious: false
-  exhaustion:
-    count: 0
-    Level: false
 health:
   max: 35
   current: 35
@@ -107,15 +92,12 @@ ammunition:
   arrow: d10
 spell_slot:
   druid: true
-  level_1_1: true
-  level_1_2: true
-  level_1_3: true
   hunters_mark1: true
   hunters_mark2: true
   hunters_mark3: true
-  hunters_mark4: true
-  hunters_mark5: true
-  pact1: true
+  level_1_1: true
+  level_1_2: true
+  level_1_3: true
   level_1_4: true
   level_2_1: true
   level_2_2: true
@@ -142,8 +124,6 @@ Spells:
       - Druidcraft
     Spells:
       - Disguise Self
-      - DoomTide
-      - Firebolt
       - Animal Messenger
       - Mage Hand
   Known:
@@ -201,14 +181,14 @@ Bastion:
       hirelings: 1
       order: None
       status: operational
-weapon_mastery:
-  "1":
-    weapon: Club
-    mastery: Slow
-  "2":
-    weapon: Scimitar
-    mastery: Nick
+weapon_mastery: {}
 wild-shape-options: []
+Wild_Shape: {}
+Channel_Divinity: {}
+Second_Wind: {}
+Action_Surge: {}
+Focus_Points: {}
+Energy_Dice: {}
 ---
 
 

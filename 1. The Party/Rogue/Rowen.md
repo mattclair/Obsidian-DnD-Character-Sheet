@@ -57,10 +57,9 @@ Stat_Bonus:
     value: 10
     source: Speedy Feat
 conditions:
-  heroic_inspiration: true
-  exhaustion:
-    count: 0
-    Level: false
+  heroic_inspiration: false
+  concentration_spell: Faerie Fire
+  concentrating: true
 resistances:
   - Advantage when rolling saving throws against the Charmed condition
   - Immune to Sleep
@@ -122,18 +121,12 @@ feats:
   - Alert
   - Speedy
 Energy_Dice:
-  energy_die_1: true
-  energy_die_2: true
-  energy_die_3: true
-  energy_die_4: true
-  energy_die_5: true
-  energy_die_6: true
-  energy_die_7: true
-  energy_die_8: true
-  energy_die_9: true
-  energy_die_10: true
-  energy_die_11: true
-  energy_die_12: true
+  energy_die_1: false
+  energy_die_2: false
+  energy_die_3: false
+  energy_die_4: false
+  energy_die_5: false
+  energy_die_6: false
 purse: 990.8
 spell_slot:
   elf_faerie_fire: true
@@ -157,6 +150,11 @@ Sorcery_Points:
   sorcery_points-3: false
   sorcery_points-4: false
   sorcery_points-5: false
+Wild_Shape: {}
+Channel_Divinity: {}
+Second_Wind: {}
+Action_Surge: {}
+Focus_Points: {}
 ---
 ```dataviewjs
 // Load full cahracter sheet

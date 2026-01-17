@@ -58,10 +58,6 @@ Stat_Bonus:
     source: Shield and Studded Leather Armor
 conditions:
   heroic_inspiration: false
-  exhaustion:
-    count: 0
-    Level: false
-  concentration_spell: ""
 health:
   max: 35
   current: 35
@@ -96,24 +92,18 @@ spell_slot:
   wizard: true
   shadow_touched_invisibility: true
   shadow_touched_silent_image: true
+  misty_step1: true
+  misty_step2: true
+  misty_step3: true
   level_3_2: true
   level_3_1: true
-  level_2_3: true
+  level_2_3: false
   level_2_2: true
   level_2_1: true
   level_1_1: true
   level_1_2: true
   level_1_3: true
   level_1_4: true
-  druid: true
-  hunters_mark1: true
-  hunters_mark2: true
-  hunters_mark3: true
-  hunters_mark4: true
-  hunters_mark5: true
-  misty_step1: true
-  misty_step2: true
-  misty_step3: true
 feats:
   - Shadow Touched:
       spell: Silent Image
@@ -205,7 +195,7 @@ Spells:
       - Speak With The Dead
       - DoomTide
 Wild_Shape:
-  wild_shape-1: true
+  wild_shape-1: false
   wild_shape-2: false
 mastery:
 wild-shape-options: []

@@ -191,6 +191,11 @@ async function commitPendingChanges() {
 		if (pendingState.Death_Saves !== undefined) {
 			fm.Death_Saves = structuredClone(pendingState.Death_Saves);
 		}
+
+		// Persist Spell Slots if present in pendingState
+		if (pendingState.spell_slot !== undefined) {
+			fm.spell_slot = structuredClone(pendingState.spell_slot);
+		}
 	});
 	clearDirty();
 	new Notice("All changes saved", 3000);
@@ -237,76 +242,6 @@ function getClassLevels(dndClassField, totalLevel) {
 
     console.warn("Unrecognized dndClass format:", dndClassField);
     return [];
-}
-
-
-
-function addResourceToggles({
-  parent,
-  label,
-  namespace,
-  prefix = "",
-  count = 1,
-  suffix = "",
-  key = null,
-  showIndex = true,
-  single = false
-}) {
-  // Ensure namespace exists
-  pendingState[namespace] ??= structuredClone(c[namespace] ?? {});
-
-  const wrap = parent.createEl("div", { cls: "char-header-block" });
-  wrap.createEl("strong", { text: label });
-
-  const togglesWrap = wrap.createDiv({ cls: "resource-toggle-row" });
-
-  // ---- SINGLE BOOLEAN MODE (Heroic Inspiration, Rage, etc.) ----
-  if (single) {
-    const finalKey = key ?? prefix;
-
-    if (pendingState[namespace][finalKey] === undefined) {
-      pendingState[namespace][finalKey] = false;
-    }
-
-    const labelEl = togglesWrap.createEl("label", {
-      cls: "resource-toggle"
-    });
-
-    const input = labelEl.createEl("input", { type: "checkbox" });
-    input.checked = !!pendingState[namespace][finalKey];
-
-    input.addEventListener("change", () => {
-      pendingState[namespace][finalKey] = input.checked;
-      markDirty();
-    });
-
-    return;
-  }
-
-  // ---- MULTI-USE MODE (Wild Shape, Luck, etc.) ----
-  for (let i = 1; i <= count; i++) {
-    const finalKey = `${prefix}${i}${suffix}`;
-
-    if (pendingState[namespace][finalKey] === undefined) {
-      pendingState[namespace][finalKey] = false;
-    }
-
-    const labelEl = togglesWrap.createEl("label", {
-      cls: "resource-toggle"
-    });
-
-    const input = labelEl.createEl("input", { type: "checkbox" });
-    input.checked = !!pendingState[namespace][finalKey];
-
-    input.addEventListener("change", () => {
-      pendingState[namespace][finalKey] = input.checked;
-      markDirty();
-    });
-
-    if (showIndex) {
-      labelEl.appendText(` ${i}`);
-    }
-  }
 }
 
 // Helper: Get level of a specific class (e.g., "Rogue")
@@ -496,9 +431,127 @@ function formatSpellName(name) {
 // ==================================================================    Character Header
 // ======================================================================================
 //const c = dv.current();
-const condObj = pendingState.conditions ?? c.conditions ?? {};
+const condObj = getConditionsState();
 const concentrationActive = condObj.concentrating === true;
-const borderColor = concentrationActive ? "#950606" : "var(--background-primary-alt)";
+//const borderColor = concentrationActive ? "#950606" : "var(--background-primary-alt)";
+
+function addResourceToggles({
+  parent,
+  label,
+  namespace,
+  prefix = "",
+  count = 1,
+  key,             // for single-key toggles
+  showIndex = true // show the number after checkbox
+}) {
+  // Ensure the namespace exists in pendingState
+  pendingState[namespace] ??= {};
+
+  const wrap = parent.createEl("div", { cls: "char-header-block" });
+  if (label) wrap.createEl("strong", { text: label });
+
+  const row = wrap.createDiv({ cls: "resource-toggle-row" });
+
+  if (key) {
+    // Single toggle
+    if (pendingState[namespace][key] === undefined) pendingState[namespace][key] = false;
+
+    const labelEl = row.createEl("label", { cls: "resource-toggle" });
+    const input = labelEl.createEl("input", { type: "checkbox" });
+
+    // Bind data for refresh
+    input.dataset.namespace = namespace;
+    input.dataset.key = key;
+
+    input.checked = !!pendingState[namespace][key];
+
+    input.addEventListener("change", () => {
+      pendingState[namespace][key] = input.checked;
+      markDirty();
+    });
+
+  } else {
+    // Numbered toggles
+    for (let i = 1; i <= count; i++) {
+      const toggleKey = `${prefix}${i}`;
+      if (pendingState[namespace][toggleKey] === undefined) pendingState[namespace][toggleKey] = false;
+
+      const labelEl = row.createEl("label", { cls: "resource-toggle" });
+      const input = labelEl.createEl("input", { type: "checkbox" });
+
+      // Bind data for refresh
+      input.dataset.namespace = namespace;
+      input.dataset.key = toggleKey;
+
+      input.checked = !!pendingState[namespace][toggleKey];
+
+      input.addEventListener("change", () => {
+        pendingState[namespace][toggleKey] = input.checked;
+        markDirty();
+      });
+
+      if (showIndex) labelEl.appendText(` ${i}`);
+    }
+  }
+
+  return row; // return the row if needed later
+}
+
+function rebuildHeader() {
+  try {
+		console.log("rebuildHeader() wrapper called; pendingState.conditions:", pendingState.conditions);
+		window.__char_rebuildHandlers?.[__char_file_key]?.rebuildHeader?.();
+		console.log("Character header rebuilt (wrapper)");
+  } catch (e) {
+    console.warn("Header rebuild failed", e);
+  }
+}
+
+function syncConcentrationCSS(rootEl = document) {
+  const headerBlock =
+    rootEl.classList?.contains("character-header-block")
+      ? rootEl
+      : rootEl.querySelector?.(".character-header-block");
+
+  if (!headerBlock) return;
+
+  const concentrating = pendingState.conditions?.concentrating === true;
+  headerBlock.classList.toggle("is-concentrating", concentrating);
+}
+
+function refreshResourceToggles() {
+  document.querySelectorAll("input[type=checkbox][data-namespace][data-key]").forEach(input => {
+    const ns = input.dataset.namespace;
+    const key = input.dataset.key;
+    if (pendingState[ns] && key in pendingState[ns]) {
+      input.checked = !!pendingState[ns][key];
+    }
+  });
+}
+
+function refreshSpellSlotToggles() {
+	console.log("Refreshing spell slot toggles from pendingState");
+    const wrappers = document.querySelectorAll(
+        '.mb-input-wrapper[data-namespace="spell_slot"]'
+    );
+
+    wrappers.forEach(wrapper => {
+        const key = wrapper.dataset.key;
+        const box = wrapper.querySelector('.checkbox-container');
+
+        if (!box) return;
+
+        const enabled = !!pendingState.spell_slot?.[key];
+
+        box.classList.toggle("is-enabled", enabled);
+        box.setAttribute("aria-checked", enabled ? "true" : "false");
+    });
+}
+
+function getConditionsState() {
+  pendingState.conditions ??= structuredClone(c.conditions ?? {});
+  return pendingState.conditions;
+}
 
 const active = [];
 function prettyKey(k) {
@@ -644,7 +697,7 @@ function updateSaveUi() {
 }
 
 	let html = `
-<div class="char-header" style="border: 1px solid ${borderColor}; border-radius: 14px; transition: border-color 0.3s;">
+<div class="char-header">
 	${menuHtml}
 <div class="char-info">
     <h1 class="char-name">${c.name ?? "Unnamed Character"}</h1>
@@ -696,6 +749,7 @@ function updateSaveUi() {
 const root = dv.container.createEl("div");
 root.classList.add("character-header-block");
 root.innerHTML = html;
+syncConcentrationCSS(root);
 
 const hpFill   = root.querySelector(".hp-fill");
 const tempFill = root.querySelector(".temp-fill");
@@ -739,10 +793,12 @@ updateMenuDirtyState();
 try {
 	window.__char_rebuildHandlers[__char_file_key].rebuildHeader = function() {
 		try {
-			const headerDetails = document.querySelector('.character-header-block .char-details');
-			if (!headerDetails) return;
+			console.log('rebuildHeader handler running; pendingState.conditions:', pendingState.conditions);
+			const headers = Array.from(document.querySelectorAll('.character-header-block .char-details'));
+			console.log('rebuildHeader handler found header elements:', headers.length);
+			if (!headers.length) return;
 
-			const condObjLocal = pendingState.conditions ?? c.conditions ?? {};
+			const condObjLocal = getConditionsState();
 			const activeLocal = [];
 
 			for (const [k, v] of Object.entries(condObjLocal)) {
@@ -765,15 +821,18 @@ try {
 
 			const condDisplayLocal = activeLocal.length ? activeLocal.join(', ') : 'None';
 
-			// Find the Conditions row in header and update it
-			const child = Array.from(headerDetails.children).find(el => el.textContent && el.textContent.trim().startsWith('Conditions:'));
-			if (child) {
-				child.innerHTML = `<b>Conditions:</b> ${condDisplayLocal}`;
+			for (const [idx, headerDetails] of headers.entries()) {
+				// Find the Conditions row in this header and update it
+				const child = Array.from(headerDetails.children).find(el => el.textContent && el.textContent.trim().startsWith('Conditions:'));
+				if (child) {
+					child.innerHTML = `<b>Conditions:</b> ${condDisplayLocal}`;
+				}
 			}
 
 			// Keep other header UI in sync
 			try { updateSaveUi(); } catch (e) {}
 			try { renderHpDisplay(); } catch (e) {}
+			console.log('rebuildHeader handler updated header display');
 		} catch (err) { console.error('rebuildHeader failed:', err); }
 	};
 } catch (e) {}
@@ -793,7 +852,7 @@ addResourceToggles({
   label: "Heroic Inspiration",
   namespace: "conditions",
   key: "heroic_inspiration",
-  single: true
+  showIndex: false
 });
 
 // Only display Luck Points if character has the Lucky feat
@@ -1203,30 +1262,27 @@ const hdWrap = bottomBar.createEl("div", { cls: "char-header-block" });
 hdWrap.createEl("strong", { text: "Hit Dice:" });
 hdWrap.createEl("br");
 
-// Build row for each class
+// Build row for each class using addResourceToggles
 Object.entries(classDict).forEach(([cls, lvl]) => {
-    const die = hitDieByClass[cls] ?? "d8"; // default fallback
+    const die = hitDieByClass[cls] ?? "d8";
 
-    // Label
-    hdWrap.createEl("div", { text: `(${die}):`, cls: "hd-class-label" });
+    const rowWrap = hdWrap.createEl("div", { cls: "resource-toggle-row" });
+    rowWrap.createEl("strong", { text: `${cls} (${die}):` });
 
-    // Create toggle row
-    const toggleRow = hdWrap.createDiv({ cls: "resource-toggle-row" });
-
-    for (let i = 1; i <= lvl; i++) {
-        const key = `${cls}_${die}-${i}`;
-
-        const labelEl = toggleRow.createEl("label", { cls: "resource-toggle" });
-        const input = labelEl.createEl("input", { type: "checkbox" });
-
-        // Set checked state based on pendingState (which now reflects frontmatter)
-        input.checked = !!pendingState.Hit_Dice[key];
-
-        input.addEventListener("change", () => {
-            pendingState.Hit_Dice[key] = input.checked;
-            markDirty();
-        });
-    }
+    // Use addResourceToggles
+    addResourceToggles({
+        parent: rowWrap,
+        label: "",
+        namespace: "Hit_Dice",
+        prefix: `${cls}_${die}-`,
+        count: lvl,
+        showIndex: false,
+        onCreate: (input, key) => {
+            // Link dataset for potential direct UI refresh
+            input.dataset.namespace = "Hit_Dice";
+            input.dataset.key = key;
+        }
+    });
 });
 
 
@@ -1348,6 +1404,7 @@ function dealDamage() {
 	updateSaveUi();
 	updateMenuDirtyState();
 	renderHpDisplay();
+	resetHpInput();
 }
 
 
@@ -1520,157 +1577,78 @@ let shortRestBtn, longRestBtn;
 });
 
 // onclick functions
-shortRestBtn.onclick = async () => {
-  const file = app.workspace.getActiveFile();
-  if (!file) return;
+shortRestBtn.onclick = () => {
+  // Health recovery is optional, maybe partial
+  pendingState.health ??= {};
+  // pendingState.health.current += Math.floor(pendingState.health.max / 2);
 
-  await app.fileManager.processFrontMatter(file, fm => {
+  // Cleric + Paladin Channel Divinity (recover 1 use)
+  pendingState.Channel_Divinity ??= {};
+  const cdKeys = Object.keys(pendingState.Channel_Divinity)
+    .filter(k => k.startsWith("divinity-"))
+    .sort((a,b) => Number(a.split("-")[1]) - Number(b.split("-")[1]));
 
-	
-    
-	// Cleric Channel Divinity recovery
-	if( hasCleric ) {
-		fm.Channel_Divinity ??= {};
+  for (const key of cdKeys) {
+    if (!pendingState.Channel_Divinity[key]) {
+      pendingState.Channel_Divinity[key] = true;
+      markDirty();
+      break;
+    }
+  }
 
-		// Get keys like ["divinity-1", "divinity-2"]
-		const divinityKeys = Object.keys(fm.Channel_Divinity ?? {})
-			.filter(k => k.startsWith("divinity-"))
-			.sort((a, b) => {
-				const na = Number(a.split("-")[1]);
-				const nb = Number(b.split("-")[1]);
-				return na - nb;
-			});
+  // Druid Wild Shape (recover 1 use)
+  pendingState.Wild_Shape ??= {};
+  const wsKeys = Object.keys(pendingState.Wild_Shape)
+    .filter(k => k.startsWith("wild_shape-"))
+    .sort((a,b) => Number(a.split("-")[1]) - Number(b.split("-")[1]));
 
-			// Recover exactly ONE spent use
-			for (const key of divinityKeys) {
-			if (fm.Channel_Divinity[key] === false) {
-				fm.Channel_Divinity[key] = true;
-				break; // stop after recovering one
-			}
-		}
-	}
-	
+  for (const key of wsKeys) {
+    if (!pendingState.Wild_Shape[key]) {
+      pendingState.Wild_Shape[key] = true;
+      markDirty();
+      break;
+    }
+  }
 
-	// Druid Wild Shape recovery
-	if (hasDruid ) {
-		const wildShapeKeys = Object.keys(fm.Wild_Shape ?? {})
-			.filter(k => k.startsWith("wild_shape-"))
-			.sort((a, b) => {
-				const na = Number(a.split("-")[1]);
-				const nb = Number(b.split("-")[1]);
-				return na - nb;
-			});
+  // Fighter Action Surge + Second Wind
+  pendingState.Action_Surge ??= {};
+  Object.keys(pendingState.Action_Surge).forEach(k => pendingState.Action_Surge[k] = true);
 
-			// Recover exactly ONE spent use
-			for (const key of wildShapeKeys) {
-			if (fm.Wild_Shape[key] === false) {
-				fm.Wild_Shape[key] = true;
-				break; // stop after recovering one
-			}
-		}
-	}
-	
-	if (hasFighter ) {
-		// Fighter Action Surge recovery
-		fm.Action_Surge ??= {};
+  pendingState.Second_Wind ??= {};
+  Object.keys(pendingState.Second_Wind).forEach(k => pendingState.Second_Wind[k] = true);
 
-		Object.keys(fm.Action_Surge).forEach(key => {
-			if (key.startsWith("action_surge-")) {
-				fm.Action_Surge[key] = true;
-			}
-		});
+  // Monk Focus Points
+  pendingState.Focus_Points ??= {};
+  Object.keys(pendingState.Focus_Points).forEach(k => pendingState.Focus_Points[k] = true);
 
-		// Fighter Second Wind recovery
-		const secondWindKeys = Object.keys(fm.Second_Wind ?? {})
-			.filter(k => k.startsWith("wild_shape-"))
-			.sort((a, b) => {
-				const na = Number(a.split("-")[1]);
-				const nb = Number(b.split("-")[1]);
-				return na - nb;
-			});
+  // Soulknife Energy Dice (recover 1 use)
+  pendingState.Energy_Dice ??= {};
+  Object.keys(pendingState.Energy_Dice)
+    .filter(k => k.startsWith("energy_die_"))
+    .sort((a,b) => Number(a.split("_").pop()) - Number(b.split("_").pop()))
+    .some(k => {
+      if (!pendingState.Energy_Dice[k]) {
+        pendingState.Energy_Dice[k] = true;
+        markDirty();
+        return true; // stop after recovering one
+      }
+      return false;
+    });
 
-			// Recover exactly ONE spent use
-			for (const key of secondWindKeys) {
-			if (fm.Second_Wind[key] === false) {
-				fm.Second_Wind[key] = true;
-				break; // stop after recovering one
-			}
-		}
-	}
+  // Warlock Pact Slots
+  pendingState.spell_slot ??= {};
+  Object.keys(pendingState.spell_slot)
+    .filter(k => k.startsWith("pact"))
+    .forEach(k => pendingState.spell_slot[k] = true);
 
-	// Monk Focus Point recovery
-	if( hasMonk ) {
-		fm.Focus_Points ??= {};
-		
-		// Reset only pact slots to true
-		Object.keys(fm.Focus_Points).forEach(key => {
-		if (key.startsWith("focus_points-")) {
-			fm.Focus_Points[key] = true;
-		}
-		});
-	}
+  // Refresh UI
+  refreshResourceToggles();
+  renderHpDisplay();
+  updateMenuDirtyState();
+  updateSaveUi();
+  
 
-	// Paladin Channel Divinity recovery
-	if( hasPaladin ) {
-		fm.Channel_Divinity ??= {};
-
-		// Get keys like ["divinity-1", "divinity-2"]
-		const divinityKeys = Object.keys(fm.Channel_Divinity ?? {})
-			.filter(k => k.startsWith("divinity-"))
-			.sort((a, b) => {
-				const na = Number(a.split("-")[1]);
-				const nb = Number(b.split("-")[1]);
-				return na - nb;
-			});
-
-			// Recover exactly ONE spent use
-			for (const key of divinityKeys) {
-			if (fm.Channel_Divinity[key] === false) {
-				fm.Channel_Divinity[key] = true;
-				break; // stop after recovering one
-			}
-		}
-	}
-
-	if (subclass.includes("Soulknife" )) {
-		fm.energy_dice ??= {};
-
-		// Get keys like ["divinity-1", "divinity-2"]
-		const energyDiceKeys = Object.keys(fm.energy_dice ?? {})
-			.filter(k => k.startsWith("energy_die_"))
-			.sort((a, b) => {
-				const na = Number(a.split("-")[1]);
-				const nb = Number(b.split("-")[1]);
-				return na - nb;
-			});
-
-			// Recover exactly ONE spent use
-			for (const key of energyDiceKeys) {
-			if (fm.energy_dice[key] === false) {
-				fm.energy_dice[key] = true;
-				break; // stop after recovering one
-			}
-		}
-	}
-	
-	// Warlock Pact Magic recovery
-	if ( hasWarlock ) {
-		fm.spell_slot ??= {};
-		
-		// Reset only pact slots to true
-		Object.keys(fm.spell_slot).forEach(key => {
-		if (key.startsWith("pact")) {
-			fm.spell_slot[key] = true;
-		}
-		});
-	}	
-
-  });  
-
-  new Notice(
-    "Short Reset Completed. \nRemember to: \n  -Track spent Hit Dice\n  -Track Recovered HP",
-    5000
-  );
+  new Notice("Short Rest applied (unsaved)", 5000);
 };
 
 longRestBtn.onclick = async () => {
@@ -1684,49 +1662,67 @@ longRestBtn.onclick = async () => {
     fm.spell_slot ??= {};
 
     // Restore ALL spell slots
-    Object.keys(fm.spell_slot).forEach(key => {
-      fm.spell_slot[key] = true;
-    });
+    pendingState.spell_slot ??= {};
+	Object.keys(pendingState.spell_slot).forEach(k => {
+		pendingState.spell_slot[k] = true;
+	});
+	markDirty();
 
-    fm.Hit_Dice ??= {};
+    
 
     // Restore ALL Hit Dice
-    Object.keys(fm.Hit_Dice).forEach(key => {
-      fm.Hit_Dice[key] = true;
+	pendingState.Hit_Dice ??= {};
+    Object.keys(pendingState.Hit_Dice).forEach(key => {
+      pendingState.Hit_Dice[key] = true;
     });
+
+	// Restore Heroic Inspiration if Human
+	if (c.species === "Human") {
+		pendingState.conditions ??= {};
+		pendingState.conditions.heroic_inspiration = true;
+		markDirty();
+	}
 
 	// Reset Class Specific Resources
 
 	if (hasBarbarian) {
-		Object.keys(fm.Rage).forEach(key => {
+		pendingState.Rage ??= {};
+		Object.keys(pendingState.Rage).forEach(key => {
 			if (key.startsWith("rage-")) {
-				fm.Rage[key] = true;
+				pendingState.Rage[key] = true;
 			}
 		});
+		markDirty();
 	}
 
 	if (hasBard) {
-		Object.keys(fm["Bardic-Insp"]).forEach(key => {
-			if (key.startsWith("bardic_insp_die_")) {
-				fm["Bardic-Insp"][key] = true;
+		pendingState.Bardic_Inspiration ??= {};
+		Object.keys(pendingState["Bardic_Inspiration"]).forEach(key => {
+			if (key.startsWith("bardic_insp_")) {
+				pendingState["Bardic_Inspiration"][key] = true;
 			}
 		});
+		markDirty();
 	}
 
 	if (hasCleric) {
-		Object.keys(fm.Channel_Divinity).forEach(key => {
+		pendingState.Channel_Divinity ??= {};
+		Object.keys(pendingState.Channel_Divinity).forEach(key => {
 			if (key.startsWith("divinity-")) {
-				fm.Channel_Divinity[key] = true;
+				pendingState.Channel_Divinity[key] = true;
 			}
 		});
+		markDirty();
 	}
 
 	if (hasDruid) {
-		Object.keys(fm.Wild_Shape).forEach(key => {
+		pendingState.Wild_Shape ??= {};
+		Object.keys(pendingState.Wild_Shape).forEach(key => {
 			if (key.startsWith("wild_shape-")) {
-				fm.Wild_Shape[key] = true;
+				pendingState.Wild_Shape[key] = true;
 			}
 		});
+		markDirty();
 	}
 
 	if (hasDruid && druidLevel >= 2) {
@@ -1738,91 +1734,111 @@ longRestBtn.onclick = async () => {
 	}
 
 	if (hasFighter) {
-		Object.keys(fm.Second_Wind).forEach(key => {
+		pendingState.Second_Wind ??= {};
+		pendingState.Action_Surge ??= {};
+		Object.keys(pendingState.Second_Wind).forEach(key => {
 			if (key.startsWith("second_wind-")) {
-				fm.Second_Wind[key] = true;
+				pendingState.Second_Wind[key] = true;
 			}
 		});
 
-		Object.keys(fm.Action_Surge).forEach(key => {
+		Object.keys(pendingState.Action_Surge).forEach(key => {
 			if (key.startsWith("action_surge-")) {
-				fm.Action_Surge[key] = true;
+				pendingState.Action_Surge[key] = true;
 			}
 		});
+		markDirty();
 	}
 
 	if (hasMonk) {
-		Object.keys(fm.Focus_Points).forEach(key => {
+		pendingState.Focus_Points ??= {};
+		Object.keys(pendingState.Focus_Points).forEach(key => {
 			if (key.startsWith("focus_points-")) {
-				fm.Focus_Points[key] = true;
+				pendingState.Focus_Points[key] = true;
 			}
 		});
+		markDirty();
 	}
 
 	if (hasPaladin) {
-		Object.keys(fm.Channel_Divinity).forEach(key => {
+		pendingState.Channel_Divinity ??= {};
+		Object.keys(pendingState.Channel_Divinity).forEach(key => {
 			if (key.startsWith("divinity-")) {
-				fm.Channel_Divinity[key] = true;
+				pendingState.Channel_Divinity[key] = true;
 			}
 		});
+		markDirty();
 	}
 
 	if (subclass.includes("Gloom Stalker" )) {
-		Object.keys(fm.Dreadful_Strike).forEach(key => {
+		pendingState.Dreadful_Strike ??= {};
+		Object.keys(pendingState.Dreadful_Strike).forEach(key => {
 			if (key.startsWith("dreadful_strike-")) {	
-				fm.Dreadful_Strike[key] = true;
+				pendingState.Dreadful_Strike[key] = true;
 			}
 		});
+		markDirty();
 	}
 
 	if (subclass.includes("Soulknife" )) {
-		Object.keys(fm.energy_dice).forEach(key => {
+		pendingState.Energy_Dice ??= {};
+		Object.keys(pendingState.Energy_Dice).forEach(key => {
 			if (key.startsWith("energy_die_")) {
-				fm.energy_dice[key] = true;
+				pendingState.Energy_Dice[key] = true;
 			}
 		});
+		markDirty();
 	}
 
 	if (hasSorcerer) {
-		Object.keys(fm.Sorcery_Points).forEach(key => {
+		pendingState.Sorcery_Points ??= {};
+		Object.keys(pendingState.Sorcery_Points).forEach(key => {
 			if (key.startsWith("sorcery_points-")) {
-				fm.Sorcery_Points[key] = true;
+				pendingState.Sorcery_Points[key] = true;
 			}
 		});
+		markDirty();
 	}
 
 	if (hasWarlock) {
-		Object.keys(fm.Magical_Cunning).forEach(key => {
+		pendingState.Magical_Cunning ??= {};
+		Object.keys(pendingState.Magical_Cunning).forEach(key => {
 			if (key.startsWith("magical_cunning-")) {
-				fm.Magical_Cunning[key] = true;
+				pendingState.Magical_Cunning[key] = true;
 			}
 		});
+		markDirty();
 	}
 	
 	// Reset Feat Specific Resources
 
 	if (feats.includes("Lucky")) {
-		Object.keys(fm.Luck).forEach(key => {
+		pendingState.Luck ??= {};
+		Object.keys(pendingState.Luck).forEach(key => {
 			if (key.startsWith("luck_point_")) {
-				fm.Luck[key] = true;
+				pendingState.Luck[key] = true;
 			}
 		});
 	}
 
 	if (feats.includes("Mage Slayer")) {
-		Object.keys(fm.Mage_Slayer).forEach(key => {
+		pendingState.Mage_Slayer ??= {};
+		Object.keys(pendingState.Mage_Slayer).forEach(key => {
 			if (key.startsWith("guarded_mind_")) {
-				fm.Mage_Slayer[key] = true;
+				pendingState.Mage_Slayer[key] = true;
 			}
 		});
+		markDirty();
 	}
 
 	if (feats.includes("Ritual Caster")) {
-		Object.keys(fm.Ritual_Caster).forEach(key => {
+		pendingState.Ritual_Caster ??= {};
+		Object.keys(pendingState.Ritual_Caster).forEach(key => {
 			if (key.startsWith("quick_ritual_")) {
-				fm.Ritual_Caster[key] = true;
+				pendingState.Ritual_Caster[key] = true;
 			}
 		});
+		markDirty();
 	}
 
 	if (pendingState.weaponMastery && Object.keys(pendingState.weaponMastery).length) {
@@ -1837,14 +1853,16 @@ longRestBtn.onclick = async () => {
 	// Reset Species Specific Resources
 
 	if (c.species === "Orc") {
-		Object.keys(fm.Adrenaline_Rush).forEach(key => {
+		pendingState.Adrenaline_Rush ??= {};
+		pendingState.Relentless_Endurance ??= {};
+		Object.keys(pendingState.Adrenaline_Rush).forEach(key => {
 			if (key.startsWith("adrenaline_rush-")) {
-				fm.Adrenaline_Rush[key] = true;
+				pendingState.Adrenaline_Rush[key] = true;
 			}
 		});
-		Object.keys(fm.Relentless_Endurance).forEach(key => {
+		Object.keys(pendingState.Relentless_Endurance).forEach(key => {
 			if (key.startsWith("relentless_endurance-")) {
-				fm.Relentless_Endurance[key] = true;
+				pendingState.Relentless_Endurance[key] = true;
 			}
 		});
 	}
@@ -1899,7 +1917,7 @@ longRestBtn.onclick = async () => {
 					const activeContainer = buttonContainer.previousElementSibling;
 					if (activeContainer) {
 						// Rebuild active list
-						const conditions = pendingState.conditions ?? {};
+						const conditions = getConditionsState();
 						const active = Object.entries(conditions)
 							.filter(([key, val]) => {
 								if (val === true) return true;
@@ -1923,6 +1941,15 @@ longRestBtn.onclick = async () => {
 		} catch (e) { console.error('Failed to update conditions panel after long rest:', e); }
 
 	} catch (e) { console.error('Failed to update pendingState.conditions after long rest:', e); }
+	
+	refreshResourceToggles();
+	renderHpDisplay();
+	updateMenuDirtyState();
+	updateSaveUi();
+	refreshSpellSlotToggles();
+	rebuildHeader();
+	refreshConditionsTabUI();
+	syncConcentrationCSS();
 
 	new Notice("Long Rest Completed!", 3000);
 };
@@ -2807,7 +2834,7 @@ document.addEventListener("keydown", (e) => {
 		// ======================================================================================
 		// Spell Slots
 		// ======================================================================================
-
+		pendingState.spell_slot ??= structuredClone(c.spell_slot ?? {});
         const char = dv.current() ?? {};
 		const preparedSpells = (char.Prepared_spells ?? []).map(s => String(s).trim()).filter(Boolean);
 		const spellAttackExtra = Number(char.Stat_Bonus?.Spell_Attack?.value ?? 0);
@@ -2837,75 +2864,121 @@ document.addEventListener("keydown", (e) => {
 		// Insert into panel
 		spellSlotsWrapper.appendChild(spellSlotsDiv);
 
-		// ✅ THEN insert wild shape above it
+		// THEN insert wild shape above it
 		if (wildShapeWrapper) {
 			spellSlotsWrapper.insertBefore(wildShapeWrapper, spellSlotsHeading);
 		}
 				
-		function addSpellLine(toggles, label) {
-		    const line = spellSlotsDiv.createEl("div", { cls: "spell-line" });
-		    line.appendChild(dv.paragraph(`${toggles} ${label}`));
+		function addSpellLine({ prefix, label, count = 1, cssClass = "spell-toggle" }) {
+			const line = spellSlotsDiv.createEl("div", { cls: "spell-line" });
+			const toggleRow = line.createEl("span", { cls: "spell-toggles" });
+
+			pendingState.spell_slot ??= {};
+
+			for (let i = 1; i <= count; i++) {
+				const key = `${prefix}${count > 1 ? i : ""}`;
+				const enabled = !!pendingState.spell_slot[key];
+
+				// Meta Bind–style wrapper
+				const wrapper = toggleRow.createEl("div", {
+					cls: `mb-input-wrapper ${cssClass}`
+				});
+
+				wrapper.dataset.namespace = "spell_slot";
+				wrapper.dataset.key = key;
+
+				// Checkbox container (this is what your CSS targets)
+				const box = wrapper.createEl("div", {
+					cls: "checkbox-container",
+					attr: {
+						role: "checkbox",
+						"aria-checked": enabled ? "true" : "false"
+					}
+				});
+
+				if (enabled) box.classList.add("is-enabled");
+
+				// Memory-only toggle behavior
+				box.addEventListener("click", e => {
+					e.preventDefault();
+					e.stopPropagation();
+
+					const next = !pendingState.spell_slot[key];
+					pendingState.spell_slot[key] = next;
+
+					box.classList.toggle("is-enabled", next);
+					box.setAttribute("aria-checked", next ? "true" : "false");
+
+					markDirty();
+				});
+			}
+
+			if (label) {
+				line.createEl("span", {
+					cls: "spell-label",
+					text: label
+				});
+			}
 		}
+
+		
 		
 		
 			
-		//=================================== Full/Half/One-Third Spell Caster
+		//=================================== Full / Half / Third Casters
 		if (
-		  hasBard || hasCleric || hasDruid || hasSorcerer || hasWizard ||
-		  hasPaladin || hasRanger || hasEldritchKnight || hasArcaneTrickster
+			hasBard || hasCleric || hasDruid || hasSorcerer || hasWizard ||
+			hasPaladin || hasRanger || hasEldritchKnight || hasArcaneTrickster
 		) {
-		
-		    const fullCasterSlotsTable = {
-		      1:  [2,0,0,0,0,0,0,0,0],
-		      2:  [3,0,0,0,0,0,0,0,0],
-		      3:  [4,2,0,0,0,0,0,0,0],
-		      4:  [4,3,0,0,0,0,0,0,0],
-		      5:  [4,3,2,0,0,0,0,0,0],
-		      6:  [4,3,3,0,0,0,0,0,0],
-		      7:  [4,3,3,1,0,0,0,0,0],
-		      8:  [4,3,3,2,0,0,0,0,0],
-		      9:  [4,3,3,3,1,0,0,0,0],
-		      10: [4,3,3,3,2,0,0,0,0],
-		      11: [4,3,3,3,2,1,0,0,0],
-		      12: [4,3,3,3,2,1,0,0,0],
-		      13: [4,3,3,3,2,1,1,0,0],
-		      14: [4,3,3,3,2,1,1,0,0],
-		      15: [4,3,3,3,2,1,1,1,0],
-		      16: [4,3,3,3,2,1,1,1,0],
-		      17: [4,3,3,3,2,1,1,1,1],
-		      18: [4,3,3,3,3,1,1,1,1],
-		      19: [4,3,3,3,3,2,1,1,1],
-		      20: [4,3,3,3,3,2,2,1,1]
-		    };
-		
-		    // Calculate combined caster level
-		    const spellcasterLevel =
-		        bardLevel +
-		        clericLevel +
-		        druidLevel +
-		        sorcererLevel +
-		        wizardLevel +
-		        Math.ceil(paladinLevel / 2) +
-		        Math.ceil(rangerLevel / 2) +
-		        Math.ceil(eldritchKnightLevel / 3) +
-		        Math.ceil(arcaneTricksterLevel / 3);
-		        
-			// spellcasting level computed (debug suppressed)
-		
-		    const fullCasterSlots = fullCasterSlotsTable[spellcasterLevel] ?? [0,0,0,0,0,0,0,0,0];
-		
-		    // Render slots
-		    for (let lvl = 1; lvl <= 9; lvl++) {
-		        const slotCount = fullCasterSlots[lvl - 1];
-		        if (slotCount === 0) continue;
-		
-		        const toggles = [...Array(slotCount).keys()]
-		          .map(i => `\`INPUT[toggle(class(spell-toggle)):spell_slot.level_${lvl}_${i+1}]\``)
-		          .join(" ");
-		
-		        addSpellLine(toggles, `Level ${lvl}`);
-		    }
+			const fullCasterSlotsTable = {
+				1:  [2,0,0,0,0,0,0,0,0],
+				2:  [3,0,0,0,0,0,0,0,0],
+				3:  [4,2,0,0,0,0,0,0,0],
+				4:  [4,3,0,0,0,0,0,0,0],
+				5:  [4,3,2,0,0,0,0,0,0],
+				6:  [4,3,3,0,0,0,0,0,0],
+				7:  [4,3,3,1,0,0,0,0,0],
+				8:  [4,3,3,2,0,0,0,0,0],
+				9:  [4,3,3,3,1,0,0,0,0],
+				10: [4,3,3,3,2,0,0,0,0],
+				11: [4,3,3,3,2,1,0,0,0],
+				12: [4,3,3,3,2,1,0,0,0],
+				13: [4,3,3,3,2,1,1,0,0],
+				14: [4,3,3,3,2,1,1,0,0],
+				15: [4,3,3,3,2,1,1,1,0],
+				16: [4,3,3,3,2,1,1,1,0],
+				17: [4,3,3,3,2,1,1,1,1],
+				18: [4,3,3,3,3,1,1,1,1],
+				19: [4,3,3,3,3,2,1,1,1],
+				20: [4,3,3,3,3,2,2,1,1]
+			};
+
+			const spellcasterLevel =
+				bardLevel +
+				clericLevel +
+				druidLevel +
+				sorcererLevel +
+				wizardLevel +
+				Math.ceil(paladinLevel / 2) +
+				Math.ceil(rangerLevel / 2) +
+				Math.ceil(eldritchKnightLevel / 3) +
+				Math.ceil(arcaneTricksterLevel / 3);
+
+			const slots = fullCasterSlotsTable[spellcasterLevel] ?? [];
+
+			for (let lvl = 1; lvl <= 9; lvl++) {
+				const count = slots[lvl - 1];
+				if (!count) continue;
+
+				addSpellLine({
+					prefix: `level_${lvl}_`,
+					label: `Level ${lvl}`,
+					count,
+					cssClass: "spell-toggle"
+				});
+			}
 		}
+
 
 		//=================================== Pact Magic + Mystic Arcanum (Warlock)
 		if (hasWarlock) {
@@ -2913,21 +2986,31 @@ document.addEventListener("keydown", (e) => {
 			if (warlockLevel >= 2) maxSlots = 2;
 			if (warlockLevel >= 11) maxSlots = 3;
 			if (warlockLevel >= 17) maxSlots = 4;
-			
+
 			let mLevel = 1;
 			if (warlockLevel >= 2) mLevel = 2;
 			if (warlockLevel >= 5) mLevel = 3;
 			if (warlockLevel >= 7) mLevel = 4;
 			if (warlockLevel >= 9) mLevel = 5;
-		    const pactToggles = [...Array(maxSlots).keys()]
-		        .map(i => `\`INPUT[toggle(class(pact-toggle)):spell_slot.pact${i+1}]\``)
-		        .join(" ");
-		    addSpellLine(pactToggles, `Pact Magic Spell Slot - Level ${mLevel}`);
-		
-		    if (warlockLevel >= 11) addSpellLine("`INPUT[toggle(class(pact-toggle)):spell_slot.arcanum1]`", "Mystic Arcanum Spell Slot - Level 6");
-		    if (warlockLevel >= 13) addSpellLine("`INPUT[toggle(class(pact-toggle)):spell_slot.arcanum2]`", "Mystic Arcanum Spell Slot - Level 7");
-		    if (warlockLevel >= 15) addSpellLine("`INPUT[toggle(class(pact-toggle)):spell_slot.arcanum3]`", "Mystic Arcanum Spell Slot - Level 8");
-		    if (warlockLevel >= 17) addSpellLine("`INPUT[toggle(class(pact-toggle)):spell_slot.arcanum4]`", "Mystic Arcanum Spell Slot - Level 9");
+
+			addSpellLine({
+				label: `Pact Magic Spell Slot(s) – Level ${mLevel}`,
+				prefix: "pact",
+				count: maxSlots,
+				cssClass: "pact-toggle"
+			});
+
+			if (warlockLevel >= 11)
+				addSpellLine({ label: "Mystic Arcanum – Level 6", prefix: "arcanum1", cssClass: "pact-toggle" });
+
+			if (warlockLevel >= 13)
+				addSpellLine({ label: "Mystic Arcanum – Level 7", prefix: "arcanum2", cssClass: "pact-toggle" });
+
+			if (warlockLevel >= 15)
+				addSpellLine({ label: "Mystic Arcanum – Level 8", prefix: "arcanum3", cssClass: "pact-toggle" });
+
+			if (warlockLevel >= 17)
+				addSpellLine({ label: "Mystic Arcanum – Level 9", prefix: "arcanum4", cssClass: "pact-toggle" });
 		}
 
 
@@ -2957,26 +3040,34 @@ document.addEventListener("keydown", (e) => {
 		
 		if (elfType && elfSpellTable[elfType]) {
 		    elfSpellTable[elfType].forEach(spell => {
-		        if (Level >= spell.level) {
-		            const toggle = `\`INPUT[toggle(class(spell-toggle)):spell_slot.${spell.key}]\``;
-		            addSpellLine(toggle, spell.name);
-		        }
-		    });
+			if (Level >= spell.level) {
+				addSpellLine({
+					label: spell.name,
+					prefix: spell.key,
+					cssClass: "spell-toggle"
+				});
+			}
+		});
 		}
 		
 		if (c.species === "Gnome") {
 			if (c.species_traits.includes("Forest Gnome")){
-				const toggle = `\`INPUT[toggle(class(spell-toggle)):spell_slot.forest_gnome_speak_with_animals]\``;
-		            addSpellLine(toggle, "Speak with Animals");
+					addSpellLine({
+					label: "Speak with Animals",
+					prefix: "forest_gnome_speak_with_animals",
+					cssClass: "spell-toggle"
+				});
 			}
 		}
 		
 		
 		if (c.species === "Goliath" && c.species_traits.includes("Cloud Giant")) {
-		    const toggles = [...Array(pb).keys()]
-		        .map(i => `\`INPUT[toggle(class(spell-toggle)):spell_slot.misty_step${i+1}]\``)
-		        .join(" ");
-		    addSpellLine(toggles, "Cloud's Jaunt (Misty Step)");
+			addSpellLine({
+				label: "Cloud's Jaunt (Misty Step)",
+				prefix: "misty_step",
+				count: pb,
+				cssClass: "spell-toggle"
+			});
 		} 
 		
 		const tieflingSpellTable = {
@@ -3005,8 +3096,13 @@ document.addEventListener("keydown", (e) => {
 		if (tieflingType && tieflingSpellTable[tieflingType]) {
 		    tieflingSpellTable[tieflingType].forEach(spell => {
 		        if (Level >= spell.level) {
-		            const toggle = `\`INPUT[toggle(class(spell-toggle)):spell_slot.${spell.key}]\``;
-		            addSpellLine(toggle, spell.name);
+		            if (Level >= spell.level) {
+						addSpellLine({
+							label: spell.name,
+							prefix: spell.key,
+							cssClass: "spell-toggle"
+						});
+					}
 		        }
 		    });
 		}
@@ -3022,10 +3118,12 @@ document.addEventListener("keydown", (e) => {
 			    if (lvl >= 5) return 3;
 			    return 2;
 			}
-			const toggles = [...Array(favEnemyFromLevel(rangerLevel)).keys()]
-		        .map(i => `\`INPUT[toggle(class(spell-toggle)):spell_slot.hunters_mark${i+1}]\``)
-		        .join(" ");
-		    addSpellLine(toggles, "Favored Enemy (Hunter's Mark)");
+			addSpellLine({
+				label: "Favored Enemy (Hunter's Mark)",
+				prefix: "hunters_mark",
+				count: favEnemyFromLevel(rangerLevel),
+				cssClass: "spell-toggle"
+			});
 		}
 		
 
@@ -3036,26 +3134,30 @@ document.addEventListener("keydown", (e) => {
 		    const ft = ftObj["Fey Touched"];
 		    const spellKey = ft.spell.replace(/\s+/g, "_").toLowerCase();  // safe key
 		
-		    addSpellLine(
-		        `\`INPUT[toggle(class(spell-toggle)):spell_slot.fey_touched_${spellKey}]\``,
-		        `Fey Touched - ${ft.spell} - Level 1`
-		    );
-		
-		    addSpellLine(
-		        `\`INPUT[toggle(class(spell-toggle)):spell_slot.fey_touched_misty_step]\``,
-		        `Fey Touched - Misty Step - Level 2`
-		    );
+		    addSpellLine({
+				label: `Fey Touched – ${ft.spell} – Level 1`,
+				prefix: `fey_touched_${spellKey}`,
+				cssClass: "spell-toggle"
+			});
+
+			addSpellLine({
+				label: "Fey Touched – Misty Step – Level 2",
+				prefix: "fey_touched_misty_step",
+				cssClass: "spell-toggle"
+			});
 		}
 		
 		//=================================== Magic Initiate
 		const miObj = feats.find(f => typeof f === "object" && f["Magic Initiate"]);
-		
+
 		if (miObj) {
-		    const mi = miObj["Magic Initiate"];
-		    addSpellLine(
-		        `\`INPUT[toggle(class(spell-toggle)):spell_slot.${mi.class.toLowerCase()}]\``,
-		        `Magic Initiate (${mi.class}) - ${mi.spell} - Level 1`
-		    );
+			const mi = miObj["Magic Initiate"];
+
+			addSpellLine({
+				prefix: mi.class.replace(/\s+/g, "_").toLowerCase(),
+				label: `Magic Initiate (${mi.class}) – ${mi.spell}`,
+				cssClass: "spell-toggle"
+			});
 		}
 
 			
@@ -3068,36 +3170,38 @@ document.addEventListener("keydown", (e) => {
 		    const st = stObj["Shadow Touched"];
 		    const spellKey = st.spell.replace(/\s+/g, "_").toLowerCase();  // safe key
 		
-		    addSpellLine(
-		        `\`INPUT[toggle(class(spell-toggle)):spell_slot.shadow_touched_${spellKey}]\``,
-		        `Shadow Touched - ${st.spell} - Level 1`
-		    );
-		
-		    addSpellLine(
-		        `\`INPUT[toggle(class(spell-toggle)):spell_slot.shadow_touched_invisibility]\``,
-		        `Shadow Touched - Invisibility - Level 2`
-		    );
+			addSpellLine({
+				label: `Shadow Touched – ${st.spell} – Level 1`,
+				prefix: `shadow_touched_${spellKey}`,
+				cssClass: "spell-toggle"
+			});
+
+			addSpellLine({
+				label: "Shadow Touched – Invisibility – Level 2",
+				prefix: "shadow_touched_invisibility",
+				cssClass: "spell-toggle"
+			});
 		}
 		
 		//=================================== Steps of the Fey (Misty Step) CHA_MOD Times/day
 		if (hasWarlock && hasArchfey) {
-		    const toggles = [...Array(CHA_MOD).keys()]
-		        .map(i => `\`INPUT[toggle(class(spell-toggle)):spell_slot.misty_step${i+1}]\``)
-		        .join(" ");
-		    addSpellLine(toggles, "Steps of the Fey (Misty Step)");
+			 addSpellLine({
+				label: `Steps of the Fey (Misty Step)`,
+				prefix: "misty_step",
+				cssClass: "spell-toggle",
+				count: CHA_MOD
+			});
 		}
 		
 		const invocations = c.Eldritch_Invocations
 		if (hasWarlock && invocations.includes("Gift of the Depths")) {
-		    const toggles = [...Array(1).keys()]
-		        .map(i => `\`INPUT[toggle(class(spell-toggle)):spell_slot.water_breathing${i+1}]\``)
-		        .join(" ");
-		    addSpellLine(toggles, "Gift of the Depths (Water Brathing)");
-		}
-		
-		
-		
-		
+			addSpellLine({
+				label: `Gift of the Deptsh (water_breathing)`,
+				prefix: "Water Brathing",
+				cssClass: "spell-toggle",
+				count: 1
+			});
+		}		
 		
 		
 		// Render SpellSlotsWrapper
@@ -3559,26 +3663,82 @@ document.addEventListener("keydown", (e) => {
 		}
 		
 		async function setConcentrationSpell(spellName) {
+			console.log('setConcentrationSpell called with', spellName, 'pendingState.conditions (before):', pendingState.conditions);
 			// Update concentration spell in-memory; persist on Save
 			pendingState.conditions = pendingState.conditions || {};
 			const current = pendingState.conditions.concentration_spell ?? dv.current().conditions?.concentration_spell ?? "";
 			if (current === spellName) {
 				delete pendingState.conditions.concentration_spell;
 				delete pendingState.conditions.concentrating;
+				markDirty();
+  				rebuildHeader();
+				refreshConditionsTabUI();
+				syncConcentrationCSS();
 			} else {
 				pendingState.conditions.concentration_spell = spellName;
 				pendingState.conditions.concentrating = true;
+				markDirty();
+  				rebuildHeader();
+				refreshConditionsTabUI();
+				syncConcentrationCSS();
 			}
+			console.log('setConcentrationSpell pendingState.conditions (after):', pendingState.conditions);
 
 			markDirty();
-			try { window.__char_rebuildHandlers?.[__char_file_key]?.rebuildHeader?.(); } catch (e) {}
+			// Try to invoke the registered rebuild handler; if not present, update header DOM directly.
+			try {
+				if (window.__char_rebuildHandlers?.[__char_file_key]?.rebuildHeader) {
+					window.__char_rebuildHandlers[__char_file_key].rebuildHeader();
+					// schedule a delayed rebuild to cover cases where DOM isn't ready yet
+					setTimeout(() => { try { window.__char_rebuildHandlers[__char_file_key].rebuildHeader(); } catch(e){} }, 100);
+					setTimeout(() => { try { window.__char_rebuildHandlers[__char_file_key].rebuildHeader(); } catch(e){} }, 300);
+					refreshConditionsTabUI();
+				} else {
+					// Fallback: update Conditions text in header directly
+					try {
+						const headerDetails = document.querySelector('.character-header-block .char-details');
+						if (headerDetails) {
+							const condObjLocal = pendingState.conditions ?? dv.current().conditions ?? {};
+							const activeLocal = [];
+							for (const [k, v] of Object.entries(condObjLocal)) {
+								if (k === 'concentrating' && v === true) {
+									const spellNameLocal = condObjLocal?.concentration_spell ?? '';
+									if (spellNameLocal) activeLocal.push(`Concentrating: ${formatSpellName(spellNameLocal)}`);
+									else activeLocal.push(prettyKey(k));
+									continue;
+								}
+								if (v === true) { activeLocal.push(prettyKey(k)); continue; }
+								if (v === false || v == null) continue;
+								if (typeof v === 'object') {
+									if ('count' in v && Number(v.count) > 0) { activeLocal.push(`${prettyKey(k)} (${v.count})`); continue; }
+									if (v.Level === true) { activeLocal.push(`${prettyKey(k)} (Level)`); continue; }
+									const innerTrue = Object.entries(v).filter(([k2, v2]) => k2 !== 'count' && v2 === true);
+									if (innerTrue.length) { const innerNames = innerTrue.map(([k2]) => prettyKey(k2)).join(', '); activeLocal.push(`${prettyKey(k)} (${innerNames})`); continue; }
+								}
+								if (typeof v === 'number' && v > 0) { activeLocal.push(`${prettyKey(k)} (${v})`); }
+							}
+							const condDisplayLocal = activeLocal.length ? activeLocal.join(', ') : 'None';
+							const child = Array.from(headerDetails.children).find(el => el.textContent && el.textContent.trim().startsWith('Conditions:'));
+							if (child) child.innerHTML = `<b>Conditions:</b> ${condDisplayLocal}`;
+						}
+					} catch (err) { /* ignore fallback DOM update errors */ }
+				}
+			} catch (e) { /* ignore */ }
+			try { rebuildHeader(); 
+				refreshConditionsTabUI();
+				syncConcentrationCSS();
+			} catch (e) {}
+			try { setTimeout(() => { rebuildHeader(); }, 100); } catch (e) {}
 			try { setTimeout(() => { app.commands.executeCommandById("dataview:refresh-views"); }, 50); } catch (e) {}
 		}
 
 
 		// Build a list of spell slot definitions (key, label, used)
 		function getSpellSlotDefs() {
-			const slotsObj = (dv.current().spell_slot) ?? {};
+			// Merge frontmatter slots with in-memory pendingState overrides so
+			// the picker reflects slots spent during this session.
+			const fmSlots = (dv.current().spell_slot) ?? {};
+			const slotsObj = Object.assign({}, fmSlots, pendingState.spell_slot ?? {});
 
 			// Recreate full caster slots table (same as used for rendering)
 			const fullCasterSlotsTable = {
@@ -3623,12 +3783,15 @@ document.addEventListener("keydown", (e) => {
 			for (let lvl = 1; lvl <= 9; lvl++) {
 				const cnt = fullCasterSlots[lvl - 1];
 				if (cnt === 0) continue;
-				for (let i = 1; i <= cnt; i++) {
-					const key = `level_${lvl}_${i}`;
-					// In frontmatter this project stores `true` for available slots.
-					// Treat explicit `false` as a spent/used slot.
-					defs.push({ key, label: `Level ${lvl} Slot ${i}`, used: (slotsObj[key] === false), slotLevel: lvl, isSpecific: false });
-				}
+				// Group generated numeric slots into a single definition per level
+				const members = [];
+				for (let i = 1; i <= cnt; i++) members.push(`level_${lvl}_${i}`);
+				let available = 0;
+				for (const m of members) if (slotsObj[m] !== false) available++;
+				let label = `Level ${lvl}`;
+				if (cnt > 1) label = `${label} (${available} of ${cnt})`;
+				const used = available === 0;
+				defs.push({ key: `level_${lvl}`, label, used, slotLevel: lvl, isSpecific: false, members });
 			}
 
 			// Warlock pact slots
@@ -3684,10 +3847,17 @@ document.addEventListener("keydown", (e) => {
 					if (existing.has(k)) continue;
 					const m = k.match(/^(.*?)(\d+)$/);
 					if (m) {
-						const base = m[1];
+						let base = m[1];
+						// Normalize trailing underscore (e.g., 'level_1_' -> 'level_1')
+						// so numeric keys like 'level_1_1' merge with generated 'level_1' defs.
+						if (base.endsWith('_')) base = base.slice(0, -1);
+						// If a def for this base already exists (e.g., generated 'level_1'), skip grouping
+						if (existing.has(base)) continue;
 						if (!groups[base]) groups[base] = { members: [] };
 						groups[base].members.push(k);
 					} else {
+						// If a def already exists for this exact key, skip
+						if (existing.has(k)) continue;
 						groups[k] = { members: [k] };
 					}
 				}
@@ -3712,24 +3882,30 @@ document.addEventListener("keydown", (e) => {
 			return defs;
 		}
 
-		async function spendSpellSlot(key) {
-			const file = app.workspace.getActiveFile();
-			if (!file) return false;
-			let success = false;
-			await app.fileManager.processFrontMatter(file, fm => {
-				if (!fm.spell_slot) fm.spell_slot = {};
-				// Mark as spent -> set to false (project uses `true` for available)
-				let target = key;
-				if (!(target in fm.spell_slot)) {
-					// try to find a numbered member (e.g., misty_step1..misty_step4)
-					const candidates = Object.keys(fm.spell_slot).filter(k => k.startsWith(target) && /\d+$/.test(k) && fm.spell_slot[k] !== false);
-					if (candidates.length) target = candidates[0];
+		function spendSpellSlot(key) {
+			pendingState.spell_slot ??= {};
+
+			// Resolve grouped key (e.g., 'level_3') to a concrete numbered key (e.g., 'level_3_1').
+			let target = key;
+			if (!(target in pendingState.spell_slot)) {
+				// 1) Look for available numbered candidates in pendingState first
+				let candidates = Object.keys(pendingState.spell_slot)
+					.filter(k => k.startsWith(target) && /\d+$/.test(k) && pendingState.spell_slot[k] !== false);
+				// 2) Then look in frontmatter (dv.current()) if none in pendingState
+				if (!candidates.length) {
+					const fm = (dv.current().spell_slot) ?? {};
+					candidates = Object.keys(fm).filter(k => k.startsWith(target) && /\d+$/.test(k) && fm[k] !== false);
 				}
-				fm.spell_slot[target] = false;
-				success = true;
-			});
-			app.commands.executeCommandById("dataview:refresh-views");
-			return success;
+				// 3) If still none, assume the first numeric index
+				if (candidates.length) target = candidates[0];
+				else if (!/\d+$/.test(target)) target = `${target}_1`;
+			}
+
+			if (!target) return false;
+
+			pendingState.spell_slot[target] = false; // mark spent
+			markDirty();
+			return true;
 		}
 
 		function showSpellSlotPicker(spell) {
@@ -3832,10 +4008,15 @@ document.addEventListener("keydown", (e) => {
 				btn.disabled = !usable;
 				btn.onclick = async () => {
 					overlay.remove();
-					const ok = await spendSpellSlot(d.key);
+					const ok = spendSpellSlot(d.key);
 					if (ok) {
 						if (spell.IsConcentration) await setConcentrationSpell(spell.Name);
 						new Notice(`Expended ${d.label} for ${spell.Name}`, 3000);
+						markDirty();
+						refreshSpellSlotToggles();
+						rebuildHeader();
+						refreshConditionsTabUI();
+						syncConcentrationCSS();
 					}
 				};
 				list.appendChild(btn);
@@ -5452,6 +5633,30 @@ console.log("Rendering TAB: Inventory");
 // ======================================================================================
 console.log("Rendering TAB: Conditions");
 
+function refreshConditionsTabUI() {
+  try {
+    const panel = document.querySelector("#conditions .panel");
+    if (!panel) return;
+
+    // Update buttons
+    panel.querySelectorAll("button[data-condition-key]").forEach(btn => {
+      const key = btn.dataset.conditionKey;
+      const active = pendingState.conditions?.[key] === true;
+
+      btn.style.backgroundColor = active
+        ? "var(--interactive-accent)"
+        : "var(--background-modifier-border)";
+    });
+
+    // Update active conditions list
+    const activeListContainer = panel.querySelector(".conditions-active-list");
+    if (activeListContainer && typeof window.__renderActiveConditions === "function") {
+      window.__renderActiveConditions(activeListContainer);
+    }
+  } catch (e) {
+    console.warn("refreshConditionsTabUI failed", e);
+  }
+}
 
 // Conditions tab renderer
 (async function renderConditionsTab() {
@@ -5502,7 +5707,9 @@ console.log("Rendering TAB: Conditions");
 		const activeConditionsContainer = document.createElement("div");
 		panel.appendChild(activeConditionsContainer);
 
+		window.__renderActiveConditions = renderActiveConditions;
 		renderActiveConditions(activeConditionsContainer);
+		activeConditionsContainer.classList.add("conditions-active-list");
 
 		function renderActiveConditions(container) {
 			// Ensure container is cleared to avoid duplicate lists on re-render
@@ -5612,18 +5819,30 @@ console.log("Rendering TAB: Conditions");
 
 
 		async function consumeRageUse(file) {
+			// Prefer consuming from in-memory pendingState first so UI updates immediately
+			pendingState.Rage ??= {};
+			const entry = Object.entries(pendingState.Rage).find(([_, available]) => available === true);
+			if (entry) {
+				const [key] = entry;
+				pendingState.Rage[key] = false;
+				markDirty();
+				refreshResourceToggles();
+				return;
+			}
+
+			// Fallback to editing frontmatter if nothing in pendingState
 			await app.fileManager.processFrontMatter(file, fm => {
 				fm.Rage ??= {};
 
-				const entry = Object.entries(fm.Rage)
+				const entry2 = Object.entries(fm.Rage)
 				.find(([_, available]) => available === true);
 
-				if (!entry) {
-				new Notice("No Rage uses remaining!", 3000);
-				throw new Error("No Rage uses left");
+				if (!entry2) {
+					new Notice("No Rage uses remaining!", 3000);
+					throw new Error("No Rage uses left");
 				}
 
-				const [key] = entry;
+				const [key] = entry2;
 				fm.Rage[key] = false;
 			});
 		}
@@ -5648,13 +5867,15 @@ console.log("Rendering TAB: Conditions");
 			btn.style.borderRadius = "6px";
 			btn.style.border = "none";
 			btn.style.cursor = "pointer";
+			btn.dataset.conditionKey = key;
 
 			btn.onclick = async () => {
 				const file = app.vault.getAbstractFileByPath(dv.current().file.path);
 				if (!file) return;
 
 				pendingState.conditions = pendingState.conditions || {};
-				const current = pendingState.conditions[key] ?? dv.current().conditions?.[key] ?? false;
+				const conditions = getConditionsState();
+				const current = key in conditions ? conditions[key] === true : false;
 				let next = !current;
 
 				// === RAGE SPECIAL HANDLING ===
@@ -5669,14 +5890,20 @@ console.log("Rendering TAB: Conditions");
 
 				// === CONCENTRATION CLEANUP ===
 				if (key === "concentrating" && !next) {
-					delete pendingState.concentration_spell;
+					// remove concentration spell from the conditions object (not top-level)
+					if (pendingState.conditions) delete pendingState.conditions.concentration_spell;
 				}
+
+				console.log('Condition button click:', key, 'current:', current, 'next:', next, 'pendingState.conditions:', pendingState.conditions);
 
 				if (next) pendingState.conditions[key] = next;
 				else delete pendingState.conditions[key];
 
 				markDirty();
-
+				rebuildHeader();
+				refreshConditionsTabUI();
+				refreshConditionsTabUI();
+				syncConcentrationCSS();
 				// Update button appearance
 				btn.style.backgroundColor = next
 					? "var(--interactive-accent)"
@@ -5684,7 +5911,10 @@ console.log("Rendering TAB: Conditions");
 
 				// Refresh active list and header conditions display
 				renderActiveConditions(activeConditionsContainer);
-				try { window.__char_rebuildHandlers?.[__char_file_key]?.rebuildHeader?.(); } catch (e) {}
+				try { rebuildHeader(); 
+					refreshConditionsTabUI();
+					syncConcentrationCSS();
+				} catch (e) { try { window.__char_rebuildHandlers?.[__char_file_key]?.rebuildHeader?.(); } catch(e){} }
 			};
 
 			return btn;

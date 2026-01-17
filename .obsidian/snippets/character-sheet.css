@@ -78,10 +78,14 @@
   }
 }
 
-/* Outer pulse when inner header shows concentration */
-.character-header-block:has(.char-header[style*="#950606"]) {
+/* Applied when concentration is active */
+.character-header-block.is-concentrating {
   animation: wateryBreath 2.8s ease-in-out infinite;
-  border-color: #1aa3c8 !important; /* soft water-teal border */
+  border-color: #1aa3c8 !important;
+}
+
+.character-header-block.is-concentrating .char-header {
+  border-color: #950606 !important;
 }
 
 /* Ensure .char-header never shows a red border */
@@ -639,7 +643,7 @@
 
 
 
-
+/* ======= Spell Slot Toggles ======= */
 
 .mb-input-wrapper.spell-toggle .checkbox-container {
   --slot-size: 20px;
@@ -775,10 +779,7 @@ background-color: #000;
   animation-delay: var(--delay, 0s);
   box-shadow: 0 0 6px 2px rgba(138, 43, 226, 0.7);
 }
-
-
-
-
+/* ======= END Spell Slot Toggles ======= */
 
 
 .spell-header-row {

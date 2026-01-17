@@ -35,37 +35,34 @@ weapon_training: Simple Melee
 Proficiencies:
 Stat_Bonus:
 conditions:
-  blinded: false
-  charmed: false
-  concentrating: false
-  deafened: false
-  frightened: false
-  grappled: false
   heroic_inspiration: false
-  incapacitated: false
-  invisible: false
-  mage_armor: false
-  paralyzed: false
-  petrified: false
-  poisoned: false
-  prone: false
-  restrained: false
-  stunned: false
-  unconscious: false
-  exhaustion:
-    count: 0
-    Level: false
 health:
   max: 11
   current: 11
   temp: 0
-  maxTmp: 5
+  maxTmp: 0
 Hit_Dice:
-inventory:
+  Cleric_d8-1: true
+  Cleric_d8-2: true
+  Cleric_d8-3: true
+  Cleric_d8-4: true
+  Cleric_d8-5: true
+inventory: {}
 attuned:
 spell_slot:
   level1_2: true
   level1_1: true
+  level_1_1: true
+  level_1_2: true
+  level_1_3: true
+  level_1_4: true
+  level_2_3: true
+  level_2_2: true
+  level_2_1: true
+  level_3_1: true
+  level_3_2: false
+  elf_faerie_fire: true
+  elf_darkness: true
 feats:
 Spells:
   Prepared:
@@ -87,6 +84,19 @@ Eldritch_Invocations:
 mastery:
 purse: 0
 BASE_FOLDER: 3. Mechanics/CLI
+weapon_mastery: {}
+Bastion:
+  name: ""
+  current_day: 0
+  defenders: 0
+  facilities: []
+Channel_Divinity:
+  divinity-1: true
+  divinity-2: true
+Wild_Shape: {}
+Second_Wind: {}
+Action_Surge: {}
+Focus_Points: {}
 ---
 ```dataviewjs
 // Load full cahracter sheet

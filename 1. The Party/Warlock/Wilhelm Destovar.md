@@ -52,19 +52,15 @@ Stat_Bonus:
     source: 1 Rod of the Pact Keeper
 conditions:
   heroic_inspiration: false
-  exhaustion:
-    count: 0
-    Level: false
-  concentration_spell: Hunger Of Hadar
 health:
   max: 39
   current: 11
   temp: 0
   maxTmp: 4
 Luck:
-  luck_point_1: true
-  luck_point_2: true
-  luck_point_3: true
+  luck_point_1: false
+  luck_point_2: false
+  luck_point_3: false
 Hit_Dice:
   Warlock_d8-1: true
   Warlock_d8-2: true
@@ -155,7 +151,7 @@ Eldritch_Invocations:
   - Repelling Blast
   - Eldritch Mind
 Magical_Cunning:
-  magical_cunning-1: true
+  magical_cunning-1: false
 mastery:
 purse: 1897
 Bastion:

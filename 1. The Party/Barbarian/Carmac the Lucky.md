@@ -54,20 +54,13 @@ Stat_Bonus:
     value: 10
     source: Fast Movement
 conditions:
-  bless: false
-  prone: false
-  paralyzed: false
-  frightened: false
-  haste: false
-  exhaustion:
-    count: 0
-    Level: false
   heroic_inspiration: false
+  rage: true
 health:
   max: 57
   current: 57
   temp: 0
-  maxTmp: 5
+  maxTmp: 0
 Hit_Dice:
   Barbarian_d12-1: true
   Barbarian_d12-2: true
@@ -111,22 +104,13 @@ mastery:
   Javelin: Slow
   Light Crossbow: Slow
 Rage:
-  rage-1: true
-  rage-2: true
-  rage-3: false
-  rage-4: false
+  rage-1: false
+  rage-2: false
+  rage-3: true
+  rage-4: true
 purse: 156
 BASE_FOLDER: 3. Mechanics/CLI
-weapon_mastery:
-  "1":
-    weapon: Greataxe
-    mastery: Cleave
-  "2":
-    weapon: Heavy Crossbow
-    mastery: Push
-  "3":
-    weapon: Spear
-    mastery: Sap
+weapon_mastery: {}
 Bastion:
   name: ""
   current_day: 0
