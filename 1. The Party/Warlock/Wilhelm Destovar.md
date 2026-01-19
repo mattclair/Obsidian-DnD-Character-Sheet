@@ -52,10 +52,10 @@ Stat_Bonus:
     source: 1 Rod of the Pact Keeper
 conditions:
   heroic_inspiration: false
-  mage_armor: true
   poisoned: true
   invisible: true
   paralyzed: true
+  mage_armor: true
 health:
   max: 39
   current: 11

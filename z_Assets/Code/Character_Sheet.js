@@ -2359,7 +2359,10 @@ document.addEventListener("keydown", (e) => {
 // ======================================================================================
 // ============================================================    Overview Container Tab
 // ======================================================================================
-window.renderOverviewTab = function () {
+function rebuildOverview() {
+	window.__char_rebuildHandlers?.[__char_file_key]?.rebuildOverview?.();
+}
+function renderOverviewTab() {
 	const c = window.getLiveCharacter();
 	const conditions = getEffectiveConditions();
 	try {
@@ -2602,6 +2605,25 @@ window.renderOverviewTab = function () {
 		// Remove the old stat-grid placeholder
 		const oldStatGrid = overviewPanel.querySelector(".stat-grid");
 		if (oldStatGrid) oldStatGrid.remove();
+
+
+		// Ensure handler registry exists
+		window.__char_rebuildHandlers ??= {};
+		window.__char_rebuildHandlers[__char_file_key] ??= {};
+
+		// Expose Overview rebuild handler
+		window.__char_rebuildHandlers[__char_file_key].rebuildOverview = function () {
+			try {
+				// Guard: only rebuild if Overview tab exists
+				const overviewPanel = container?.querySelector?.("#overview .panel");
+				if (!overviewPanel) return;
+
+				renderOverviewTab();
+				console.log("Overview rebuilt");
+			} catch (e) {
+				console.warn("Overview rebuild failed", e);
+			}
+		};
 		
 		
     } catch (e) {
@@ -5793,45 +5815,12 @@ function rebuildConditions() {
 	}
 }
 
-// function refreshConditionsTabUI() {
-//   try {
-//     const panel = document.querySelector("#conditions .panel");
-//     if (!panel) return;
-
-//     panel.querySelectorAll("button[data-condition-key]").forEach(btn => {
-//       const key = btn.dataset.conditionKey;
-
-//       let active = false;
-
-//       if (key === "exhaustion") {
-//         active =
-//           pendingState.conditions?.exhaustion?.Level === true &&
-//           (pendingState.conditions.exhaustion.count ?? 0) > 0;
-//       } else {
-//         active = pendingState.conditions?.[key] === true;
-//       }
-
-//       btn.classList.toggle("is-active", active);
-//     });
-
-//     const activeListContainer = window.__conditionsActiveListContainer || panel.querySelector(".conditions-active-list");
-
-//     if (activeListContainer && typeof window.__renderActiveConditions === "function") {
-//       window.__renderActiveConditions(activeListContainer);
-//     }
-//   } catch (e) {
-//     console.warn("refreshConditionsTabUI failed", e);
-//   }
-// }
-
-
-
 function syncAfterConditionChange() {
 	console.log("Syncing after condition change...");
 	rebuildHeader();
 	rebuildConditions();
 	syncConcentrationCSS();
-	renderOverviewTab();
+	rebuildOverview();
 }
 
 
