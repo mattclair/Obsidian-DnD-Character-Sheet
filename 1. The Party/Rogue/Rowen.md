@@ -58,6 +58,11 @@ Stat_Bonus:
     source: Speedy Feat
 conditions:
   heroic_inspiration: false
+  exhaustion:
+    count: 1
+    Level: true
+  frightened: true
+  incapacitated: true
 resistances:
   - Advantage when rolling saving throws against the Charmed condition
   - Immune to Sleep

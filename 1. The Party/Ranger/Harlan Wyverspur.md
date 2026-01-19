@@ -56,6 +56,9 @@ Stat_Bonus:
     source: Dread Ambusher
 conditions:
   heroic_inspiration: true
+  exhaustion:
+    count: 0
+    Level: false
 health:
   max: 35
   current: 35
@@ -95,7 +98,7 @@ spell_slot:
   hunters_mark1: true
   hunters_mark2: true
   hunters_mark3: true
-  level_1_1: false
+  level_1_1: true
   level_1_2: true
   level_1_3: true
   level_1_4: true
@@ -182,13 +185,6 @@ Bastion:
       order: None
       status: operational
 weapon_mastery: {}
-wild-shape-options: []
-Wild_Shape: {}
-Channel_Divinity: {}
-Second_Wind: {}
-Action_Surge: {}
-Focus_Points: {}
-Energy_Dice: {}
 ---
 
 

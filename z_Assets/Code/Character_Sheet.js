@@ -422,6 +422,42 @@ function hasArmorOfShadows() {
   return invocations.includes("Armor of Shadows") ||
          invocations.includes("Armour of Shadows");
 }
+function hasAscendantStep() {
+	  const invocations = c.Eldritch_Invocations ?? [];
+	  return invocations.includes("Ascendant Step");
+}
+function hasFiendishVigor() {
+	  const invocations = c.Eldritch_Invocations ?? [];
+	  return invocations.includes("Fiendish Vigor");
+}
+function hasMaskOfManyFaces() {
+	  const invocations = c.Eldritch_Invocations ?? [];
+	  return invocations.includes("Mask of Many Faces");
+}
+function hasMasterofMyriadForms() {
+	  const invocations = c.Eldritch_Invocations ?? [];
+	  return invocations.includes("Master of Myriad Forms");
+}
+function hasMistyVisoions() {
+	  const invocations = c.Eldritch_Invocations ?? [];
+	  return invocations.includes("Misty Visions");
+}
+function hasOneWithShadows() {
+	  const invocations = c.Eldritch_Invocations ?? [];
+	  return invocations.includes("One with Shadows");
+}
+function hasOtherworldlyLeap() {
+	  const invocations = c.Eldritch_Invocations ?? [];
+	  return invocations.includes("Otherworldly Leap");
+}
+function hasVisionsOfDistantRealms() {
+	  const invocations = c.Eldritch_Invocations ?? [];
+	  return invocations.includes("Visions of Distant Realms");
+}
+function hasWhispersOfTheGrave() {
+	  const invocations = c.Eldritch_Invocations ?? [];
+	  return invocations.includes("Whispers of the Grave");
+}
 
 // Optional: debug info suppressed
 
@@ -435,11 +471,11 @@ function formatSpellName(name) {
 }
 
 // ======================================================================================
-// ==================================================================    Character Header
+// =================================================================   UI Refresh Helpers
 // ======================================================================================
 const active = [];
 const condObj = getConditionsState();
-const concentrationActive = condObj.concentrating === true;
+const concentrationActive = condObj.concentration === true;
 
 function addResourceToggles({
   parent,
@@ -474,6 +510,7 @@ function addResourceToggles({
     input.addEventListener("change", () => {
       pendingState[namespace][key] = input.checked;
       markDirty();
+	  syncAfterConditionChange();
     });
 
   } else {
@@ -499,7 +536,6 @@ function addResourceToggles({
       if (showIndex) labelEl.appendText(` ${i}`);
     }
   }
-
   return row; // return the row if needed later
 }
 
@@ -532,7 +568,7 @@ function syncConcentrationCSS() {
     {};
 
   const isConcentrating =
-    cond.concentrating === true &&
+    cond.concentration === true &&
     !!cond.concentration_spell;
 
   const headers = document.querySelectorAll('.character-header-block');
@@ -579,7 +615,7 @@ function refreshSpellSlotToggles() {
 
 function syncAfterSpellCast() {
   refreshSpellSlotToggles();
-  refreshConditionsTabUI();
+  rebuildConditions();
   rebuildHeader();
   syncConcentrationCSS();
 }
@@ -642,8 +678,8 @@ function prettyKey(k) {
 }
 
 for (const [key, val] of Object.entries(condObj)) {
-  // Special case for concentrating
-  if (key === "concentrating" && val === true) {
+  // Special case for concentration
+  if (key === "concentration" && val === true) {
     const spellName = condObj?.concentration_spell ?? "";
     if (spellName) {
       active.push(`Concentrating: ${spellName}`);
@@ -677,7 +713,55 @@ for (const [key, val] of Object.entries(condObj)) {
   }
 }
 
+// window.syncConditionsUI = function syncConditionsUI() {
+//   console.log("syncConditionsUI() called");
 
+//   try {
+//     refreshConditionsTabUI();
+
+//     if (typeof window.__renderActiveConditions === "function") {
+//       const panel = document.querySelector("#conditions .panel");
+//       const list = panel?.querySelector(".conditions-active-list");
+//       if (list) {
+//         const fresh = list.cloneNode(false);
+//         list.replaceWith(fresh);
+//         window.__renderActiveConditions(fresh);
+//       }
+//     }
+
+//     rebuildHeader();
+//     syncConcentrationCSS();
+//   } catch (e) {
+//     console.warn("syncConditionsUI failed", e);
+//   }
+// };
+
+window.getLiveCharacter = function () {
+  const fm = dv.current();
+
+  return {
+    ...fm,
+    conditions: {
+      ...(fm.conditions ?? {}),
+      ...(pendingState.conditions ?? {})
+    },
+    Stat_Bonus: {
+      ...(fm.Stat_Bonus ?? {}),
+      ...(pendingState.Stat_Bonus ?? {})
+    }
+  };
+};
+
+function getEffectiveConditions() {
+  return pendingState.conditions
+    ? structuredClone(pendingState.conditions)
+    : structuredClone(c.conditions ?? {});
+}
+
+
+// ======================================================================================
+// ==================================================================    Character Header
+// ======================================================================================
 
 
 const condDisplay = active.length ? active.join(", ") : "None";
@@ -823,7 +907,7 @@ try {
 			const activeLocal = [];
 
 			for (const [k, v] of Object.entries(condObjLocal)) {
-				if (k === 'concentrating' && v === true) {
+				if (k === 'concentration' && v === true) {
 					const spellName = condObjLocal?.concentration_spell ?? '';
 					if (spellName) activeLocal.push(`Concentrating: ${spellName}`);
 					else activeLocal.push(prettyKey(k));
@@ -1412,7 +1496,7 @@ function dealDamage() {
   }, () => {
     const rollMod = CON_MOD + pb;
 
-    if (c.conditions?.concentrating === true) {
+    if (c.conditions?.concentration === true) {
       let conTest = Math.floor(delta / 2);
       conTest = Math.min(30, Math.max(10, conTest));
       new Notice(`Roll a DC ${conTest} Concentration Check! Add ${rollMod}`, 5000);
@@ -1667,7 +1751,7 @@ shortRestBtn.onclick = () => {
   renderHpDisplay();
   updateMenuDirtyState();
   updateSaveUi();
-  
+  renderOverviewTab();
 
   new Notice("Short Rest applied (unsaved)", 5000);
 };
@@ -1969,9 +2053,11 @@ longRestBtn.onclick = async () => {
 	updateSaveUi();
 	refreshSpellSlotToggles();
 	rebuildHeader();
-	refreshConditionsTabUI();
+	rebuildConditions();
 	syncConcentrationCSS();
 	syncAfterSpellCast();
+	renderOverviewTab();
+	syncAfterConditionChange();
 
 	new Notice("Long Rest Completed!", 3000);
 };
@@ -2273,13 +2359,15 @@ document.addEventListener("keydown", (e) => {
 // ======================================================================================
 // ============================================================    Overview Container Tab
 // ======================================================================================
-
-(function renderOverviewTab() {
+window.renderOverviewTab = function () {
+	const c = window.getLiveCharacter();
+	const conditions = getEffectiveConditions();
 	try {
+		console.log("Rendering Overview Tab for character:", c.name || "(Unnamed)");
 		// Rendering Overview (diagnostics suppressed)
         // === Level-based Proficiency Bonus ===
-		const profs = dv.current().Proficiencies ?? {};
-		let rawBonus = dv.current().Stat_Bonus ?? {};
+		const profs = c.Proficiencies ?? {};
+		let rawBonus = c.Stat_Bonus ?? {};
 		
 		// Dataview sometimes returns strings for nested YAML — parse if needed
 		if (typeof rawBonus === "string") {
@@ -2310,18 +2398,18 @@ document.addEventListener("keydown", (e) => {
 		
 		// Dynamic variables dictionary
 		const vars = {
-		  STR: Number(dv.current().STR ?? 10),
-		  DEX: Number(dv.current().DEX ?? 10),
-		  CON: Number(dv.current().CON ?? 10),
-		  INT: Number(dv.current().INT ?? 10),
-		  WIS: Number(dv.current().WIS ?? 10),
-		  CHA: Number(dv.current().CHA ?? 10),
-		  STR_MOD: mod(Number(dv.current().STR ?? 10)),
-		  DEX_MOD: mod(Number(dv.current().DEX ?? 10)),
-		  CON_MOD: mod(Number(dv.current().CON ?? 10)),
-		  INT_MOD: mod(Number(dv.current().INT ?? 10)),
-		  WIS_MOD: mod(Number(dv.current().WIS ?? 10)),
-		  CHA_MOD: mod(Number(dv.current().CHA ?? 10)),
+		  STR: Number(c.STR ?? 10),
+		  DEX: Number(c.DEX ?? 10),
+		  CON: Number(c.CON ?? 10),
+		  INT: Number(c.INT ?? 10),
+		  WIS: Number(c.WIS ?? 10),
+		  CHA: Number(c.CHA ?? 10),
+		  STR_MOD: mod(Number(c.STR ?? 10)),
+		  DEX_MOD: mod(Number(c.DEX ?? 10)),
+		  CON_MOD: mod(Number(c.CON ?? 10)),
+		  INT_MOD: mod(Number(c.INT ?? 10)),
+		  WIS_MOD: mod(Number(c.WIS ?? 10)),
+		  CHA_MOD: mod(Number(c.CHA ?? 10)),
 		  PROF: pb
 		};
 		
@@ -2383,19 +2471,17 @@ document.addEventListener("keydown", (e) => {
 		};
 		
 		// Derived Stats
-		let baseAC = Number(dv.current().Base_AC ?? 10);
-		if (dv.current()?.conditions?.mage_armor) baseAC = 13;
-		const spellAbility = dv.current().Spellcasting_Ability;
+		let baseAC = Number(c.Base_AC ?? 10);
+		if (conditions.mage_armor) baseAC = 13;
+		const spellAbility = c.Spellcasting_Ability;
 		const spellAbilityScore = vars[spellAbility];
 		const spellMod = mod(spellAbilityScore);
-		//const dexMod = vars.DEX_MOD;
-		//const wisMod = vars.WIS_MOD;
-		const initiative = DEX_MOD + (statBonus.Initiative ?? 0);
-		const armorClass = baseAC + DEX_MOD + (statBonus.Armor_Class ?? 0);
+		const initiative = vars.DEX_MOD + (statBonus.Initiative ?? 0);
+		const armorClass = baseAC + vars.DEX_MOD + (statBonus.Armor_Class ?? 0);
 		const spellSaveDC = 8 + pb + spellMod + (statBonus.Spell_Save_DC ?? 0);
 		const spellAttack = pb + spellMod + (statBonus.Spell_Attack ?? 0);
-		const passivePerception = 10 + WIS_MOD + (pb * (profs.Perception ?? 0)) + (statBonus.Perception ?? 0);
-		const speedDisplay = (dv.current().speed ?? 30) + (statBonus.Speed ?? 0);
+		const passivePerception = 10 + vars.WIS_MOD + (pb * (profs.Perception ?? 0)) + (statBonus.Perception ?? 0);
+		const speedDisplay = (c.speed ?? 30) + (statBonus.Speed ?? 0);
 		
 		// === Render Statblock ===
 		let charStatHtml = `<div class="character-stats-container">`;
@@ -2494,26 +2580,37 @@ document.addEventListener("keydown", (e) => {
 		    </div>
 		  `;
 		}
+
+		console.log(
+			"AC debug:",
+			"baseAC =", baseAC,
+			"DEX_MOD =", vars.DEX_MOD,
+			"final AC =", armorClass
+		);
 		
 		
 		// === Replace Overview Stat Grid with Full Character Stat Block ===
 		const overviewPanel = container.querySelector("#overview .panel");
-		
+		let statsRoot = overviewPanel.querySelector(".character-stats-root");
+		if (!statsRoot) {
+		statsRoot = document.createElement("div");
+		statsRoot.className = "character-stats-root";
+		overviewPanel.appendChild(statsRoot);
+		}
+		statsRoot.innerHTML = charStatHtml;
+
 		// Remove the old stat-grid placeholder
 		const oldStatGrid = overviewPanel.querySelector(".stat-grid");
 		if (oldStatGrid) oldStatGrid.remove();
 		
-		// Insert the full character stats HTML
-		const statsContainer = document.createElement("div");
-		statsContainer.innerHTML = charStatHtml;
-		overviewPanel.appendChild(statsContainer);
+		
     } catch (e) {
         console.error("Overview Tab Failed:", e);
         dv.paragraph("⚠ Overview failed to load. Check console.");
     }
-})();
+};
 
-
+renderOverviewTab(); // initial render
 
 
 // ======================================================================================
@@ -2940,6 +3037,7 @@ document.addEventListener("keydown", (e) => {
 					box.setAttribute("aria-checked", next ? "true" : "false");
 
 					markDirty();
+					renderOverviewTab();
 				});
 			}
 
@@ -3696,10 +3794,10 @@ document.addEventListener("keydown", (e) => {
 			pendingState.conditions ??= {};
 
 			pendingState.conditions.concentration_spell = spellName;
-			pendingState.conditions.concentrating = true;
+			pendingState.conditions.concentration = true;
 
 			markDirty();
-
+			rebuildConditions();
 			// Immediate UI sync (memory-driven)
 			//refreshConditionsTabUI();
 			//rebuildHeader();
@@ -3879,17 +3977,70 @@ document.addEventListener("keydown", (e) => {
 
 			pendingState.spell_slot[target] = false; // mark spent
 			markDirty();
+			renderOverviewTab();
 			return true;
 		}
 
-		const nextFrame = () => new Promise(r => requestAnimationFrame(r));
+		const nextFrame = () => new Promise(r => requestAnimationFrame(r));		
 
 		function showSpellSlotPicker(spell) {
-			// Don't consume spell slot for Eldritch Invocation Armour of Shadows
+			// Don't consume spell slot for Eldritch Invocations / special features
 			if (hasArmorOfShadows() && slugifyName(spell.Name) === 'mage-armor') {
-				new Notice(`Cast ${spell.Name} (no slot consumed)`);
+				new Notice(`Cast ${spell.Name} (with Armor of Shadows. No slot consumed)`);
+				pendingState.conditions ??= {};
 				pendingState.conditions.mage_armor = true;
   				markDirty();
+				syncAfterSpellCast();
+				renderOverviewTab();
+				rebuildConditions();
+				return;
+			}
+			if (hasAscendantStep() && slugifyName(spell.Name) === 'levitate') {
+				new Notice(`Cast ${spell.Name} (no slot consumed)`);
+				syncAfterSpellCast();
+				return;
+			}
+			if (hasFiendishVigor() && slugifyName(spell.Name) === 'false-life') {
+				new Notice(`Cast ${spell.Name} (no slot consumed)`);
+				syncAfterSpellCast();
+				return;
+			}
+			if (hasMaskOfManyFaces() && slugifyName(spell.Name) === 'disguise-self') {
+				new Notice(`Cast ${spell.Name} (no slot consumed)`);
+				syncAfterSpellCast();
+				return;
+			}
+			if (hasMasterofMyriadForms() && slugifyName(spell.Name) === 'alter-self') {
+				new Notice(`Cast ${spell.Name} (no slot consumed)`);
+				syncAfterSpellCast();
+				return;
+			}
+			if (hasMistyVisoions() && slugifyName(spell.Name) === 'silent-image') {
+				new Notice(`Cast ${spell.Name} (no slot consumed)`);
+				syncAfterSpellCast();
+				return;
+			}
+			if (hasOneWithShadows() && slugifyName(spell.Name) === 'invisibility') {
+				new Notice(`Cast ${spell.Name} (with One with Shadows. No slot consumed)`);
+				pendingState.conditions ??= {};
+				pendingState.conditions.invisible = true;
+  				markDirty();
+				syncAfterSpellCast();
+				rebuildConditions();
+				return;
+			}
+			if (hasOtherworldlyLeap() && slugifyName(spell.Name) === 'jump') {
+				new Notice(`Cast ${spell.Name} (no slot consumed)`);
+				syncAfterSpellCast();
+				return;
+			}
+			if (hasVisionsOfDistantRealms() && slugifyName(spell.Name) === 'arcane-eye') {
+				new Notice(`Cast ${spell.Name} (no slot consumed)`);
+				syncAfterSpellCast();
+				return;
+			}
+			if (hasWhispersOfTheGrave() && slugifyName(spell.Name) === 'speak-with-dead') {
+				new Notice(`Cast ${spell.Name} (no slot consumed)`);
 				syncAfterSpellCast();
 				return;
 			}
@@ -3900,6 +4051,7 @@ document.addEventListener("keydown", (e) => {
 				}
 				new Notice(`Cast ${spell.Name} (cantrip)`);
 				syncAfterSpellCast();
+				rebuildConditions();
 				return;
 			}
 
@@ -4007,10 +4159,11 @@ document.addEventListener("keydown", (e) => {
 				}
 
 				markDirty();
+				renderOverviewTab();
 
 				// UI updates AFTER memory is correct
 				refreshSpellSlotToggles();
-				refreshConditionsTabUI();
+				rebuildConditions();
 				rebuildHeader();
 				syncAfterSpellCast();
 				// Always target the actual header root
@@ -5632,33 +5785,56 @@ console.log("Rendering TAB: Inventory");
 //============================================================   Conditions Container Tab
 // ======================================================================================
 console.log("Rendering TAB: Conditions");
-
-function refreshConditionsTabUI() {
-  try {
-    const panel = document.querySelector("#conditions .panel");
-    if (!panel) return;
-
-    // Update buttons
-    panel.querySelectorAll("button[data-condition-key]").forEach(btn => {
-      const key = btn.dataset.conditionKey;
-      const active = pendingState.conditions?.[key] === true;
-
-      btn.style.backgroundColor = active
-        ? "var(--interactive-accent)"
-        : "var(--background-modifier-border)";
-    });
-
-    // Update active conditions list
-    const activeListContainer = panel.querySelector(".conditions-active-list");
-    if (activeListContainer && typeof window.__renderActiveConditions === "function") {
-		const fresh = activeListContainer.cloneNode(false);
-		activeListContainer.replaceWith(fresh);
-		window.__renderActiveConditions(fresh);
+function rebuildConditions() {
+	try {
+		window.__char_rebuildHandlers?.[__char_file_key]?.rebuildConditions?.();
+	} catch (e) {
+		console.warn("rebuildConditions wrapper failed", e);
 	}
-  } catch (e) {
-    console.warn("refreshConditionsTabUI failed", e);
-  }
 }
+
+// function refreshConditionsTabUI() {
+//   try {
+//     const panel = document.querySelector("#conditions .panel");
+//     if (!panel) return;
+
+//     panel.querySelectorAll("button[data-condition-key]").forEach(btn => {
+//       const key = btn.dataset.conditionKey;
+
+//       let active = false;
+
+//       if (key === "exhaustion") {
+//         active =
+//           pendingState.conditions?.exhaustion?.Level === true &&
+//           (pendingState.conditions.exhaustion.count ?? 0) > 0;
+//       } else {
+//         active = pendingState.conditions?.[key] === true;
+//       }
+
+//       btn.classList.toggle("is-active", active);
+//     });
+
+//     const activeListContainer = window.__conditionsActiveListContainer || panel.querySelector(".conditions-active-list");
+
+//     if (activeListContainer && typeof window.__renderActiveConditions === "function") {
+//       window.__renderActiveConditions(activeListContainer);
+//     }
+//   } catch (e) {
+//     console.warn("refreshConditionsTabUI failed", e);
+//   }
+// }
+
+
+
+function syncAfterConditionChange() {
+	console.log("Syncing after condition change...");
+	rebuildHeader();
+	rebuildConditions();
+	syncConcentrationCSS();
+	renderOverviewTab();
+}
+
+
 
 // Conditions tab renderer
 (async function renderConditionsTab() {
@@ -5707,6 +5883,40 @@ function refreshConditionsTabUI() {
 
 		// 👇 Dataview will render INTO this
 		const activeConditionsContainer = document.createElement("div");
+
+
+		// expose a conditions rebuild handler so it can be refreshed externally
+		window.__char_rebuildHandlers[__char_file_key].rebuildConditions = function () {
+			try {
+				console.log("rebuildConditions handler running; pendingState.conditions:", pendingState.conditions);
+
+				// 1. Update button states
+				panel.querySelectorAll("button[data-condition-key]").forEach(btn => {
+					const key = btn.dataset.conditionKey;
+
+					let active = false;
+					if (key === "exhaustion") {
+						active =
+							pendingState.conditions?.exhaustion?.Level === true &&
+							(pendingState.conditions.exhaustion.count ?? 0) > 0;
+					} else {
+						active = pendingState.conditions?.[key] === true;
+					}
+
+					btn.classList.toggle("is-active", active);
+				});
+
+				// 2. Update active list
+				renderActiveConditions(activeConditionsContainer);
+
+				console.log("Conditions rebuilt");
+			} catch (e) {
+				console.warn("Conditions rebuild failed", e);
+			}
+		};
+
+
+
 		panel.appendChild(activeConditionsContainer);
 
 		window.__renderActiveConditions = renderActiveConditions;
@@ -5714,10 +5924,12 @@ function refreshConditionsTabUI() {
 		activeConditionsContainer.classList.add("conditions-active-list");
 
 		function renderActiveConditions(container) {
+			console.log("Rendering active conditions list into container:", container);
 			// Ensure container is cleared to avoid duplicate lists on re-render
 			try { container.innerHTML = ""; } catch (e) {}
 
 			const conditions = pendingState.conditions ?? (dv.current().conditions ?? {});
+			//const conditions = pendingState.conditions || {};
 
 			const active = Object.entries(conditions)
 				.filter(([key, val]) => {
@@ -5744,7 +5956,7 @@ function refreshConditionsTabUI() {
 					.replace(/_/g, " ")
 					.replace(/\b\w/g, c => c.toUpperCase());
 
-				if (key === "concentrating") {
+				if (key === "concentration") {
 					label = "Concentration";
 				}
 
@@ -5759,7 +5971,7 @@ function refreshConditionsTabUI() {
 					case "bless":
 						target = `${BASE_FOLDER}/spells/${slug}-xphb`;
 						break;	
-					case "concentrating":
+					case "concentration":
 						target = `${BASE_FOLDER}/rules/conditions#concentration`;
 						break;								
 					case "haste":
@@ -5800,7 +6012,7 @@ function refreshConditionsTabUI() {
 		const booleanConditions = [
 			{key: "blinded", label: "Blinded"},
 			{key: "charmed", label: "Charmed"},
-			{key: "concentrating", label: "Concentrating"},
+			{key: "concentration", label: "Concentration"},
 			{key: "deafened", label: "Deafened"},
 			{key: "frightened", label: "Frightened"},
 			{key: "grappled", label: "Grappled"},
@@ -5857,66 +6069,49 @@ function refreshConditionsTabUI() {
 			const label = cond.label;
 
 			const btn = document.createElement("button");
-
-			const currentVal = pendingState.conditions?.[key] ?? dv.current().conditions?.[key] ?? false;
-
 			btn.textContent = label;
-			btn.style.backgroundColor = currentVal
-				? "var(--interactive-accent)"
-				: "var(--background-modifier-border)";
-			btn.style.color = "var(--text-on-accent)";
-			btn.style.padding = "4px 8px";
-			btn.style.borderRadius = "6px";
-			btn.style.border = "none";
-			btn.style.cursor = "pointer";
 			btn.dataset.conditionKey = key;
 
-			btn.onclick = async () => {
-				const file = app.vault.getAbstractFileByPath(dv.current().file.path);
-				if (!file) return;
+			const currentVal =
+				pendingState.conditions?.[key] ??
+				dv.current().conditions?.[key] ??
+				false;
 
-				pendingState.conditions = pendingState.conditions || {};
-				const conditions = getConditionsState();
-				const current = key in conditions ? conditions[key] === true : false;
-				let next = !current;
+			// Initial visual state
+			btn.classList.toggle("is-active", currentVal);
+
+			btn.onclick = async () => {
+				pendingState.conditions ??= structuredClone(c.conditions ?? {});
+				const conditions = pendingState.conditions;
+
+				const current = !!conditions[key];
+				const next = !current;
 
 				// === RAGE SPECIAL HANDLING ===
 				if (key === "rage" && next) {
-					try {
-						await consumeRageUse(file);
-					} catch (e) {
-						new Notice("No Rage uses remaining!", 3000);
-						next = false;
-					}
+				try {
+					await consumeRageUse(file);
+				} catch {
+					new Notice("No Rage uses remaining!", 3000);
+					return;
+				}
 				}
 
 				// === CONCENTRATION CLEANUP ===
-				if (key === "concentrating" && !next) {
-					// remove concentration spell from the conditions object (not top-level)
-					if (pendingState.conditions) delete pendingState.conditions.concentration_spell;
+				if (key === "concentration" && !next) {
+				delete conditions.concentration_spell;
 				}
 
-				console.log('Condition button click:', key, 'current:', current, 'next:', next, 'pendingState.conditions:', pendingState.conditions);
+				if (next) conditions[key] = true;
+				else delete conditions[key];
 
-				if (next) pendingState.conditions[key] = next;
-				else delete pendingState.conditions[key];
+				// 🔑 Single source of truth for visuals
+				btn.classList.toggle("is-active", next);
 
 				markDirty();
-				rebuildHeader();
-				refreshConditionsTabUI();
-				syncConcentrationCSS();
-				// Update button appearance
-				btn.style.backgroundColor = next
-					? "var(--interactive-accent)"
-					: "var(--background-modifier-border)";
-
-				// Refresh active list and header conditions display
-				renderActiveConditions(activeConditionsContainer);
-				try { rebuildHeader(); 
-					rebuildHeader();
-					refreshConditionsTabUI();
-					syncConcentrationCSS();
-				} catch (e) { try { window.__char_rebuildHandlers?.[__char_file_key]?.rebuildHeader?.(); } catch(e){} }
+				//renderActiveConditions(activeConditionsContainer);
+				syncAfterConditionChange();
+				//rebuildConditions();
 			};
 
 			return btn;
@@ -5937,6 +6132,7 @@ function refreshConditionsTabUI() {
 
 		const exButton = document.createElement("button");
 		exButton.textContent = "Exhaustion";
+		exButton.dataset.conditionKey = "exhaustion";
 		exButton.style.flex = "1";
 
 		const exInc = document.createElement("button");
@@ -5945,43 +6141,48 @@ function refreshConditionsTabUI() {
 		const exDec = document.createElement("button");
 		exDec.textContent = "-";
 
+		const isActive =
+			pendingState.conditions?.exhaustion?.Level === true &&
+			(pendingState.conditions.exhaustion.count ?? 0) > 0;
+		
+		exButton.classList.toggle("is-active", isActive);
+
 		// === Helpers ===
 		async function toggleExhaustion() {
-			pendingState.conditions = pendingState.conditions || {};
-			pendingState.conditions.exhaustion = pendingState.conditions.exhaustion || { count: 0, Level: false };
+		pendingState.conditions ??= {};
+		pendingState.conditions.exhaustion ??= { count: 0, Level: false };
 
-			if (pendingState.conditions.exhaustion.Level) {
-				pendingState.conditions.exhaustion.count = 0;
-				pendingState.conditions.exhaustion.Level = false;
-			} else {
-				pendingState.conditions.exhaustion.count = 1;
-				pendingState.conditions.exhaustion.Level = true;
-			}
+		if (pendingState.conditions.exhaustion.Level) {
+			pendingState.conditions.exhaustion.count = 0;
+			pendingState.conditions.exhaustion.Level = false;
+		} else {
+			pendingState.conditions.exhaustion.count = 1;
+			pendingState.conditions.exhaustion.Level = true;
+		}
 
-			// mark dirty and refresh header/buttons
-			markDirty();
-			renderActiveConditions(activeConditionsContainer);
-			try { window.__char_rebuildHandlers?.[__char_file_key]?.rebuildHeader?.(); } catch (e) {}
+		markDirty();
+		syncAfterConditionChange(); // 🔑 unified path
+		//renderActiveConditions(activeConditionsContainer);
+		//rebuildConditions();
 		}
 
 		async function changeExhaustion(delta) {
-			pendingState.conditions = pendingState.conditions || {};
-			pendingState.conditions.exhaustion = pendingState.conditions.exhaustion || { count: 0, Level: false };
+		pendingState.conditions ??= {};
+		pendingState.conditions.exhaustion ??= { count: 0, Level: false };
 
-			let count = pendingState.conditions.exhaustion.count ?? 0;
-			count += delta;
+		let count = pendingState.conditions.exhaustion.count ?? 0;
+		count += delta;
 
-			if (count <= 0) {
-				pendingState.conditions.exhaustion.count = 0;
-				pendingState.conditions.exhaustion.Level = false;
-			} else {
-				pendingState.conditions.exhaustion.count = count;
-				pendingState.conditions.exhaustion.Level = true;
-			}
+		if (count <= 0) {
+			pendingState.conditions.exhaustion.count = 0;
+			pendingState.conditions.exhaustion.Level = false;
+		} else {
+			pendingState.conditions.exhaustion.count = count;
+			pendingState.conditions.exhaustion.Level = true;
+		}
 
-			markDirty();
-			renderActiveConditions(activeConditionsContainer);
-			try { window.__char_rebuildHandlers?.[__char_file_key]?.rebuildHeader?.(); } catch (e) {}
+		markDirty();
+		syncAfterConditionChange(); // 🔑 unified path
 		}
 
 		// === Attach events ===
@@ -7594,6 +7795,12 @@ console.log("Rendering TAB: Session Notes");
 
 // force save before closing note
 
+function isHoverPreviewLeaf(leaf) {
+	if (!leaf?.parent?.containerEl) return false;
+
+	return leaf.parent.containerEl.classList.contains("popover");
+}
+
 async function confirmSave(title, message) {
   return new Promise(resolve => {
     // Overlay
@@ -7636,7 +7843,7 @@ async function confirmSave(title, message) {
     };
 
     const noBtn = document.createElement("button");
-    noBtn.textContent = "Discard";
+    noBtn.textContent = "Continue Without Saving";
     noBtn.onclick = () => {
       document.body.removeChild(overlay);
       resolve(false);
@@ -7658,32 +7865,57 @@ async function confirmSave(title, message) {
 let ignoreNextLeafChange = false;
 let pendingLeavePrompt = false;
 let lastActiveLeaf = app.workspace.activeLeaf;
+let isHandlingLeave = false;
+let queuedLeaf = null;
+let lastFile = app.workspace.getActiveFile();
 
-app.workspace.on("active-leaf-change", async (leaf) => {
-	const previousLeaf = lastActiveLeaf;
-	lastActiveLeaf = leaf;
+// listen for leaf changes
 
-	if (ignoreNextLeafChange) {
-		ignoreNextLeafChange = false;
-		return;
-	}
+app.workspace.on("active-leaf-change", async (nextLeaf) => {
+	try {
+		if (isHandlingLeave) return;
 
-	if (!isDirty) return;
-	if (pendingLeavePrompt) return;
+		// Obsidian can pass null when closing the last leaf
+		if (!nextLeaf) {
+			lastActiveLeaf = null;
+			return;
+		}
 
-	pendingLeavePrompt = true;
-	const choice = await confirmSave(
-		"Unsaved Changes",
-		"You have unsaved changes. Save before leaving?"
-	);
-	pendingLeavePrompt = false;
+		const previousLeaf = lastActiveLeaf;
+		lastActiveLeaf = nextLeaf;
 
-	if (choice === true) {
-		// Save and allow navigation
-		await commitPendingChanges();
-	} else if (choice === false) {
-		// Discard: clear dirty state so the user won't be prompted again
-		clearDirty();
-		// No programmatic reveal; allow navigation to proceed normally
+		// Ignore hover previews
+		if (nextLeaf.parent?.containerEl?.classList?.contains("popover")) return;
+
+		if (!isDirty) return;
+
+		isHandlingLeave = true;
+		queuedLeaf = nextLeaf;
+
+		// Snap back immediately
+		if (previousLeaf) {
+			app.workspace.setActiveLeaf(previousLeaf, { focus: false });
+		}
+
+		const choice = await confirmSave(
+			"Unsaved Changes",
+			"You have unsaved changes. Save before leaving?"
+		);
+
+		if (choice === true) {
+			await commitPendingChanges();
+		}
+
+		// Resume navigation
+		if (queuedLeaf) {
+			app.workspace.setActiveLeaf(queuedLeaf, { focus: true });
+		}
+
+	} catch (err) {
+		console.error("Save-before-leave error:", err);
+	} finally {
+		queuedLeaf = null;
+		isHandlingLeave = false;
 	}
 });
+

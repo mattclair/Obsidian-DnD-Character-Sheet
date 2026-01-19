@@ -57,7 +57,11 @@ Stat_Bonus:
     value: 2 + 2
     source: Shield and Studded Leather Armor
 conditions:
+  exhaustion:
+    count: 1
+    Level: true
   heroic_inspiration: false
+  paralyzed: true
 health:
   max: 35
   current: 35
@@ -97,7 +101,7 @@ spell_slot:
   misty_step3: true
   level_3_2: true
   level_3_1: true
-  level_2_3: false
+  level_2_3: true
   level_2_2: true
   level_2_1: true
   level_1_1: true
@@ -198,7 +202,8 @@ Wild_Shape:
   wild_shape-1: false
   wild_shape-2: false
 mastery:
-wild-shape-options: []
+wild-shape-options:
+  - Cat
 purse: 1615.5
 BASE_FOLDER: 3. Mechanics/CLI
 weapon_mastery: {}

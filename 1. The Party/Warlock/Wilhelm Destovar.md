@@ -53,6 +53,9 @@ Stat_Bonus:
 conditions:
   heroic_inspiration: false
   mage_armor: true
+  poisoned: true
+  invisible: true
+  paralyzed: true
 health:
   max: 39
   current: 11
@@ -98,7 +101,7 @@ attuned:
 spell_slot:
   druid: false
   pact1: false
-  pact2: true
+  pact2: false
   misty_step1: false
   misty_step2: true
   misty_step3: true

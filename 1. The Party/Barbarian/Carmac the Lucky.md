@@ -7,10 +7,10 @@ INT: 14
 WIS: 12
 CHA: 8
 name: Carmac the Lucky
-dndClass: 
+dndClass:
   - Barbarian: 3
   - Bard: 2
-subclass: 
+subclass:
   - Path of the Berserker
 background: Wayfarer
 species: Dwarf
@@ -58,7 +58,9 @@ Stat_Bonus:
     source: Fast Movement
 conditions:
   heroic_inspiration: false
-  rage: true
+  exhaustion:
+    count: 0
+    Level: false
 health:
   max: 57
   current: 57
@@ -70,6 +72,8 @@ Hit_Dice:
   Barbarian_d12-3: true
   Barbarian_d12-4: true
   Barbarian_d12-5: true
+  Bard_d8-1: false
+  Bard_d8-2: false
 inventory:
   HandAxe: 1
   Javelin: 4
@@ -109,8 +113,7 @@ mastery:
 Rage:
   rage-1: false
   rage-2: false
-  rage-3: true
-  rage-4: true
+  rage-3: false
 purse: 156
 BASE_FOLDER: 3. Mechanics/CLI
 weapon_mastery: {}
@@ -119,6 +122,8 @@ Bastion:
   current_day: 0
   defenders: 0
   facilities: []
+Bardic_Inspiration:
+  bardic_insp_1: false
 ---
 ```dataviewjs
 // Load full cahracter sheet

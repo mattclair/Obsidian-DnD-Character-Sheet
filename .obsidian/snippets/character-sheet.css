@@ -429,7 +429,21 @@
 }
 
 
+/* ======= Conditions Button Styling ======= */
+.conditions-buttons button {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background-color: var(--background-modifier-border);
+  color: var(--text-normal);
+  transition: background-color 120ms ease, color 120ms ease;
+}
 
+.conditions-buttons button.is-active {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
 
 
 /* ======= Money Tracking ======= */
