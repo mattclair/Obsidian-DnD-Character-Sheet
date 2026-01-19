@@ -52,9 +52,6 @@ Stat_Bonus:
     source: 1 Rod of the Pact Keeper
 conditions:
   heroic_inspiration: false
-  poisoned: true
-  invisible: true
-  paralyzed: true
   mage_armor: true
 health:
   max: 39
@@ -198,6 +195,7 @@ weapon_mastery: {}
 await dv.view("z_Assets/Code/Character_Sheet");
 ```
 
+
 <br>
 
 > [!multi-column|blank] %%HIDE TITLE%%
@@ -238,4 +236,3 @@ await dv.view("z_Assets/Code/Character_Sheet");
 ```dataviewjs
 await dv.view("z_Assets/Code/Character_Purse_Tracking");
 ```
-

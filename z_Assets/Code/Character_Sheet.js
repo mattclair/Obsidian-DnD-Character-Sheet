@@ -1,26 +1,55 @@
-const c = dv.current(); // your character note
-// Suppress noisy debug logs from this script (restored at end)
-let __char_dashboard_origConsoleLog;
-try {
-	__char_dashboard_origConsoleLog = console.log;
-	// Replace console.log with a no-op to silence debug output
-	console.log = function() {};
-} catch (e) {
-	// environment may not allow overriding console; ignore
+if (!dv.current() || !dv.current().file) {
+	console.log("Dataview not ready — skipping render");
+	return;
 }
+
+if (!dv.current()?.BASE_FOLDER) {
+	console.log("BASE_FOLDER not indexed yet — skipping render");
+	return;
+}
+
+const c = dv.current(); // your character note
+
 // =====================
 // =====================
 // FILE LOCATIONS
 //======================
-const BASE_FOLDER = c.BASE_FOLDER;
-const ITEMS_FOLDER = `${BASE_FOLDER}/items`;
-const RULES_FOLDER = `${BASE_FOLDER}/rules`;
-const SPELLS_FOLDER = `${BASE_FOLDER}/spells`;
-const WSHAPE_FOLDER =  `${BASE_FOLDER}/bestiary/beast`;
-const BASTIONS_FOLDER = `${BASE_FOLDER}/bastions`;
+function getBaseFolders() {
+	const c = window.getLiveCharacter?.() ?? dv.current?.();
 
-	  
-	  
+	if (!c || !c.BASE_FOLDER) {
+		throw new Error("BASE_FOLDER not ready");
+	}
+
+	const BASE_FOLDER = c.BASE_FOLDER;
+
+	return {
+		BASE_FOLDER,
+		ITEMS_FOLDER: `${BASE_FOLDER}/items`,
+		RULES_FOLDER: `${BASE_FOLDER}/rules`,
+		SPELLS_FOLDER: `${BASE_FOLDER}/spells`,
+		WSHAPE_FOLDER: `${BASE_FOLDER}/bestiary/beast`,
+		BASTIONS_FOLDER: `${BASE_FOLDER}/bastions`,
+	};
+}
+
+let BASE_FOLDER, ITEMS_FOLDER, RULES_FOLDER, SPELLS_FOLDER, WSHAPE_FOLDER, BASTIONS_FOLDER;
+
+try {
+	({
+		BASE_FOLDER,
+		ITEMS_FOLDER,
+		RULES_FOLDER,
+		SPELLS_FOLDER,
+		WSHAPE_FOLDER,
+		BASTIONS_FOLDER
+	} = getBaseFolders());
+} catch {
+	// Dataview / frontmatter not ready yet — abort render safely
+	return;
+}
+
+
 // =====================
 // Helper Functions
 // =====================
@@ -29,6 +58,12 @@ const BASTIONS_FOLDER = `${BASE_FOLDER}/bastions`;
 const __char_file_key = c?.file?.path || c?.name || "__unknown__";
 window.__char_pending_dirtyByFile = window.__char_pending_dirtyByFile || {};
 window.__char_pendingStateByFile = window.__char_pendingStateByFile || {};
+
+window.__charStartupState ??= {};
+const startup = window.__charStartupState[__char_file_key] ??= {
+	initializing: true,
+	rendered: false
+};
 
 let isDirty = !!window.__char_pending_dirtyByFile[__char_file_key];
 function markDirty() {
@@ -552,6 +587,7 @@ function updateSaveUi() {
 }
 
 function rebuildHeader() {
+  if (startup.initializing) return;
   try {
 		console.log("rebuildHeader() wrapper called; pendingState.conditions:", pendingState.conditions);
 		window.__char_rebuildHandlers?.[__char_file_key]?.rebuildHeader?.();
@@ -562,6 +598,7 @@ function rebuildHeader() {
 }
 
 function syncConcentrationCSS() {
+  if (startup.initializing) return;
   const cond =
     pendingState.conditions ??
     dv.current().conditions ??
@@ -595,6 +632,7 @@ function refreshResourceToggles() {
 }
 
 function refreshSpellSlotToggles() {
+	if (startup.initializing) return;
 	console.log("Refreshing spell slot toggles from pendingState");
     const wrappers = document.querySelectorAll(
         '.mb-input-wrapper[data-namespace="spell_slot"]'
@@ -614,6 +652,7 @@ function refreshSpellSlotToggles() {
 }
 
 function syncAfterSpellCast() {
+  if (startup.initializing) return;
   refreshSpellSlotToggles();
   rebuildConditions();
   rebuildHeader();
@@ -713,28 +752,7 @@ for (const [key, val] of Object.entries(condObj)) {
   }
 }
 
-// window.syncConditionsUI = function syncConditionsUI() {
-//   console.log("syncConditionsUI() called");
 
-//   try {
-//     refreshConditionsTabUI();
-
-//     if (typeof window.__renderActiveConditions === "function") {
-//       const panel = document.querySelector("#conditions .panel");
-//       const list = panel?.querySelector(".conditions-active-list");
-//       if (list) {
-//         const fresh = list.cloneNode(false);
-//         list.replaceWith(fresh);
-//         window.__renderActiveConditions(fresh);
-//       }
-//     }
-
-//     rebuildHeader();
-//     syncConcentrationCSS();
-//   } catch (e) {
-//     console.warn("syncConditionsUI failed", e);
-//   }
-// };
 
 window.getLiveCharacter = function () {
   const fm = dv.current();
@@ -2360,6 +2378,7 @@ document.addEventListener("keydown", (e) => {
 // ============================================================    Overview Container Tab
 // ======================================================================================
 function rebuildOverview() {
+	if (startup.initializing) return;
 	window.__char_rebuildHandlers?.[__char_file_key]?.rebuildOverview?.();
 }
 function renderOverviewTab() {
@@ -3736,6 +3755,7 @@ renderOverviewTab(); // initial render
 
 		// Local helper to rebuild prepared/known tables from pendingState.spells
 		function rebuildSpellUI() {
+			if (startup.initializing) return;
 			const spellListsLocal = pendingState.spells || structuredClone(dv.current().Spells ?? { Prepared: { Cantrips: [], Spells: [] }, Always_Prepared: { Cantrips: [], Spells: [] }, Known: { Cantrips: [], Spells: [] } });
 			const preparedLocal = normalizeList(spellListsLocal.Prepared);
 			const alwaysLocal = normalizeList(spellListsLocal.Always_Prepared);
@@ -4598,14 +4618,6 @@ renderOverviewTab(); // initial render
 		// LOAD COMPENDIUM WEAPONS
 		// -----------------------------
 
-		// Restore original console.log (if we replaced it earlier)
-		try {
-			if (typeof __char_dashboard_origConsoleLog === 'function') {
-				console.log = __char_dashboard_origConsoleLog;
-			}
-		} catch (e) {
-			// ignore restore errors
-		}
 		const allWeapons = dv.pages(`"${ITEMS_FOLDER}"`)
 			.where(p =>
 				p.tags &&
@@ -5808,6 +5820,7 @@ console.log("Rendering TAB: Inventory");
 // ======================================================================================
 console.log("Rendering TAB: Conditions");
 function rebuildConditions() {
+	if (startup.initializing) return;
 	try {
 		window.__char_rebuildHandlers?.[__char_file_key]?.rebuildConditions?.();
 	} catch (e) {
@@ -5816,6 +5829,7 @@ function rebuildConditions() {
 }
 
 function syncAfterConditionChange() {
+	if (startup.initializing) return;
 	console.log("Syncing after condition change...");
 	rebuildHeader();
 	rebuildConditions();
@@ -6189,8 +6203,10 @@ function syncAfterConditionChange() {
 		try { panel.dataset.conditionsRendered = "true"; } catch (e) {}
 		console.log("conditions panel childCount:", panel.childElementCount, "panel innerHTML length:", panel.innerHTML?.length);
 		try {
-			const cs2 = window.getComputedStyle(panel);
-			console.log("conditions panel active class:", panel.classList.contains('active'), "display:", cs2.display, "visibility:", cs2.visibility, "opacity:", cs2.opacity);
+			if (!startup.initializing) {
+				const cs2 = window.getComputedStyle(panel);
+				console.log("conditions panel active class:", panel.classList.contains('active'), "display:", cs2.display, "visibility:", cs2.visibility, "opacity:", cs2.opacity);
+			}
 		} catch (e) {}
 		try {
 			const outerC = tabContainer.querySelector('#conditions');
@@ -7700,8 +7716,10 @@ console.log("Rendering TAB: Session Notes");
 		try { notePanel.dataset.sessionRendered = "true"; } catch (e) {}
 		console.log("session panel childCount:", notePanel.childElementCount, "panel innerHTML length:", notePanel.innerHTML?.length);
 		try {
-			const cs3 = window.getComputedStyle(notePanel);
-			console.log("session panel active class:", notePanel.classList.contains('active'), "display:", cs3.display, "visibility:", cs3.visibility, "opacity:", cs3.opacity);
+			if (!startup.initializing) {
+				const cs3 = window.getComputedStyle(notePanel);
+				console.log("session panel active class:", notePanel.classList.contains('active'), "display:", cs3.display, "visibility:", cs3.visibility, "opacity:", cs3.opacity);
+			}
 		} catch (e) {}
 		try {
 			const outerS = tabContainer.querySelector('#session');
@@ -7908,3 +7926,13 @@ app.workspace.on("active-leaf-change", async (nextLeaf) => {
 	}
 });
 
+if (!startup.rendered) {
+	startup.rendered = true;
+
+	// Defer heavy rendering to next frame
+	requestAnimationFrame(() => {
+		renderOverviewTab();
+		// Conditions tab renders itself
+		startup.initializing = false;
+	});
+}

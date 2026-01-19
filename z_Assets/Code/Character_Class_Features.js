@@ -1,3 +1,47 @@
+if (!dv.current() || !dv.current().file) {
+	console.log("Dataview not ready — skipping render");
+	return;
+}
+
+if (!dv.current()?.BASE_FOLDER) {
+	console.log("BASE_FOLDER not indexed yet — skipping render");
+	return;
+}
+
+const char = dv.current() ?? {};
+
+// =====================
+// =====================
+// FILE LOCATIONS
+//======================
+function getBaseFolders() {
+	const c = window.getLiveCharacter?.() ?? dv.current?.();
+
+	if (!c || !c.BASE_FOLDER) {
+		throw new Error("BASE_FOLDER not ready");
+	}
+
+	const BASE_FOLDER = c.BASE_FOLDER;
+
+	return {
+		BASE_FOLDER,
+		ITEMS_FOLDER: `${BASE_FOLDER}/items`,
+		RULES_FOLDER: `${BASE_FOLDER}/rules`,
+		SPELLS_FOLDER: `${BASE_FOLDER}/spells`,
+		WSHAPE_FOLDER: `${BASE_FOLDER}/bestiary/beast`,
+		BASTIONS_FOLDER: `${BASE_FOLDER}/bastions`,
+	};
+}
+
+let BASE_FOLDER;
+
+try {
+	({ BASE_FOLDER } = getBaseFolders());
+} catch {
+	return;
+}
+
+
 // Helper to extract Class and Feature Progression table from class note
 function extractClassProgressionTable(content) {
     if (!content) return null;
@@ -5,8 +49,6 @@ function extractClassProgressionTable(content) {
     const match = content.match(/> \[!tldr\] Class and Feature Progression[\s\S]*?<table[\s\S]*?<\/table>/i);
     return match ? match[0] : null;
 }
-const char = dv.current() ?? {};
-const BASE_FOLDER = char.BASE_FOLDER;
 const phbClassPath = `${BASE_FOLDER}/classes`;
 
 // -----------------------------
