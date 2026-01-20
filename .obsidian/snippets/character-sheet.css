@@ -653,58 +653,49 @@
 }
 
 
-
-
-/* ======= Spell Slot Toggles ======= */
+/* ================= SPELL TOGGLE ================= */
 
 .mb-input-wrapper.spell-toggle .checkbox-container {
   --slot-size: 20px;
+
   width: var(--slot-size);
   height: var(--slot-size);
   border-radius: 50%;
-  border: 2px solid #c42d16;   /* Border matches theme */
+  border: 2px solid #c42d16;
   background: transparent;
+
   display: inline-block;
-  margin: 4px;
-  cursor: pointer;
-  transition: all 0.18s ease;
+  margin: 4px 4px 4px 15px;
   position: relative;
-  margin-left: 15px;
-  box-shadow: none;
-}
-
-/* Pact Magic ON state */
-.mb-input-wrapper.spell-toggle .checkbox-container.is-enabled,
-.mb-input-wrapper.spell-toggle .checkbox-container[aria-checked="true"] {
-  background-color: #c42d16;      /* Main fill */
-  border-color: #ff4770 !important;  /* Highlight border */
-  animation: pact-glow 3s infinite ease-in-out;
-  box-shadow: 0 0 6px 2px rgba(227, 34, 85, 0.7);
-}
-
-/* Hover highlight (subtle darkening) */
-.mb-input-wrapper.spell-toggle .checkbox-container:hover {
-  background-color: #8e0f2c;
   cursor: pointer;
+
+  transition: background-color 0.18s ease, box-shadow 0.18s ease;
 }
 
-/* --- SPELL TOGGLE: Arcane Pulse Ring (Centered Fix) --- */
-.mb-input-wrapper.spell-toggle .checkbox-container.is-enabled,
-.mb-input-wrapper.spell-toggle .checkbox-container[aria-checked="true"] {
+/* ON state */
+.mb-input-wrapper.spell-toggle
+.checkbox-container.is-enabled,
+.mb-input-wrapper.spell-toggle
+.checkbox-container[aria-checked="true"] {
   background-color: #c42d16;
-  border-color: #ff6b9b !important;
-  position: relative;
-  overflow: visible;
-  cursor: pointer;
+  border-color: #ff6b9b;
+  box-shadow: 0 0 6px 2px rgba(227, 34, 85, 0.6);
 }
 
-/* centered aura ring */
-.mb-input-wrapper.spell-toggle .checkbox-container.is-enabled::after,
-.mb-input-wrapper.spell-toggle .checkbox-container[aria-checked="true"]::after {
+/* Hover (only when OFF) */
+.mb-input-wrapper.spell-toggle
+.checkbox-container:not(.is-enabled):hover {
+  background-color: #8e0f2c;
+}
+
+/* Aura ring */
+.mb-input-wrapper.spell-toggle
+.checkbox-container.is-enabled::after,
+.mb-input-wrapper.spell-toggle
+.checkbox-container[aria-checked="true"]::after {
   content: "";
   position: absolute;
 
-  /* center perfectly */
   top: 50%;
   left: 50%;
   width: calc(100% + 12px);
@@ -714,114 +705,69 @@
   border-radius: 50%;
   border: 2px solid rgba(227, 34, 85, 0.5);
   animation: pulse-ring-centered 1.8s infinite ease-out;
+
   pointer-events: none;
 }
 
-/* centered ring pulse animation */
 @keyframes pulse-ring-centered {
-  0% {
+  from {
     transform: translate(-50%, -50%) scale(0.8);
     opacity: 0.8;
   }
-  100% {
+  to {
     transform: translate(-50%, -50%) scale(1.6);
     opacity: 0;
   }
 }
 
 
+/* ================= PACT TOGGLE ================= */
 
-
-/* Base look for your custom circular spell toggles */
 .mb-input-wrapper.pact-toggle .checkbox-container {
   --slot-size: 20px;
+
   width: 30px;
   height: var(--slot-size);
   border-radius: 20%;
   border: 2px solid var(--text-normal);
   background: transparent;
+
   display: inline-block;
-  margin: 4px;
-  cursor: pointer;
-  transition: all 0.18s ease;
-  box-shadow: none;
+  margin: 4px 4px 4px 15px;
   position: relative;
-  margin-left: 15px;
   cursor: pointer;
+
+  transition: background-color 0.18s ease, box-shadow 0.18s ease;
 }
 
-
-/* ON state — works for both aria-checked and .is-enabled */
-.mb-input-wrapper.pact-toggle .checkbox-container.is-enabled,
-.mb-input-wrapper.pact-toggle .checkbox-container[aria-checked="true"] {
+/* ON state */
+.mb-input-wrapper.pact-toggle
+.checkbox-container.is-enabled,
+.mb-input-wrapper.pact-toggle
+.checkbox-container[aria-checked="true"] {
   background-color: #35063e;
-  border-color: #520380 !important;
-  animation: pulse-glow 6s infinite alternate ease-in-out;
+  border-color: #520380;
   box-shadow: 0 0 6px 2px rgba(138, 43, 226, 0.7);
+  animation: pulse-glow 5s infinite ease-in-out;
 }
 
-
-/* Hover highlight (optional) */
-.mb-input-wrapper.pact-toggle .checkbox-container:hover {
-background-color: #000;
+/* Hover (only when OFF) */
+.mb-input-wrapper.pact-toggle
+.checkbox-container:not(.is-enabled):hover {
+  background-color: #1c051f;
 }
 
-
-/* Glow pulse keyframes (unchanged) */
 @keyframes pulse-glow {
   0% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(138, 43, 226, 0.7);
+    box-shadow: 0 0 0 0 rgba(138, 43, 226, 0.6);
   }
   50% {
-    transform: scale(1.05);
-    box-shadow: 0 0 5px 5px rgba(138, 43, 226, 0.9);
+    box-shadow: 0 0 6px 6px rgba(18, 7, 27, 0.9);
   }
   100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(138, 43, 226, 0.7);
+    box-shadow: 0 0 0 0 rgba(138, 43, 226, 0.6);
   }
 }
-
-.mb-input-wrapper.pact-toggle .checkbox-container.is-enabled,
-.mb-input-wrapper.pact-toggle .checkbox-container[aria-checked="true"] {
-  background-color: #35063e;
-  border-color: #520380 !important;
-  animation: pulse-glow 4s infinite alternate ease-in-out;
-  animation-delay: var(--delay, 0s);
-  box-shadow: 0 0 6px 2px rgba(138, 43, 226, 0.7);
-}
-/* ======= END Spell Slot Toggles ======= */
-
-
-.spell-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  gap: 1rem;
-  margin-bottom: 8px;
-}
-
-.concentration-box {
-  margin-left: 1rem;
-  padding: 4px 8px;
-  border-radius: 6px;
-  background-color: rgba(20, 10, 35, 0.5);
-  font-weight: 400;
-  display: flex;
-  align-items: Right;
-  border: 1px solid black;
-}
-
-
-
-.weapon-table-container table {
-  width: 100%;
-  table-layout: fixed; /* optional: evenly distributes column widths */
-}
-
-
 
 
 

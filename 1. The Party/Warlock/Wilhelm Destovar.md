@@ -98,7 +98,7 @@ attuned:
 spell_slot:
   druid: false
   pact1: false
-  pact2: false
+  pact2: true
   misty_step1: false
   misty_step2: true
   misty_step3: true

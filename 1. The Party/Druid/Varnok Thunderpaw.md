@@ -102,11 +102,11 @@ spell_slot:
   level_3_2: true
   level_3_1: true
   level_2_3: true
-  level_2_2: true
+  level_2_2: false
   level_2_1: true
-  level_1_1: true
-  level_1_2: true
-  level_1_3: true
+  level_1_1: false
+  level_1_2: false
+  level_1_3: false
   level_1_4: true
 feats:
   - Shadow Touched:

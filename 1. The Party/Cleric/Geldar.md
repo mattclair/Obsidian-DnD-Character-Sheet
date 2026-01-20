@@ -60,7 +60,7 @@ spell_slot:
   level_2_2: true
   level_2_1: true
   level_3_1: true
-  level_3_2: false
+  level_3_2: true
   elf_faerie_fire: true
   elf_darkness: true
 feats:

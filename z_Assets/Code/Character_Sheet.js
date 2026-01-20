@@ -6034,11 +6034,29 @@ function syncAfterConditionChange() {
 			{key: "haste", label: "Haste"}
 		];
 
-
-		async function consumeRageUse(file) {
-			// Prefer consuming from in-memory pendingState first so UI updates immediately
+		function ensureRageState(file) {
 			pendingState.Rage ??= {};
-			const entry = Object.entries(pendingState.Rage).find(([_, available]) => available === true);
+
+			// If already populated, do nothing
+			if (Object.keys(pendingState.Rage).length) return;
+
+			const fm = app.metadataCache.getFileCache(file)?.frontmatter;
+			if (!fm?.Rage) return;
+
+			for (const [k, v] of Object.entries(fm.Rage)) {
+				pendingState.Rage[k] = v;
+			}
+		}
+
+		async function consumeRageUse() {
+			const file = app.workspace.getActiveFile();
+			if (!file) throw new Error("No active file");
+
+			ensureRageState(file);
+
+			const entry = Object.entries(pendingState.Rage)
+				.find(([_, available]) => available === true);
+
 			if (entry) {
 				const [key] = entry;
 				pendingState.Rage[key] = false;
@@ -6047,21 +6065,8 @@ function syncAfterConditionChange() {
 				return;
 			}
 
-			// Fallback to editing frontmatter if nothing in pendingState
-			await app.fileManager.processFrontMatter(file, fm => {
-				fm.Rage ??= {};
-
-				const entry2 = Object.entries(fm.Rage)
-				.find(([_, available]) => available === true);
-
-				if (!entry2) {
-					new Notice("No Rage uses remaining!", 3000);
-					throw new Error("No Rage uses left");
-				}
-
-				const [key] = entry2;
-				fm.Rage[key] = false;
-			});
+			new Notice("No Rage uses remaining!", 3000);
+			throw new Error("No Rage uses left");
 		}
 
 		
@@ -6075,10 +6080,7 @@ function syncAfterConditionChange() {
 			btn.textContent = label;
 			btn.dataset.conditionKey = key;
 
-			const currentVal =
-				pendingState.conditions?.[key] ??
-				dv.current().conditions?.[key] ??
-				false;
+			const currentVal = !!pendingState.conditions[key];
 
 			// Initial visual state
 			btn.classList.toggle("is-active", currentVal);
@@ -6092,12 +6094,11 @@ function syncAfterConditionChange() {
 
 				// === RAGE SPECIAL HANDLING ===
 				if (key === "rage" && next) {
-				try {
-					await consumeRageUse(file);
-				} catch {
-					new Notice("No Rage uses remaining!", 3000);
-					return;
-				}
+					try {
+						await consumeRageUse();
+					} catch {
+						return;
+					}
 				}
 
 				// === CONCENTRATION CLEANUP ===

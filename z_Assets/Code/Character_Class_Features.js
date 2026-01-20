@@ -9,6 +9,24 @@ if (!dv.current()?.BASE_FOLDER) {
 }
 
 const char = dv.current() ?? {};
+const __char_file_key = char?.file?.path || char?.name || "__unknown__";
+window.__charStartupState ??= {};
+const startup = window.__charStartupState[__char_file_key] ??= {
+	initializing: true,
+	rendered: false
+};
+
+if (!dv.current() || !dv.current().file) {
+	console.log("Dataview not ready — skipping render");
+	return;
+}
+
+if (!dv.current()?.BASE_FOLDER) {
+	console.log("BASE_FOLDER not indexed yet — skipping render");
+	return;
+}
+
+
 
 // =====================
 // =====================
