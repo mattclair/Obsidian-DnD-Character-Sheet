@@ -7,9 +7,12 @@ INT: 14
 WIS: 12
 CHA: 8
 name: Carmac the Lucky
-dndClass: Barbarian
+dndClass:
+  - Barbarian: 3
+  - Fighter: 3
 subclass:
   - Path of the Berserker
+  - Champion
 background: Wayfarer
 species: Dwarf
 species_traits:
@@ -17,18 +20,16 @@ species_traits:
   - Dwarven Resiliance
   - Dwarven Toughness
   - Stonecunning
-alignment: Neutral-Neutral
+alignment: ""
 size: Medium
 senses: Dark Vision (120ft)
 languages:
   - Common
   - Goblin
   - Gnome
-tools:
-  - Gaming Set
+tools: Gaming Set
 instruments:
-image:
-  - z_Assets/Misc/Carmac.webp
+image: z_Assets/Misc/Carmac.webp
 Spellcasting_Ability:
 speed: 30
 Base_AC: 10
@@ -72,6 +73,9 @@ Hit_Dice:
   Barbarian_d12-5: true
   Bard_d8-1: true
   Bard_d8-2: true
+  Fighter_d10-1: false
+  Fighter_d10-2: false
+  Fighter_d10-3: false
 inventory:
   HandAxe: 1
   Javelin: 4
@@ -109,10 +113,9 @@ mastery:
   Javelin: Slow
   Light Crossbow: Slow
 Rage:
-  rage-1: true
-  rage-2: true
-  rage-3: true
-  rage-4: true
+  rage-1: false
+  rage-2: false
+  rage-3: false
 purse: 156
 BASE_FOLDER: 3. Mechanics/CLI
 weapon_mastery: {}
@@ -123,6 +126,12 @@ Bastion:
   facilities: []
 Bardic_Inspiration:
   bardic_insp_1: true
+Second_Wind:
+  second_wind-1: false
+  second_wind-2: false
+Action_Surge:
+  action_surge-1: false
+  action_surge-2: false
 ---
 ```dataviewjs
 // Load full cahracter sheet

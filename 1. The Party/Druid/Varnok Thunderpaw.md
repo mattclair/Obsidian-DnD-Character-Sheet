@@ -198,12 +198,15 @@ Spells:
       - Animal Friendship
       - Speak With The Dead
       - DoomTide
+      - Elementalism
 Wild_Shape:
   wild_shape-1: false
   wild_shape-2: false
 mastery:
 wild-shape-options:
   - Cat
+  - Draft Horse
+  - Dire Wolf
 purse: 1615.5
 BASE_FOLDER: 3. Mechanics/CLI
 weapon_mastery: {}

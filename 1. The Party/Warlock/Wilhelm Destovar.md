@@ -7,23 +7,24 @@ INT: 9
 WIS: 10
 CHA: 20
 name: Wilhelm Destovar
-dndClass: Warlock
-subclass: Archfey Patron
+dndClass:
+  - Warlock: 5
+subclass:
+  - Archfey Patron
 background: Wayfarer
 species: Human
 species_traits:
   - Resourceful
   - Skillful
   - Versatile
-alignment: Chaotic-Good
+alignment: Chaotic Good
 size: Medium
 senses: Devil's Sight
 languages:
   - Common
   - Giant
   - Dwarvish
-tools:
-  - Thieve's Tools
+tools: Thieve's Tools
 instruments:
 image:
   - z_Assets/Misc/Wilhelm_Portrait.png
@@ -32,7 +33,8 @@ image:
 Spellcasting_Ability: CHA
 speed: 30
 Base_AC: 10
-armor_training: Light Armor
+armor_training:
+  - Light Armor
 weapon_training: Simple Melee
 Proficiencies:
   WIS_SAVE: 1
@@ -51,29 +53,33 @@ Stat_Bonus:
     value: 1
     source: 1 Rod of the Pact Keeper
 conditions:
-  heroic_inspiration: false
-  mage_armor: true
+  heroic_inspiration: true
+  exhaustion:
+    count: 0
+    Level: false
 health:
   max: 39
-  current: 11
+  current: 39
   temp: 0
-  maxTmp: 4
-Luck:
-  luck_point_1: false
-  luck_point_2: false
-  luck_point_3: false
+  maxTmp: 0
 Hit_Dice:
   Warlock_d8-1: true
   Warlock_d8-2: true
   Warlock_d8-3: true
   Warlock_d8-4: true
   Warlock_d8-5: true
+  Warlock_d8-6: false
+Luck:
+  luck_point_1: false
+  luck_point_2: false
+  luck_point_3: false
+Magical_Cunning:
+  magical_cunning-1: false
 inventory:
-  Holy Scroll Text: 2
+  Holy Scroll Text: 1
   Silver Neclace with Holy Symbol of Torm: 1
   Holy Water: 2
   1 Rod of the Pact Keeper: 1
-  Potion of Healing: 1
   Quarterstaff: 1
   Sickle: 1
   Thieves' Tools: 1
@@ -96,10 +102,10 @@ inventory:
 attuned:
   - 1 Rod of the Pact Keeper
 spell_slot:
-  druid: false
-  pact1: false
+  druid: true
+  pact1: true
   pact2: true
-  misty_step1: false
+  misty_step1: true
   misty_step2: true
   misty_step3: true
   misty_step4: true
@@ -151,8 +157,6 @@ Eldritch_Invocations:
   - Devil's Sight
   - Repelling Blast
   - Eldritch Mind
-Magical_Cunning:
-  magical_cunning-1: false
 mastery:
 purse: 1897
 Bastion:

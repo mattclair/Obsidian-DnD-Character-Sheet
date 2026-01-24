@@ -231,7 +231,105 @@ async function commitPendingChanges() {
 		if (pendingState.spell_slot !== undefined) {
 			fm.spell_slot = structuredClone(pendingState.spell_slot);
 		}
+
+		// Persist Name if present in pendingState
+		if (pendingState.name !== undefined) {
+			fm.name = pendingState.name;
+		}
+
+		// Persist DnD Class if present in pendingState
+		if (pendingState.dndClass !== undefined) {
+			fm.dndClass = pendingState.dndClass;
+		}
+
+		// Persist Subclass if present in pendingState
+		if (pendingState.subclass !== undefined) {
+			fm.subclass = pendingState.subclass;
+		}
+
+		// Persist Background if present in pendingState
+		if (pendingState.background !== undefined) {
+			fm.background = pendingState.background;
+		}
+
+		// Persist Species if present in pendingState
+		if (pendingState.species !== undefined) {
+			fm.species = pendingState.species;
+		}
+
+		// Persist Alignment if present in pendingState
+		if (pendingState.alignment !== undefined) {
+			fm.alignment = pendingState.alignment;
+		}
+
+		// Persist Size if present in pendingState
+		if (pendingState.size !== undefined) {
+			fm.size = pendingState.size;
+		}
+
+		// Persist Senses if present in pendingState
+		if (pendingState.senses !== undefined) {
+			fm.senses = pendingState.senses;
+		}
+
+		// Persist Languages if present in pendingState
+		if (pendingState.languages !== undefined) {
+			fm.languages = pendingState.languages;
+		}
+
+		// Persist Tools if present in pendingState
+		if (pendingState.tools !== undefined) {
+			fm.tools = pendingState.tools;
+		}
+
+		// Persist Instruments if present in pendingState
+		if (pendingState.instruments !== undefined) {
+			fm.instruments = pendingState.instruments;
+		}
+
+		// Persist Species Traits if present in pendingState
+		if (pendingState.species_traits !== undefined) {
+			fm.species_traits = pendingState.species_traits;
+		}
+
+		// Persist Spellcasting Ability if present in pendingState
+		if (pendingState.spellcasting_ability !== undefined) {
+			fm.spellcasting_ability = pendingState.spellcasting_ability;
+		}
+
+		// Persist Speed if present in pendingState
+		if (pendingState.speed !== undefined) {
+			fm.speed = pendingState.speed;
+		}
+
+		// Persist Base AC if present in pendingState
+		if (pendingState.base_ac !== undefined) {
+			fm.base_ac = pendingState.base_ac;
+		}
+
+		// Persist Armor Training if present in pendingState
+		if (pendingState.armor_training !== undefined) {
+			fm.armor_training = pendingState.armor_training;
+		}
+
+		// Persist Weapon Training if present in pendingState
+		if (pendingState.weapon_training !== undefined) {
+			fm.weapon_training = pendingState.weapon_training;
+		}
+
+		// Persist Image Paths if present in pendingState
+		if (pendingState.image !== undefined) {
+			fm.image = pendingState.image;
+		}
+
+		// Persist Level if present in pendingState
+		if (pendingState.Level !== undefined) {
+			fm.Level = pendingState.Level;
+		}
 	});
+	// delete depriciated data
+	delete pendingState.Level;
+	delete pendingState.level;
 	clearDirty();
 	new Notice("All changes saved", 3000);
 }
@@ -355,7 +453,8 @@ const CHA_MOD = Math.floor((CHA - 10) / 2);
 // =====================
 // Proficiency Bonus
 // =====================
-const Level = Number(dv.current().Level ?? 1);
+const classLevels = getClassLevels(dv.current().dndClass);
+const Level = classLevels.reduce((sum, c) => sum + c.level, 0) || 1;
 function proficiencyFromLevel(lvl) {
   if (lvl >= 17) return 6;
   if (lvl >= 13) return 5;
@@ -445,7 +544,6 @@ if (hasArcaneTrickster) { arcaneTricksterLevel = rogueLevel };
 const hasCircleOfTheMoon = Array.isArray(c.subclass)
   ? c.subclass.includes("Circle of the Moon")
   : c.subclass === "Circle of the Moon";
-// Debug logs removed for production
 // ======================
 // Feats
 // ======================
@@ -494,15 +592,371 @@ function hasWhispersOfTheGrave() {
 	  return invocations.includes("Whispers of the Grave");
 }
 
-// Optional: debug info suppressed
+function getClassLevels(dndClassField) {
+	if (!dndClassField) {
+		console.warn("Invalid dndClass format:", dndClassField);
+		return [];
+	}
 
-// Functions
+	// Single-class legacy string (treat as level 1)
+	if (typeof dndClassField === "string") {
+		return [{ className: dndClassField, level: 1 }];
+	}
+
+	// Single-class object { Warlock: 5 }
+	if (typeof dndClassField === "object" && !Array.isArray(dndClassField)) {
+		const [className, level] = Object.entries(dndClassField)[0] ?? [];
+		return className && level
+			? [{ className, level }]
+			: [];
+	}
+
+	// Multi-class array [{ Warlock: 3 }, { Paladin: 4 }]
+	if (Array.isArray(dndClassField)) {
+		return dndClassField.map(entry => {
+			const [className, level] = Object.entries(entry)[0] ?? [];
+			return { className, level };
+		}).filter(e => e.className && e.level);
+	}
+
+	console.warn("Unrecognized dndClass format:", dndClassField);
+	return [];
+}
+
+
+
 function formatSpellName(name) {
   return name
     .replace(/-xphb$|-phb$|-frhof$|-srd$/i, "")
     .replace(/-/g, " ")
     .replace(/'/g, "")
     .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+// =====================================================================================
+// ==============================================================   Character Onboarding
+// =====================================================================================
+function selectField(key, options) {
+  return `
+    <label>
+      ${prettyKey(key)}
+      <select data-key="${key}">
+        <option value="">— Select —</option>
+        ${options.map(o => `<option value="${o}">${o}</option>`).join("")}
+      </select>
+    </label>
+  `;
+}
+function setDeep(obj, path, value) {
+	const parts = path.split(".");
+	let cur = obj;
+
+	for (let i = 0; i < parts.length - 1; i++) {
+		const p = parts[i];
+		cur[p] ??= {};
+		cur = cur[p];
+	}
+
+	cur[parts.at(-1)] = value;
+}
+function getDeep(obj, path) {
+	return path.split(".").reduce((o, k) => o?.[k], obj);
+}
+function val(v) {
+  if (Array.isArray(v)) return v.join(", ");
+  if (v === undefined || v === null) return "";
+  return v;
+}
+function hydrateClasses(character, overlay) {
+	const container = overlay.querySelector(".class-blocks");
+	if (!container) return;
+
+	container.querySelectorAll(".class-row").forEach(r => r.remove());
+
+	let classEntries = [];
+
+	// ---- MULTICLASS ----
+	if (Array.isArray(character?.dndClass)) {
+		classEntries = character.dndClass.map((entry, i) => {
+			const [cls, lvl] = Object.entries(entry)[0] ?? [];
+			return {
+				class: cls,
+				level: lvl,
+				subclass: character.subclass?.[i] ?? ""
+			};
+		});
+	}
+
+	// ---- SINGLE CLASS: object ----
+	else if (
+		character?.dndClass &&
+		typeof character.dndClass === "object"
+	) {
+		const [cls, lvl] = Object.entries(character.dndClass)[0] ?? [];
+		classEntries.push({
+			class: cls,
+			level: lvl,
+			subclass: character.subclass ?? ""
+		});
+	}
+
+	// ---- SINGLE CLASS: split fields ----
+	else if (typeof character?.dndClass === "string") {
+		classEntries.push({
+			class: character.dndClass,
+			level: character.Level ?? character.level ?? "",
+			subclass: character.subclass ?? ""
+		});
+	}
+
+	// ---- Fallback: empty row ----
+	if (!classEntries.length) {
+		container.insertBefore(
+			createClassRow(),
+			container.querySelector(".add-class")
+		);
+		return;
+	}
+
+	// ---- Render rows ----
+	for (const entry of classEntries) {
+		const row = createClassRow();
+
+		row.querySelector('[data-subkey="class"]').value = entry.class ?? "";
+		row.querySelector('[data-subkey="level"]').value = entry.level ?? "";
+		row.querySelector('[data-subkey="subclass"]').value = entry.subclass ?? "";
+
+		container.insertBefore(row, container.querySelector(".add-class"));
+	}
+}
+function createClassRow() {
+	const row = document.createElement("div");
+	row.className = "class-row";
+
+	row.innerHTML = `
+		<input
+			placeholder="Class"
+			data-subkey="class"
+		>
+		<input
+			type="number"
+			min="1"
+			placeholder="Level"
+			data-subkey="level"
+		>
+		<input
+			placeholder="Subclass (optional)"
+			data-subkey="subclass"
+		>
+		<button type="button" class="remove-class">✕</button>
+	`;
+
+	// Optional: allow removing a class row
+	row.querySelector(".remove-class").onclick = () => {
+		row.remove();
+	};
+
+	return row;
+}
+function openCharacterOnboardingModal(character = null) {
+	// Prevent multiple modals
+	if (document.querySelector(".char-onboarding-overlay")) return;
+
+	const overlay = document.createElement("div");
+	overlay.className = "char-onboarding-overlay";
+	overlay.innerHTML = `
+		<div class="char-onboarding-modal">
+  			<h2>${character ? "Edit Character" : "Create Your Character"}</h2>
+
+			<div class="onboarding-grid">
+				<label>Name<input data-key="name" /></label>
+				<div class="class-blocks" data-key="classes">
+				<h3>Classes</h3>
+
+				<!-- rows injected dynamically -->
+
+				<button class="add-class">+ Add Class</button>
+				</div>
+				<label>Image Paths<input data-key="image" placeholder="ex: z_Assets/Misc/Char.png" /></label>
+				<label>Max Health<input data-key="health.max" type="number" placeholder="Number" min=1 /></label>
+				<label>Background<input data-key="background" /></label>
+				<label>Species<input data-key="species" /></label>
+				<label>Species Traits<input data-key="species_traits" placeholder="Comma separated" /></label>
+				${selectField("alignment", [
+					"Lawful Good", 
+					"Neutral Good", 
+					"Chaotic Good", 
+					"Lawful Neutral", 
+					"True Neutral", 
+					"Chaotic Neutral", 
+					"Lawful Evil", 
+					"Neutral Evil", 
+					"Chaotic Evil"])}
+				${selectField("size", ["Small", "Medium"])}
+				<label>Senses<input data-key="senses" /></label>
+
+				<label>Languages<input data-key="languages" placeholder="Comma separated" /></label>
+				<label>Tools<input data-key="tools" placeholder="Comma separated" /></label>
+				<label>Instruments<input data-key="instruments" placeholder="Comma separated" /></label>
+
+				${selectField("Spellcasting_Ability", ["CHA", "INT", "WIS"])}
+				<label>Speed<input data-key="speed" type="number" placeholder="Number" /></label>
+				<label>Base AC<input data-key="Base_AC" type="number" placeholder="Number" /></label>
+				<fieldset data-key="armor_training">
+					<legend>Armor Training</legend>
+					<label><input type="checkbox" value="Light Armor"> Light Armor</label>
+					<label><input type="checkbox" value="Medium Armor"> Medium Armor</label>
+					<label><input type="checkbox" value="Heavy Armor"> Heavy Armor</label>
+					<label><input type="checkbox" value="Shields"> Shields</label>
+				</fieldset>
+				<fieldset data-key="weapon_training">
+					<legend>Weapon Training</legend>
+					<label><input type="checkbox" value="Simple Weapons"> Simple Weapons</label>
+					<label><input type="checkbox" value="Martial Weapons"> Martial Weapons</label>
+				</fieldset>
+			</div>
+
+			<div class="onboarding-actions">
+				<button class="cancel">Cancel</button>
+				<button class="confirm">${character ? "Save Changes" : "Create Character"}</button>
+			</div>
+		</div>
+	`;
+
+	document.body.appendChild(overlay);
+	const container = overlay.querySelector(".class-blocks");
+	const addBtn = container.querySelector(".add-class");
+
+	addBtn.onclick = (e) => {
+		e.preventDefault();
+		container.insertBefore(createClassRow(), addBtn);
+	};
+
+	if (character) {
+		hydrateClasses(character, overlay);
+	} else {
+		container.insertBefore(createClassRow(), addBtn);
+	}
+				
+	if (character) {
+		const fields = overlay.querySelectorAll("[data-key]");
+
+		for (const el of fields) {
+			const key = el.dataset.key;
+			let value = getDeep(character, key);
+
+			if (value == null) continue;
+
+			// FIELDSET (checkbox groups)
+			if (el.tagName === "FIELDSET") {
+				let values = value;
+
+				// Normalize to array
+				if (typeof values === "string") {
+					values = [values];
+				}
+				if (!Array.isArray(values)) continue;
+
+				el.querySelectorAll("input[type=checkbox]").forEach(cb => {
+					cb.checked = values.includes(cb.value);
+				});
+			}
+
+			// SELECT
+			else if (el.tagName === "SELECT") {
+				el.value = value;
+			}
+
+			// INPUT
+			else if (el.tagName === "INPUT") {
+				if (Array.isArray(value)) {
+					el.value = value.join(", ");
+				} else {
+					el.value = value;
+				}
+			}
+		}
+	}
+	if (!character) {
+		const container = overlay.querySelector(".class-blocks");
+		container.insertBefore(
+			createClassRow(),
+			container.querySelector(".add-class")
+		);
+	}
+
+	const close = () => overlay.remove();
+
+	overlay.querySelector(".cancel").onclick = close;
+
+	overlay.querySelector(".confirm").onclick = async () => {
+		pendingState ??= {};
+
+		const fields = overlay.querySelectorAll("[data-key]");
+
+		for (const el of fields) {
+			const key = el.dataset.key;
+			let value;
+
+			if (el.tagName === "FIELDSET") {
+				value = Array.from(el.querySelectorAll("input:checked"))
+					.map(i => i.value);
+				if (!value.length) continue;
+			}
+			else if (el.tagName === "SELECT") {
+				value = el.value;
+			}
+			else if (el.tagName === "INPUT") {
+				value = el.value.trim();
+				if (!value) continue;
+
+				if (el.type === "number") value = Number(value);
+
+				if (typeof value === "string" && value.includes(",")) {
+					value = value.split(",").map(v => v.trim()).filter(Boolean);
+				}
+			}
+
+			// Special case: Max Health
+			if (key === "health.max") {
+				pendingState.health ??= {};
+				pendingState.health.max = value;
+				pendingState.health.current = value;
+				pendingState.health.temp ??= 0;
+				pendingState.health.maxTmp ??= value;
+				continue;
+			}
+
+			setDeep(pendingState, key, value);
+			console.log("Onboarding set:", key, value);
+		}
+
+		// --- Handle multiclass data ONCE ---
+		const classRows = overlay.querySelectorAll(".class-row");
+
+		const classes = [];
+		const subclasses = [];
+
+		for (const row of classRows) {
+			const cls = row.querySelector('[data-subkey="class"]')?.value?.trim();
+			const lvl = Number(row.querySelector('[data-subkey="level"]')?.value);
+			const sub = row.querySelector('[data-subkey="subclass"]')?.value?.trim();
+
+			if (!cls || !lvl) continue;
+
+			classes.push({ [cls]: lvl });
+			if (sub) subclasses.push(sub);
+		}
+
+		if (classes.length) pendingState.dndClass = classes;
+		if (subclasses.length) pendingState.subclass = subclasses;
+
+		close();
+		markDirty();
+		await commitPendingChanges();
+		pendingState = {};
+		clearDirty();		
+	};
 }
 
 // ======================================================================================
@@ -781,7 +1235,22 @@ function getEffectiveConditions() {
 // ==================================================================    Character Header
 // ======================================================================================
 
+const totalLevel = classLevels.reduce((sum, cls) => sum + cls.level, 0) || "?";
 
+const isMulticlass = classLevels.length > 1;
+const isSingleClass = classLevels.length === 1;
+
+const classText = isMulticlass
+  ? classLevels.map(({ className, level }) => `${className} (${level})`).join(" / ")
+  : (classLevels[0]?.className ?? c.dndClass ?? "Class");
+
+const subclassText = Array.isArray(c.subclass)
+  ? c.subclass.join(" / ")
+  : (c.subclass ?? "");
+
+const subtitle = isSingleClass
+  ? `Level ${totalLevel} ${classText}${subclassText ? ` — ${subclassText}` : ""}`
+  : `Level ${totalLevel} ${classText}${subclassText ? ` — ${subclassText}` : ""}`;
 const condDisplay = active.length ? active.join(", ") : "None";
 const maxHP = pendingState.health.max;
 const currentHP = pendingState.health.current;
@@ -816,6 +1285,9 @@ const menuHtml = `
     <button class="char-menu-btn save-btn" disabled>
       💾 Save Changes
     </button>
+	<button class="char-menu-btn edit-btn" enabled>
+      ✏️ Edit Character
+    </button>
   </div>
 </div>
 `;
@@ -823,23 +1295,10 @@ const menuHtml = `
 <div class="char-header">
 	${menuHtml}
 <div class="char-info">
-    <h1 class="char-name">${c.name ?? "Unnamed Character"}</h1>
+    <h1 class="char-name">${c.name ?? "Click Here to Create a new Character"}</h1>
     <div class="char-subtitle">
-		  Level ${c.Level ?? "?"}
-		  ${
-		    Array.isArray(c.dndClass)
-		      ? " " + c.dndClass.map(obj => {
-		          const [cls, lvl] = Object.entries(obj)[0];
-		          return `${cls} (${lvl})`;
-		        }).join(" / ")
-		      : ` ${c.dndClass ?? "Class"}`
-		  }
-		  ${
-		    Array.isArray(c.subclass)
-		      ? " — " + c.subclass.join(" / ")
-		      : (c.subclass ? ` — ${c.subclass}` : "")
-		  }
-		</div>
+		<div class="char-subtitle">${subtitle}</div>
+	</div>
     <div class="char-details">
       <div><b>Background:</b> ${c.background ?? "None"}</div>
       <div><b>Species:</b> ${c.species ?? "None"}</div>
@@ -874,13 +1333,28 @@ root.classList.add("character-header-block");
 root.innerHTML = html;
 syncConcentrationCSS();
 
+const nameEl = root.querySelector(".char-name");
+
+if (!c.name && nameEl && !nameEl.dataset.bound) {
+	nameEl.dataset.bound = "true";
+	nameEl.style.cursor = "pointer";
+	nameEl.style.textDecoration = "underline";
+	nameEl.style.opacity = "0.85";
+
+	nameEl.addEventListener("click", () => {
+		openCharacterOnboardingModal();
+	});
+}
+
 const hpFill   = root.querySelector(".hp-fill");
 const tempFill = root.querySelector(".temp-fill");
 const hpLabel  = root.querySelector(".hp-label");
 
 const menuRoot = root.querySelector(".char-menu");
-const toggleBtn = root.querySelector(".char-menu-toggle");
+const toggleBtn = root.querySelector(".char-menu-toggle"); 
 const saveBtn   = root.querySelector(".save-btn");
+const editBtn = root.querySelector(".edit-btn");
+
 
 if (menuRoot && toggleBtn && !menuRoot.dataset.bound) {
   menuRoot.dataset.bound = "true";
@@ -901,6 +1375,14 @@ if (menuRoot && toggleBtn && !menuRoot.dataset.bound) {
   if (saveBtn) {
     saveBtn.addEventListener("click", commitPendingChanges);
 	//new Notice("Changes saved", 3000);
+  }
+  if (editBtn) {
+		editBtn.addEventListener("click", (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+		menuRoot.classList.remove("open");
+		openCharacterOnboardingModal(c);
+	});
   }
   if (!menuRoot || !toggleBtn) {
 	console.warn("Character menu not ready yet");
@@ -6113,9 +6595,7 @@ function syncAfterConditionChange() {
 				btn.classList.toggle("is-active", next);
 
 				markDirty();
-				//renderActiveConditions(activeConditionsContainer);
 				syncAfterConditionChange();
-				//rebuildConditions();
 			};
 
 			return btn;
@@ -6166,8 +6646,6 @@ function syncAfterConditionChange() {
 
 		markDirty();
 		syncAfterConditionChange(); // 🔑 unified path
-		//renderActiveConditions(activeConditionsContainer);
-		//rebuildConditions();
 		}
 
 		async function changeExhaustion(delta) {
@@ -7803,129 +8281,129 @@ console.log("Rendering TAB: Session Notes");
 
 // force save before closing note
 
-function isHoverPreviewLeaf(leaf) {
-	if (!leaf?.parent?.containerEl) return false;
+// function isHoverPreviewLeaf(leaf) {
+// 	if (!leaf?.parent?.containerEl) return false;
 
-	return leaf.parent.containerEl.classList.contains("popover");
-}
+// 	return leaf.parent.containerEl.classList.contains("popover");
+// }
 
-async function confirmSave(title, message) {
-  return new Promise(resolve => {
-    // Overlay
-    const overlay = document.createElement("div");
-    overlay.style = `
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-    `;
+// async function confirmSave(title, message) {
+//   return new Promise(resolve => {
+//     // Overlay
+//     const overlay = document.createElement("div");
+//     overlay.style = `
+//       position: fixed;
+//       top: 0; left: 0;
+//       width: 100%; height: 100%;
+//       background: rgba(0,0,0,0.5);
+//       display: flex;
+//       justify-content: center;
+//       align-items: center;
+//       z-index: 9999;
+//     `;
 
-    // Modal box
-    const box = document.createElement("div");
-    box.style = `
-      background: white; 
-      padding: 1rem 2rem; 
-      border-radius: 8px;
-      max-width: 400px;
-      text-align: center;
-    `;
+//     // Modal box
+//     const box = document.createElement("div");
+//     box.style = `
+//       background: white; 
+//       padding: 1rem 2rem; 
+//       border-radius: 8px;
+//       max-width: 400px;
+//       text-align: center;
+//     `;
 
-    const h2 = document.createElement("h2");
-    h2.textContent = title;
+//     const h2 = document.createElement("h2");
+//     h2.textContent = title;
 
-    const p = document.createElement("p");
-    p.textContent = message;
+//     const p = document.createElement("p");
+//     p.textContent = message;
 
-    const btnWrap = document.createElement("div");
-    btnWrap.style = "margin-top: 1rem; display: flex; justify-content: space-around;";
+//     const btnWrap = document.createElement("div");
+//     btnWrap.style = "margin-top: 1rem; display: flex; justify-content: space-around;";
 
-    const yesBtn = document.createElement("button");
-    yesBtn.textContent = "Save";
-    yesBtn.onclick = () => {
-      document.body.removeChild(overlay);
-      resolve(true);
-    };
+//     const yesBtn = document.createElement("button");
+//     yesBtn.textContent = "Save";
+//     yesBtn.onclick = () => {
+//       document.body.removeChild(overlay);
+//       resolve(true);
+//     };
 
-    const noBtn = document.createElement("button");
-    noBtn.textContent = "Continue Without Saving";
-    noBtn.onclick = () => {
-      document.body.removeChild(overlay);
-      resolve(false);
-    };
+//     const noBtn = document.createElement("button");
+//     noBtn.textContent = "Continue Without Saving";
+//     noBtn.onclick = () => {
+//       document.body.removeChild(overlay);
+//       resolve(false);
+//     };
 
-    btnWrap.appendChild(yesBtn);
-    btnWrap.appendChild(noBtn);
+//     btnWrap.appendChild(yesBtn);
+//     btnWrap.appendChild(noBtn);
 
-    box.appendChild(h2);
-    box.appendChild(p);
-    box.appendChild(btnWrap);
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
-  });
-}
+//     box.appendChild(h2);
+//     box.appendChild(p);
+//     box.appendChild(btnWrap);
+//     overlay.appendChild(box);
+//     document.body.appendChild(overlay);
+//   });
+// }
 
 
 
-let ignoreNextLeafChange = false;
-let pendingLeavePrompt = false;
-let lastActiveLeaf = app.workspace.activeLeaf;
-let isHandlingLeave = false;
-let queuedLeaf = null;
-let lastFile = app.workspace.getActiveFile();
+// let ignoreNextLeafChange = false;
+// let pendingLeavePrompt = false;
+// let lastActiveLeaf = app.workspace.activeLeaf;
+// let isHandlingLeave = false;
+// let queuedLeaf = null;
+// let lastFile = app.workspace.getActiveFile();
 
-// listen for leaf changes
+// // listen for leaf changes
 
-app.workspace.on("active-leaf-change", async (nextLeaf) => {
-	try {
-		if (isHandlingLeave) return;
+// app.workspace.on("active-leaf-change", async (nextLeaf) => {
+// 	try {
+// 		if (isHandlingLeave) return;
 
-		// Obsidian can pass null when closing the last leaf
-		if (!nextLeaf) {
-			lastActiveLeaf = null;
-			return;
-		}
+// 		// Obsidian can pass null when closing the last leaf
+// 		if (!nextLeaf) {
+// 			lastActiveLeaf = null;
+// 			return;
+// 		}
 
-		const previousLeaf = lastActiveLeaf;
-		lastActiveLeaf = nextLeaf;
+// 		const previousLeaf = lastActiveLeaf;
+// 		lastActiveLeaf = nextLeaf;
 
-		// Ignore hover previews
-		if (nextLeaf.parent?.containerEl?.classList?.contains("popover")) return;
+// 		// Ignore hover previews
+// 		if (nextLeaf.parent?.containerEl?.classList?.contains("popover")) return;
 
-		if (!isDirty) return;
+// 		if (!isDirty) return;
 
-		isHandlingLeave = true;
-		queuedLeaf = nextLeaf;
+// 		isHandlingLeave = true;
+// 		queuedLeaf = nextLeaf;
 
-		// Snap back immediately
-		if (previousLeaf) {
-			app.workspace.setActiveLeaf(previousLeaf, { focus: false });
-		}
+// 		// Snap back immediately
+// 		if (previousLeaf) {
+// 			app.workspace.setActiveLeaf(previousLeaf, { focus: false });
+// 		}
 
-		const choice = await confirmSave(
-			"Unsaved Changes",
-			"You have unsaved changes. Save before leaving?"
-		);
+// 		const choice = await confirmSave(
+// 			"Unsaved Changes",
+// 			"You have unsaved changes. Save before leaving?"
+// 		);
 
-		if (choice === true) {
-			await commitPendingChanges();
-		}
+// 		if (choice === true) {
+// 			await commitPendingChanges();
+// 		}
 
-		// Resume navigation
-		if (queuedLeaf) {
-			app.workspace.setActiveLeaf(queuedLeaf, { focus: true });
-		}
+// 		// Resume navigation
+// 		if (queuedLeaf) {
+// 			app.workspace.setActiveLeaf(queuedLeaf, { focus: true });
+// 		}
 
-	} catch (err) {
-		console.error("Save-before-leave error:", err);
-	} finally {
-		queuedLeaf = null;
-		isHandlingLeave = false;
-	}
-});
+// 	} catch (err) {
+// 		console.error("Save-before-leave error:", err);
+// 	} finally {
+// 		queuedLeaf = null;
+// 		isHandlingLeave = false;
+// 	}
+// });
 
 if (!startup.rendered) {
 	startup.rendered = true;
