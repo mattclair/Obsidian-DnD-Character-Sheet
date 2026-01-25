@@ -1,85 +1,74 @@
 ---
-Level: 15
-STR: 
-DEX: 
-CON: 
-INT: 
-WIS: 
-CHA: 
-name: 
-dndClass: Bard
+BASE_FOLDER: 3. Mechanics/CLI
+health:
+  current: 17
+  max: 17
+  temp: 0
+  maxTmp: 0
+inventory: {}
+weapon_mastery: {}
+conditions:
+  heroic_inspiration: true
+Bastion:
+  name: ""
+  current_day: 0
+  defenders: 0
+  facilities: []
+Hit_Dice:
+  Wizard_d6-1: true
+  Wizard_d6-2: true
+  Wizard_d6-3: true
+name: Gandolf
+dndClass:
+  - Wizard: 3
 subclass:
-background: Wayfarer
+  - Evoker
+background: Scribe
 species: Human
-species_traits:
-  - Trait 1
-  - Trait 2
-  - Trait 3
-alignment: Chaotic-Good
+alignment: Lawful Good
 size: Medium
-senses:
 languages:
   - Common
-tools:
-instruments:
-image:
-  - z_Assets/Misc/ImagePlaceholder.png
-Spellcasting_Ability: None
+  - Dwarvish
+species_traits:
+  - Resourceful
+  - Skillful
+  - Versatile
+Spellcasting_Ability: INT
 speed: 30
-Base_AC: 10
-armor_training:
-weapon_training: Simple Melee
-Proficiencies:
-Stat_Bonus:
-conditions:
-  blinded: false
-  charmed: false
-  concentrating: false
-  deafened: false
-  frightened: false
-  grappled: false
-  heroic_inspiration: false
-  incapacitated: false
-  invisible: false
-  mage_armor: false
-  paralyzed: false
-  petrified: false
-  poisoned: false
-  prone: false
-  restrained: false
-  stunned: false
-  unconscious: false
-  exhaustion:
-    count: 0
-    Level: false
-health:
-  max: 11
-  current: 11
-  temp: 0
-  maxTmp: 5
-Hit_Dice:
-inventory:
-attuned:
-spell_slot:
-  level1_2: true
-  level1_1: true
-feats:
+image: z_Assets/Misc/ImagePlaceholder.png
 Spells:
   Prepared:
-    Cantrips:
-    Spells:
+    Cantrips: []
+    Spells: []
   Always_Prepared:
     Cantrips:
+      - Message
+      - Guidance
     Spells:
+      - Healing Word
   Known:
     Cantrips: []
     Spells: []
-Eldritch_Invocations:
-mastery:
-purse: 20
-BASE_FOLDER: 3. Mechanics/CLI
-Bardic_Inspiration:
-  bardic_insp_1: true
+spell_slot: {}
+STR: 9
+DEX: 12
+CON: 13
+INT: 17
+WIS: 14
+CHA: 10
+Proficiencies:
+  INT_SAVE: 1
+  WIS_SAVE: 1
+  Arcana: 1
+  Medicine: 1
+feats:
+  - Magic Initiate:
+      class: Cleric
+      spell: Healing Word
+      cantrips:
+        - Message
+        - Guidance
 ---
 ```dataviewjs
 // Load full cahracter sheet

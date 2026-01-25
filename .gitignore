@@ -25,3 +25,6 @@ null*
 
 # Exclude CLI directory
 3. Mechanics/CLI/
+
+# Exclude Session Notes
+SessionNotes*.md

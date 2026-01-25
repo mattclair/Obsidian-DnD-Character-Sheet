@@ -43,12 +43,12 @@ weapon_training:
 Proficiencies:
   DEX_SAVE: 1
   INT_SAVE: 1
-  Deception: 1
-  Stealth: 2
-  Insight: 1
   Acrobatics: 1
-  Sleight of Hand: 2
+  Deception: 1
+  Insight: 1
   Perception: 1
+  Sleight of Hand: 2
+  Stealth: 2
 Stat_Bonus:
   Initiative:
     value: PROF
@@ -59,10 +59,8 @@ Stat_Bonus:
 conditions:
   heroic_inspiration: false
   exhaustion:
-    count: 1
-    Level: true
-  frightened: true
-  incapacitated: true
+    count: 0
+    Level: false
 resistances:
   - Advantage when rolling saving throws against the Charmed condition
   - Immune to Sleep

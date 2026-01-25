@@ -37,8 +37,8 @@ Stat_Bonus:
 conditions:
   heroic_inspiration: false
 health:
-  max: 11
   current: 11
+  max: 11
   temp: 0
   maxTmp: 0
 Hit_Dice:
@@ -64,6 +64,14 @@ spell_slot:
   elf_faerie_fire: true
   elf_darkness: true
 feats:
+  - Magic Initiate:
+      class: Druid
+      spell: Healing Word
+      cantrips:
+        - Message
+        - Light
+  - Shadow Touched:
+      spell: Message
 Spells:
   Prepared:
     Cantrips:
@@ -91,8 +99,8 @@ Bastion:
   defenders: 0
   facilities: []
 Channel_Divinity:
-  divinity-1: true
-  divinity-2: true
+  divinity-1: false
+  divinity-2: false
 Wild_Shape: {}
 Second_Wind: {}
 Action_Surge: {}

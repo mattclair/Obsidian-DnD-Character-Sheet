@@ -1,5 +1,4 @@
 ---
-Level: 5
 STR: 9
 DEX: 12
 CON: 14
@@ -57,6 +56,7 @@ conditions:
   exhaustion:
     count: 0
     Level: false
+  mage_armor: true
 health:
   max: 39
   current: 39

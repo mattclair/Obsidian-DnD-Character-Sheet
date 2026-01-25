@@ -46,7 +46,7 @@ Proficiencies:
   Athletics: 1
   Animal Handling: 1
   Perception: 1
-  Survivial: 1
+  Survival: 1
   Intimidation: 1
 Stat_Bonus:
   Armor_Class:

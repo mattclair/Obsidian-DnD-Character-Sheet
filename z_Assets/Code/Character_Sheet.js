@@ -83,16 +83,20 @@ function clearDirty() {
 }
 
 // In-memory storage for character stats (scoped per-file)
-window.__char_pendingStateByFile[__char_file_key] = window.__char_pendingStateByFile[__char_file_key] || {
-	health: {
-		current: Number(c.health?.current ?? c.health?.max ?? 0),
-		max:     Number(c.health?.max ?? 0),
-		temp:    Number(c.health?.temp ?? 0),
-		maxTmp:  Number(c.health?.maxTmp ?? 0),
-	},
-};
+window.__char_pendingStateByFile[__char_file_key] =
+  window.__char_pendingStateByFile[__char_file_key] || {};
 
 const pendingState = window.__char_pendingStateByFile[__char_file_key];
+
+// 🔒 ONLY initialize health if it does not already exist
+if (!pendingState.health) {
+  pendingState.health = {
+    current: Number(c.health?.current ?? c.health?.max ?? 0),
+    max:     Number(c.health?.max ?? 0),
+    temp:    Number(c.health?.temp ?? 0),
+    maxTmp:  Number(c.health?.maxTmp ?? 0),
+  };
+}
 
 // Handlers to allow imperative re-renders of small UI regions without a full Dataview refresh
 window.__char_rebuildHandlers = window.__char_rebuildHandlers || {};
@@ -102,10 +106,13 @@ async function commitPendingChanges() {
 	const file = app.workspace.getActiveFile();
 	if (!file) return;
 
-	await app.fileManager.processFrontMatter(file, fm => {
-		fm.health ??= {};
+		await app.fileManager.processFrontMatter(file, fm => {
 
-		Object.assign(fm.health, structuredClone(pendingState.health));
+		// Persist Health if present in pendingState
+		fm.health ??= {};
+		if (pendingState.health?.max != null) {
+			fm.health = structuredClone(pendingState.health);
+		}
 
 		// Persist inventory if present in pendingState
 		if (pendingState.inventory !== undefined) {
@@ -145,11 +152,6 @@ async function commitPendingChanges() {
 		// Persist Luck if present in pendingState
 		if (pendingState.Luck !== undefined) {
 			fm.Luck = structuredClone(pendingState.Luck);
-		}
-
-		// Persist Feats if present in pendingState
-		if (pendingState.Feats !== undefined) {
-			fm.Feats = structuredClone(pendingState.Feats);
 		}
 
 		// Persist Rage if present in pendingState
@@ -293,8 +295,8 @@ async function commitPendingChanges() {
 		}
 
 		// Persist Spellcasting Ability if present in pendingState
-		if (pendingState.spellcasting_ability !== undefined) {
-			fm.spellcasting_ability = pendingState.spellcasting_ability;
+		if (pendingState.Spellcasting_Ability !== undefined) {
+			fm.Spellcasting_Ability = pendingState.Spellcasting_Ability;
 		}
 
 		// Persist Speed if present in pendingState
@@ -326,12 +328,62 @@ async function commitPendingChanges() {
 		if (pendingState.Level !== undefined) {
 			fm.Level = pendingState.Level;
 		}
+
+		// Persist STR if present in pendingState
+		if (pendingState.STR !== undefined) {
+			fm.STR = pendingState.STR;
+		}
+
+		// Persist DEX if present in pendingState
+		if (pendingState.DEX !== undefined) {
+			fm.DEX = pendingState.DEX;
+		}
+
+		// Persist CON if present in pendingState
+		if (pendingState.CON !== undefined) {
+			fm.CON = pendingState.CON;
+		}
+
+		// Persist INT if present in pendingState
+		if (pendingState.INT !== undefined) {
+			fm.INT = pendingState.INT;
+		}
+
+		// Persist WIS if present in pendingState
+		if (pendingState.WIS !== undefined) {
+			fm.WIS = pendingState.WIS;
+		}
+
+		// Persist CHA if present in pendingState
+		if (pendingState.CHA !== undefined) {
+			fm.CHA = pendingState.CHA;
+		}
+
+		// Persist Proficiencies if present in pendingState
+		if (pendingState.Proficiencies !== undefined) {
+			fm.Proficiencies = pendingState.Proficiencies;
+		}
+
+		// Persist Feats if present in pendingState
+		if (pendingState.feats !== undefined) {
+			fm.feats = pendingState.feats
+		}
+
+		// Persist Stat_Bonus if present in pendingState
+		if (pendingState.Stat_Bonus !== undefined) {
+			fm.Stat_Bonus = pendingState.Stat_Bonus
+		}
 	});
-	// delete depriciated data
-	delete pendingState.Level;
-	delete pendingState.level;
-	clearDirty();
-	new Notice("All changes saved", 3000);
+
+  /* ---------- POST-SAVE UI SYNC ---------- */
+  renderHpDisplay();
+  window.__char_rebuildHandlers[__char_file_key]?.hp?.();
+
+  delete pendingState.Level;
+  delete pendingState.level;
+
+  clearDirty();
+  new Notice("All changes saved", 3000);
 }
 
 
@@ -623,19 +675,19 @@ function getClassLevels(dndClassField) {
 	return [];
 }
 
-
-
 function formatSpellName(name) {
-  return name
-    .replace(/-xphb$|-phb$|-frhof$|-srd$/i, "")
-    .replace(/-/g, " ")
-    .replace(/'/g, "")
-    .replace(/\b\w/g, c => c.toUpperCase());
+	return name
+		.replace(/-xphb$|-phb$|-frhof$|-srd$/i, "")
+		.replace(/-/g, " ")
+		.replace(/'/g, "")
+		.replace(/\b\w/g, c => c.toUpperCase());
 }
 
 // =====================================================================================
 // ==============================================================   Character Onboarding
 // =====================================================================================
+
+// ============== Character Data ==================
 function selectField(key, options) {
   return `
     <label>
@@ -877,13 +929,7 @@ function openCharacterOnboardingModal(character = null) {
 			}
 		}
 	}
-	if (!character) {
-		const container = overlay.querySelector(".class-blocks");
-		container.insertBefore(
-			createClassRow(),
-			container.querySelector(".add-class")
-		);
-	}
+
 
 	const close = () => overlay.remove();
 
@@ -954,11 +1000,615 @@ function openCharacterOnboardingModal(character = null) {
 		close();
 		markDirty();
 		await commitPendingChanges();
-		pendingState = {};
-		clearDirty();		
+		for (const k in pendingState) {
+			delete pendingState[k];
+		}	
 	};
 }
+// ============== Character Stats ==================
+function renderProficiencies(character) {
+  // List **all possible proficiencies** we want to display
+  const profs = [
+    "STR_SAVE", "DEX_SAVE", "CON_SAVE", "INT_SAVE", "WIS_SAVE", "CHA_SAVE",
+    "Acrobatics", "Animal Handling", "Arcana", "Athletics", "Deception",
+	"History", "Insight", "Intimidation", "Investigation", "Medicine",
+	"Nature", "Perception", "Persuasion", "Religion", "Sleight of Hand",
+	"Stealth", "Survival"
+  ];
 
+  return profs.map(prof => {
+    // Default to 0 if the character does not have this proficiency yet
+    const currentValue = character?.Proficiencies?.[prof] ?? 0;
+
+    return `
+      <div class="prof-row">
+        <label>${prof}</label>
+        <select data-prof="${prof}">
+          <option value="0" ${currentValue === 0 ? "selected" : ""}>None</option>
+          <option value="1" ${currentValue === 1 ? "selected" : ""}>Proficient</option>
+          <option value="2" ${currentValue === 2 ? "selected" : ""}>Expertise</option>
+        </select>
+      </div>
+    `;
+  }).join("");
+}
+
+function hydrateStatFields(character, overlay) {
+  if (!character) return;
+
+  // Stats
+  ["STR", "DEX", "CON", "INT", "WIS", "CHA"].forEach(stat => {
+    const input = overlay.querySelector(`[data-key="${stat}"]`);
+    if (input && character[stat] !== undefined) {
+      input.value = character[stat];
+    }
+  });
+
+  // Proficiencies
+  if (character.Proficiencies) {
+    Object.entries(character.Proficiencies).forEach(([k, v]) => {
+      const select = overlay.querySelector(`[data-prof="${k}"]`);
+      if (select) select.value = v;
+    });
+  }
+}
+
+function openCharacterStatOnboardingModal(character = null) {
+  if (document.querySelector(".char-stats-overlay")) return;
+
+  const overlay = document.createElement("div");
+  overlay.className = "char-stats-overlay";
+  overlay.innerHTML = `
+    <div class="char-stats-modal">
+      <h2>${character ? "Edit Stats" : "Create Stats"}</h2>
+
+      <div class="stats-grid">
+        <label>STR <input data-key="STR" type="number" min="1" max="30"></label>
+        <label>DEX <input data-key="DEX" type="number" min="1" max="30"></label>
+        <label>CON <input data-key="CON" type="number" min="1" max="30"></label>
+        <label>INT <input data-key="INT" type="number" min="1" max="30"></label>
+        <label>WIS <input data-key="WIS" type="number" min="1" max="30"></label>
+        <label>CHA <input data-key="CHA" type="number" min="1" max="30"></label>
+      </div>
+
+      <h3>Proficiencies & Saves</h3>
+      <div class="proficiencies-grid">
+        ${renderProficiencies(character)}
+      </div>
+
+      <div class="actions">
+        <button class="cancel">Cancel</button>
+        <button class="confirm">${character ? "Save" : "Create"}</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  hydrateStatFields(character, overlay);
+
+  const close = () => overlay.remove();
+
+  overlay.querySelector(".cancel").onclick = close;
+
+  overlay.querySelector(".confirm").onclick = async () => {
+    pendingState ??= {};
+
+    // Save stats
+    const statInputs = overlay.querySelectorAll("[data-key]");
+    for (const input of statInputs) {
+      const key = input.dataset.key;
+      const val = Number(input.value);
+      if (!val) continue;
+      pendingState[key] = val;
+    }
+
+    // Save proficiency data
+    const profNodes = overlay.querySelectorAll("[data-prof]");
+    pendingState.Proficiencies ??= {};
+
+    for (const node of profNodes) {
+		const profKey = node.dataset.prof;
+		const val = Number(node.value);
+
+		if (val === 0) {
+			// Remove it if it exists
+			delete pendingState.Proficiencies[profKey];
+		} else {
+			pendingState.Proficiencies[profKey] = val;
+		}
+	}
+
+    markDirty();
+    await commitPendingChanges();
+    close();
+  };
+}
+
+//================= Feat Onboarding =====================
+const FEAT_DEFINITIONS = {
+  "Actor": {
+    type: "simple"
+  },
+  "Alert": {
+    type: "simple"
+  },
+  "Archery": {
+    type: "simple"
+  },
+  "Athlete": {
+    type: "simple"
+  },
+  "Blind Fighting": {
+    type: "simple"
+  },
+  "Lucky": {
+    type: "simple"
+  },
+	"Charger": {
+    type: "simple"
+  },
+  "Chef": {
+    type: "simple"
+  },
+  "Crafter": {
+    type: "simple"
+  },
+  "Crossbow Expert": {
+    type: "simple"
+  },
+  "Crusher": {
+    type: "simple"
+  },"Defense": {
+    type: "simple"
+  },
+  "Defensive Duelist": {
+    type: "simple"
+  },
+  "Dual Wielder": {
+    type: "simple"
+  },
+  "Dueling": {
+    type: "simple"
+  },
+  "Durable": {
+    type: "simple"
+  },
+  "Elemental Adept": {
+    type: "simple"
+  },
+  "Fey Touched": {
+    type: "spell-choice",
+    fields: ["spell"]
+  },
+  "Grappler": {
+    type: "simple"
+  },
+  "Great Weapon Fighting": {
+    type: "simple"
+  },
+  "Great Weapon Master": {
+    type: "simple"
+  },
+  "Healer": {
+    type: "simple"
+  },
+  "Heavily Armored": {
+    type: "simple"
+  },
+  "Heavy Armor Master": {
+    type: "simple"
+  },
+  "Inspiring Leader": {
+    type: "simple"
+  },
+  "Interception": {
+    type: "simple"
+  },
+  "Keen Mind": {
+    type: "simple"
+  },
+  "Lightly Armored": {
+    type: "simple"
+  },
+  "Lucky": {
+    type: "simple"
+  },
+  "Mage Slayer": {
+    type: "simple"
+  },
+  "Magic Initiate": {
+    type: "magic-initiate",
+    fields: ["class", "spell", "cantrips"]
+  },
+  "Martial Weapon Training": {
+    type: "simple"
+  },
+  "Medium Armor Master": {
+    type: "simple"
+  },
+  "Mounted Combatant": {
+    type: "simple"
+  },
+  "Musician": {
+    type: "simple"
+  },
+  "Observant": {
+    type: "simple"
+  },
+  "Piercer": {
+    type: "simple"
+  },
+  "Poisoner": {
+    type: "simple"
+  },
+  "Pole Arm Master": {
+    type: "simple"
+  },
+  "Protection": {
+    type: "simple"
+  },
+  "Resilient": {
+    type: "simple"
+  },
+  "Ritual Caster": {
+    type: "simple"
+  },
+  "Savage Attacker": {
+    type: "simple"
+  },
+  "Sentinel": {
+    type: "simple"
+  },
+  "Shadow Touched": {
+    type: "spell-choice",
+    fields: ["spell"]
+  },
+  "Sharpshooter": {
+    type: "simple"
+  },
+  "Shield Master": {
+    type: "simple"
+  },
+  "Skilled": {
+    type: "simple"
+  },
+  "Skill Expert": {
+    type: "simple"
+  },
+  "Skulker": {
+    type: "simple"
+  },
+  "Slasher": {
+    type: "simple"
+  },
+  "Speedy": {
+    type: "simple"
+  },
+  "Spell Sniper": {
+    type: "simple"
+  },
+  "Tavern Brawler": {
+    type: "simple"
+  },
+  "Telekinetic": {
+    type: "simple"
+  },
+  "Telepathic": {
+    type: "simple"
+  },
+  "Thrown Weapon Fighting": {
+    type: "simple"
+  },
+  "Tough": {
+    type: "simple"
+  },
+  "Two-Weapon Fighting": {
+    type: "simple"
+  },
+  "Unarmed Fighting": {
+    type: "simple"
+  },
+  "War Caster": {
+    type: "simple"
+  },
+  "Weapon Master": {
+    type: "simple"
+  }
+  
+}; 
+
+function normalizeFeatsFromFrontmatter(fmFeats = []) {
+  return fmFeats.map(f => {
+    if (typeof f === "string") {
+      return { name: f };
+    }
+
+    if (typeof f === "object") {
+      const [name, data] = Object.entries(f)[0];
+      return { name, data: structuredClone(data) };
+    }
+
+    return null;
+  }).filter(Boolean);
+}
+
+function createFeatRow(entry = {}) {
+  const row = document.createElement("div");
+  row.className = "feat-row";
+
+  row.innerHTML = `
+    <select class="feat-select">
+      <option value="">Select Feat</option>
+      ${Object.keys(FEAT_DEFINITIONS)
+        .map(f => `<option value="${f}">${f}</option>`)
+        .join("")}
+    </select>
+
+    <div class="feat-extra"></div>
+
+    <button type="button" class="remove-feat">✕</button>
+  `;
+
+  const select = row.querySelector(".feat-select");
+  const extra  = row.querySelector(".feat-extra");
+
+  select.value = entry.name ?? "";
+
+  select.onchange = () => {
+    entry.data = {};
+    renderFeatExtras(select.value, extra, entry);
+  };
+
+  row.querySelector(".remove-feat").onclick = () => {
+    row.remove();
+  };
+
+  if (entry.name) {
+    renderFeatExtras(entry.name, extra, entry);
+  }
+
+  return row;
+}
+
+function renderFeatExtras(featName, container, entry) {
+  container.innerHTML = "";
+
+  const def = FEAT_DEFINITIONS[featName];
+  if (!def || def.type === "simple") return;
+
+  if (def.type === "magic-initiate") {
+    container.innerHTML = `
+      <label>
+        Class
+        <select data-key="class">
+          <option value="">Select</option>
+          <option>Cleric</option>
+          <option>Druid</option>
+          <option>Wizard</option>
+        </select>
+      </label>
+
+      <label>
+        Spell
+        <input data-key="spell" placeholder="Spell name">
+      </label>
+
+      <label>
+        Cantrips
+        <input data-key="cantrips" placeholder="Comma-separated">
+      </label>
+    `;
+  }
+
+  if (def.type === "spell-choice") {
+    container.innerHTML = `
+      <label>
+        Spell
+        <input data-key="spell" placeholder="Spell name">
+      </label>
+    `;
+  }
+
+  hydrateFeatExtras(container, entry.data);
+}
+
+function hydrateFeatExtras(container, data = {}) {
+  container.querySelectorAll("[data-key]").forEach(input => {
+    const key = input.dataset.key;
+
+    if (Array.isArray(data[key])) {
+      input.value = data[key].join(", ");
+    } else if (data[key]) {
+      input.value = data[key];
+    }
+  });
+}
+
+function collectFeatsFromUI(container) {
+  const feats = [];
+
+  container.querySelectorAll(".feat-row").forEach(row => {
+    const name = row.querySelector(".feat-select").value;
+    if (!name) return;
+
+    const extra = row.querySelector(".feat-extra");
+    const data = {};
+
+    extra.querySelectorAll("[data-key]").forEach(input => {
+      let value = input.value.trim();
+      if (!value) return;
+
+      if (input.dataset.key === "cantrips") {
+        value = value.split(",").map(v => v.trim()).filter(Boolean);
+      }
+
+      data[input.dataset.key] = value;
+    });
+
+    if (Object.keys(data).length) {
+      feats.push({ [name]: data });
+    } else {
+      feats.push(name);
+    }
+  });
+
+  return feats;
+}
+
+function ensureAlwaysPreparedSpells() {
+  pendingState.spells ??= {};
+
+  const normalizeBucket = (bucket) => ({
+    Cantrips: Array.isArray(bucket?.Cantrips) ? bucket.Cantrips : [],
+    Spells: Array.isArray(bucket?.Spells) ? bucket.Spells : []
+  });
+
+  pendingState.spells.Prepared =
+    normalizeBucket(pendingState.spells.Prepared);
+
+  pendingState.spells.Known =
+    normalizeBucket(pendingState.spells.Known);
+
+  pendingState.Spells.Always_Prepared =
+    normalizeBucket(pendingState.spells.Always_Prepared);
+}
+
+
+function addAlwaysPreparedSpell(name, type = "spell") {
+  ensureAlwaysPreparedSpells();
+
+  const bucket =
+    type === "cantrip"
+      ? pendingState.spells.Always_Prepared.Cantrips
+      : pendingState.spells.Always_Prepared.Spells;
+
+  if (!Array.isArray(bucket)) {
+    console.warn("Spell bucket was not an array:", bucket);
+    return;
+  }
+
+  if (!bucket.includes(name)) {
+    bucket.push(name);
+  }
+}
+
+
+function applyFeatGrantedSpells(feats) {
+  feats.forEach(feat => {
+    // SIMPLE FEAT — nothing to do
+    if (typeof feat === "string") return;
+
+    const [name, data] = Object.entries(feat)[0];
+    if (!data) return;
+
+    // ---------- MAGIC INITIATE ----------
+    if (name === "Magic Initiate") {
+      if (data.spell) {
+        addAlwaysPreparedSpell(data.spell, "spell");
+      }
+
+      if (Array.isArray(data.cantrips)) {
+        data.cantrips.forEach(c =>
+          addAlwaysPreparedSpell(c, "cantrip")
+        );
+      }
+    }
+
+    // ---------- FEY TOUCHED ----------
+    if (name === "Fey Touched") {
+      // Granted spell
+      addAlwaysPreparedSpell("Misty Step", "spell");
+
+      // Chosen spell
+      if (data.spell) {
+        addAlwaysPreparedSpell(data.spell, "spell");
+      }
+    }
+
+    // ---------- SHADOW TOUCHED ----------
+    if (name === "Shadow Touched") {
+      // Granted spell
+      addAlwaysPreparedSpell("Invisibility", "spell");
+
+      // Chosen spell
+      if (data.spell) {
+        addAlwaysPreparedSpell(data.spell, "spell");
+      }
+    }
+  });
+}
+
+function openCharacterFeatOnboardingModal(character = null) {
+  if (document.querySelector(".char-feats-overlay")) return;
+
+  pendingState.spells ??= structuredClone(character?.Spells ?? {
+	Prepared: { Cantrips: [], Spells: [] },
+	Always_Prepared: { Cantrips: [], Spells: [] },
+	Known: { Cantrips: [], Spells: [] }
+	});
+
+
+  const overlay = document.createElement("div");
+  overlay.className = "char-feats-overlay";
+  overlay.innerHTML = `
+    <div class="char-feats-modal">
+      <h2>${character ? "Edit Feats" : "Add Feats"}</h2>
+
+      <div class="feat-blocks"></div>
+
+      <button class="add-feat">+ Add Feat</button>
+
+      <div class="actions">
+        <button class="cancel">Cancel</button>
+        <button class="confirm">Save</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const featContainer = overlay.querySelector(".feat-blocks");
+
+  // Seed pending state
+  pendingState.feats = normalizeFeatsFromFrontmatter(character?.feats ?? []);
+
+  // Render existing feats
+  if (!pendingState.feats.length) {
+    featContainer.appendChild(createFeatRow());
+  } else {
+    pendingState.feats.forEach(entry => {
+      featContainer.appendChild(createFeatRow(entry));
+    });
+  }
+
+  overlay.querySelector(".add-feat").onclick = () => {
+    featContainer.appendChild(createFeatRow());
+  };
+
+  const close = () => overlay.remove();
+
+  overlay.querySelector(".cancel").onclick = close;
+
+  overlay.querySelector(".confirm").onclick = async () => {
+    const feats = collectFeatsFromUI(featContainer);
+	pendingState.feats = feats;
+	applyFeatGrantedSpells(feats);
+
+    markDirty();
+    await commitPendingChanges();
+    close();
+  };
+}
+
+
+
+
+// ================ Bonus Onbarding =======================
+
+function openCharacterBonusOnboardingModal(character = null) {
+	console.log("Add Character Bonuses coming soon")
+}
 // ======================================================================================
 // =================================================================   UI Refresh Helpers
 // ======================================================================================
@@ -1119,12 +1769,12 @@ function getConditionsState() {
 }
 
 function getHpUiState() {
-  const h = pendingState.health;
+  const h = pendingState.health ?? { max: 0, current: 0, temp: 0 };
 
   const maxHP     = Number(h.max ?? 0);
   const currentHP = Number(h.current ?? 0);
   const tempHP    = Number(h.temp ?? 0);
-  const maxTemp   = Number((h.maxTmp ?? maxHP) || 1);
+  const maxTemp   = Number(h.maxTmp ?? (maxHP || 1));
 
   const hpPercent = maxHP > 0
     ? Math.max(0, Math.min(100, (currentHP / maxHP) * 100))
@@ -1252,10 +1902,20 @@ const subtitle = isSingleClass
   ? `Level ${totalLevel} ${classText}${subclassText ? ` — ${subclassText}` : ""}`
   : `Level ${totalLevel} ${classText}${subclassText ? ` — ${subclassText}` : ""}`;
 const condDisplay = active.length ? active.join(", ") : "None";
-const maxHP = pendingState.health.max;
-const currentHP = pendingState.health.current;
-const tempHP = pendingState.health.temp;
-const maxTemp = pendingState.health.maxTmp ?? maxHP;
+
+function normalizeHealth(h = {}) {
+	return {
+		max:     Number(h.max ?? 0),
+		current: Number(h.current ?? h.max ?? 0),
+		temp:    Number(h.temp ?? 0),
+		maxTmp:  Number(h.maxTmp ?? h.max ?? 1),
+	};
+}
+const health = normalizeHealth(pendingState.health);
+const maxHP     = Number(health.max ?? 0);
+const currentHP = Number(health.current ?? maxHP);
+const tempHP    = Number(health.temp ?? 0);
+const maxTemp   = Number(health.maxTmp ?? 1);
 const hpPercent = Math.max(0, Math.min(100, (currentHP / maxHP) * 100));
 const tempPercent = Math.max(0, Math.min(100, (tempHP / maxTemp) * 100));
 let images = [];
@@ -1287,6 +1947,16 @@ const menuHtml = `
     </button>
 	<button class="char-menu-btn edit-btn" enabled>
       ✏️ Edit Character
+    </button>
+	<button class="char-menu-btn stats-btn" enabled>
+      📊 Edit Stats
+    </button>
+	<button class="char-menu-btn feats-btn" enabled>
+      🌟 Edit Feats
+    </button>
+	</button>
+	<button class="char-menu-btn bonus-btn" enabled>
+      💫 Edit Bonuses
     </button>
   </div>
 </div>
@@ -1340,6 +2010,7 @@ if (!c.name && nameEl && !nameEl.dataset.bound) {
 	nameEl.style.cursor = "pointer";
 	nameEl.style.textDecoration = "underline";
 	nameEl.style.opacity = "0.85";
+	nameEl.style.zIndex = 9999;
 
 	nameEl.addEventListener("click", () => {
 		openCharacterOnboardingModal();
@@ -1354,7 +2025,9 @@ const menuRoot = root.querySelector(".char-menu");
 const toggleBtn = root.querySelector(".char-menu-toggle"); 
 const saveBtn   = root.querySelector(".save-btn");
 const editBtn = root.querySelector(".edit-btn");
-
+const editStatBtn = root.querySelector(".stats-btn");
+const editFeatBtn = root.querySelector(".feats-btn");
+const editBonusBtn = root.querySelector(".bonus-btn");
 
 if (menuRoot && toggleBtn && !menuRoot.dataset.bound) {
   menuRoot.dataset.bound = "true";
@@ -1384,9 +2057,33 @@ if (menuRoot && toggleBtn && !menuRoot.dataset.bound) {
 		openCharacterOnboardingModal(c);
 	});
   }
+  if (editStatBtn) {
+	editStatBtn.addEventListener("click", (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+		menuRoot.classList.remove("open");
+		openCharacterStatOnboardingModal(c);
+	});
+  }
+  if (editFeatBtn) {
+	editFeatBtn.addEventListener("click", (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+		menuRoot.classList.remove("open");
+		openCharacterFeatOnboardingModal(c);
+	});
+  }
+  if (editBonusBtn) {
+	editBonusBtn.addEventListener("click", (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+		menuRoot.classList.remove("open");
+		openCharacterBonusOnboardingModal(c);
+	});
+  }
   if (!menuRoot || !toggleBtn) {
 	console.warn("Character menu not ready yet");
-	}
+  }
 }
 
 // Ensure UI reflects any persisted dirty state from previous runs
