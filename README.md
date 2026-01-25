@@ -22,6 +22,21 @@ This project supports:
 
 ## 📘 Documentation
 
+### Features
+|                                                                                                                |                                                                                                                                                                          |                                                                                |
+| -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| <img src="z_Assets/Screenshots/Overview-Tab.png" width="350">                                                  | <img src="z_Assets/Screenshots/Overview-Tab-DarkMode.png" width="350">                                                                                                   | <img src="z_Assets/Screenshots/Class-Features.png" width="350">                |
+| *Supports Light or Dark Mode*                                                                                  | *Main Overview Tab, Showcasing Character Stats*                                                                                                                          | *Class, Features are displayed according to chracter's level*                  |
+|                                                                                                                |                                                                                                                                                                          |                                                                                |
+| <img src="z_Assets/Screenshots/Spell-Tab.png" width="350">                                                     | <img src="z_Assets/Screenshots/Weapons-Tab.png" width="350">                                                                                                             | <img src="z_Assets/Screenshots/Inventory-Tab.png" width="350">                 |
+| *Spell Tracking: Add Spells through the UI. Trigger concentration with the 'Cast Spell' Button*                | *Track Weapon Attack Roll/Damage and Assign Weapon Mastery*                                                                                                              | *Track character's Inventory. Add/Remove items through the UI. Tracks weight.* |
+|                                                                                                                |                                                                                                                                                                          |                                                                                |
+| <img src="z_Assets/Screenshots/Multi-Class-Example.png" width="350">                                           | <img src="z_Assets/Screenshots/Prepare-Spells.png" width="350">                                                                                                          | <img src="z_Assets/Screenshots/Spell-Slot-Picker.png" width="350">             |
+| *Multi-Class Characters are supported, Including tracking full spell progression with full, half, 1/3 casters* | *Add Spells through the UI. The table will instruct you to add spells if you have too few prepared. Use the Arrow buttons to move the spells from 'Known' to 'Prepared'* | *Cast a spell - Pick the spell slot that you want to use*                      |
+| <img src="z_Assets/Screenshots/Wild-Shape.png" width="350">                                                    | <img src="z_Assets/Screenshots/Bastions.png" width="350">                                                                                                                |                                                                                |
+| *Wild Shape Selection Menu for Druids*                                                                         | *Manage your bastion*                                                                                                                                                    |                                                                                |
+
+
 ### Preparation
 Obtain the required source material via the TTRPG-Convert-CLI 5e tool linked above. This content must reside in your Obsidian vault under '3. Mechanics/CLI'. If your path varies from this then there is a frontmatter value labeled 'BASE_FOLDER' that must be updated. Tested with the 2024 source material (xphb, xdmg). This will not work with other content but could be added in the future.
 
@@ -38,27 +53,123 @@ BASE_FOLDER: 3. Mechanics/CLI
 ### Quick Start
 - Install Obsidian and the required plugins (Dataview, Meta Bind, ITS Theme)
 - Download Git repository and open it as a folder in Obsidian (You will be prompted to tell obsidian that you trust the content)
-- Copy CLI Content into `3. Mechanics\CLI` (There is a frontmatter variable `BASE_FOLDER` that can be set if your path varies.)
+- Copy CLI Content into `3. Mechanics\CLI` (There is a frontmatter variable `BASE_FOLDER` that can be set if your path varies.) *Only obtain CLI data for frontmatter that you own*
+- Create a note for a new character and name the file. Suggest using the character name, but it is not used within the application so name the file whatever you like. Copy the contents of 'Base Character Sheet.md' into your new file to begin building your character.
 
-### Features
-|                                                                                                                |                                                                                                                                                                          |                                                                                |
-| -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
-| <img src="z_Assets/Screenshots/Overview-Tab.png" width="350">                                                  | <img src="z_Assets/Screenshots/Overview-Tab-DarkMode.png" width="350">                                                                                                   | <img src="z_Assets/Screenshots/Class-Features.png" width="350">                |
-| *Supports Light or Dark Mode*                                                                                  | *Main Overview Tab, Showcasing Character Stats*                                                                                                                          | *Class, Features are displayed according to chracter's level*                  |
-|                                                                                                                |                                                                                                                                                                          |                                                                                |
-| <img src="z_Assets/Screenshots/Spell-Tab.png" width="350">                                                     | <img src="z_Assets/Screenshots/Weapons-Tab.png" width="350">                                                                                                             | <img src="z_Assets/Screenshots/Inventory-Tab.png" width="350">                 |
-| *Spell Tracking: Add Spells through the UI. Trigger concentration with the 'Cast Spell' Button*                | *Track Weapon Attack Roll/Damage and Assign Weapon Mastery*                                                                                                              | *Track character's Inventory. Add/Remove items through the UI. Tracks weight.* |
-|                                                                                                                |                                                                                                                                                                          |                                                                                |
-| <img src="z_Assets/Screenshots/Multi-Class-Example.png" width="350">                                           | <img src="z_Assets/Screenshots/Prepare-Spells.png" width="350">                                                                                                          | <img src="z_Assets/Screenshots/Spell-Slot-Picker.png" width="350">             |
-| *Multi-Class Characters are supported, Including tracking full spell progression with full, half, 1/3 casters* | *Add Spells through the UI. The table will instruct you to add spells if you have too few prepared. Use the Arrow buttons to move the spells from 'Known' to 'Prepared'* | *Cast a spell - Pick the spell slot that you want to use*                      |
-| <img src="z_Assets/Screenshots/Wild-Shape.png" width="350">                                                    | <img src="z_Assets/Screenshots/Bastions.png" width="350">                                                                                                                |                                                                                |
-| *Wild Shape Selection Menu for Druids*                                                                         | *Manage your bastion*                                                                                                                                                    |                                                                                |
-## ✏️Configuring Frontmatter
-### Basic Info
+## 🧙‍♂️Character Creation
+In the header of the character sheet, select 'Click Here to Create a new Character'.
+<img src="z_Assets/Screenshots/Onboarding-CharInfo.png" width="600">
+##### Input the data for your character.
+Name:
+Classes: - Add multiple classes and subclasses if multi-classing. Total Character level is calculated by adding together the char level from each class.
+Image Paths: Comma Separated. Provide relative path for your character image. More than one image is supported.
+Max Health:
+Background:
+Species: List the main species here. Sub-Species like Drow, High Elf, Woodland Elf  (for Elf) or Abyssal, Chthonic, Infernal (for Tiefling), will be input as a species trait next.
+Species Traits: Comma Separated. List the species traits. If your species has a sub-species like 'Drow', 'Cloud Giant', 'Frost Giant',etc... list it here.
+Alignment:
+Size:
+Languages: Comma Separated
+Tools: Comma Separated
+Instruments: Comma Separated
+Spellcasting Ability: If your class is not a spellcaster, but you get spells from your species, you can input the spellcasting ability here
+Speed:
+Base AC: Suggested Value 10. If using armor you can either bump this up to account for the AC increase or use a Stat_Bonus to AC which will be described later.
+Armor Training: Select applicable
+Weapon Training: Select applicable
+Select '**Create Character**' to save.
+
+##### Configure Character Stats
+In the character header, select the Hamburger Menu > Edit Stats
+<img src="z_Assets/Screenshots/Onboarding-Stats.png" width="600">
+Input your character values for STR, DEX, CON, INT, WIS, and CHA
+Mark Saves/Proficiencies that you have Proficiency or Expertise.
+**Save**
+
+##### Configure Feats
+In the character header, select the Hamburger Menu > Edit Feats
+<img src="z_Assets/Screenshots/Onboarding-Feats.png" width="600">
+Select Feat: Presents a dropdown of all PHB2024 feats
+Select '+ Add Feat' to configure additional feats.
+Fey Touched, Shadow Touched and Magic Initiate have additional configurations, allowing you to input spells.
+Spells acquired through feats are automatically added to the spell list as an 'Always Prepared' spell.
+
+#### Configure Stat bonuses
+In the character header, select the Hamburger Menu > Edit Bonuses
+<img src="z_Assets/Screenshots/Onboarding-Bonuses.png" width="600">
+Character attributes are calculated for the most part, but it is difficult to account for every edge case rule that could modify a character attribute. That is where Stat Bonuses come in handy. Use this to override calculated values.
+
+Ex: A Druid can add their Wisdom modifier to either Nature or Arcana checks.
+<img src="z_Assets/Screenshots/Onboarding-BonusExample.png" width="600">
+
+More details on Stat Bonus can be found [[#Stat Bonuses|here]].
+
+#### 📖Spells
+If your character has a Spellcasting Ability, then the spell tab will populate, allowing you to input spells.
+You can add/remove spells using the Add/Remove Spell buttons pictured below. The UI supports using 'User Friendly' names for spells. When adding a spell you can use user friendly names like 'Alter Self' rather than 'alter-self-xphb', which is the name of the file where the data for the spell is stored, within the CLI folder.
+<img src="z_Assets/Screenshots/AddSpell.png" width="900">
+
+**Known vs Prepared Spells**: The spell tab is split between Known Spells and Prepared Spells. Known spells are ones that you know, but are not prepared to cast. Prepared Spells are able to be cast and have the ✨ -Cast Spell button. 
+
+**Known Spells:** When spells are added through the UI, they are first added to the Known Spells section. Use the Up arrow on the spell to move it to the Prepared Spells table. The 'Remove Spell' button will only remove Known Spells.
+
+**Prepared Spells:** Prepared Spells are able to be cast. For Prepared Spell Casters, like Warlocks, all spells should be moved into the Prepared Spells tab using the ▲ Up Arrow. For spellcasters like Druids and Wizards that prepare spells, you can use the ▼ Down Arrow to move a spell to the Known table.
+
+**Adding a Spell**: Input the name of a spell that you want to add to your spell list and select the 'Add Spell' button. If the spell is granted from a class feature, and is always prepared, then select the '**Always Prepared?**' checkbox before selecting the '**Add Spell**' button. If you add a spell, and it does not populate in the table then that means that the spell was not found within the CLI content in the Spells Folder. Double check that the spelling for your spell is correct. 
+
+**Casting a Spell**: Some spells cause special interactions within the application.
+ - Concentration Spells - Spells cast with the cast button, and have a casting time that indicates 'Concentration', will then trigger the Concentration condition. This will be indicated in the Header, and in the Conditions Tab. If you take damage while you have active Concentration, then the UI will pop a notification with a reminder that you need to roll a Concentration Save. The DC for the save will be listed in the message.
+ - Mage Armor - Casting Mage armor will trigger a recalculation of your Armor Class, and be reflected in the Overview tab.
+
+**Note for Druid Wild Shape**
+If your characters class is Druid, you will see a Wild Shape section in the spell tab. This will allow you to choose various wild shape options after every Long Rest. To get the most out of this feature, you must edit the beast notes in the CLI/beastiary/beast/ directory. Add the following information into the frontmatter.
+
+```yaml
+wildshape:
+  ac: 11
+  speed: "40 ft., climb 30 ft."
+  fly: false
+  image: "3. Mechanics/CLI/bestiary/beast/token/brown-bear-xmm.webp"
+```
+Adding frontmatter to those notes will allow beast images, **AC**, **Speed**, and CR to **populate** in the card data.
+<img src="z_Assets/Screenshots/Wild-Shape.png" width="900">
+
+
+
+
+
+#### ⚔️Weapons
+This tab will be empty if you have not yet added any weapons to your inventory
+<img src="z_Assets/Screenshots/Weapons-Tab2.png" width="700">
+Weapon Attack Bonus, Damage and Mastery info is listed here. Weapons must be added to the Inventory before they will display here.
+**Magic/+1,+2, +3 Weapons:** When adding weapons to inventory, add '(+1)' after the spell name to indicate it is a +1 weapon
+**Weapon Mastery:** Use the dropdown to select your weapon mastery selection for the day. This is reset whenever the 'Long Rest' button is selected.
+**Feat Aware:** +2 Attack Bonus is added for ranged damage when the character has the Archer Feat
+
+#### 📦Inventory
+Add/Remove items from your inventory using this menu. 
+**Weapons:** You must add weapons here for them to show on the Weapons Tab
+**Item Naming:** Item names are pulled from the CLI/items folder, and friendly naming is supported. For example, you can add a 'Potion of Healing' to your inventory rather than 'potion-of-healing-phb'.
+**Adding Notes to items:** You can append item notes within parenthesis. For example, you can add an arcane focus for a Warlock as 'Arcane Focus (Orb)' or for a druid 'Arcane Focus (Sprig of Mistletoe)'. Strings within the () are omitted when attempting to match with an existing note.
+**Homebrew Items:** If an item is added to the inventory, and it cannot be matched with an existing note, then it will be created in the CLI/items folder with a -homebrew appended to the file name. That will allow you to open the note and add details to the item so it shows up in the hover preview within the inventory table.
+
+#### 🤕Conditions
+Character conditions can be tracked and toggled on/off through this UI
+
+
+#### 🏰Bastions
+You can Add your bastion and add Basic/Special facilities. You can also assign tasks and keep track of the time until the task is completed.
+
+#### 🗒️Session Notes
+Write notes during gameplay here. They will be saved in your character folder with the current date. This is a good place to keep track of NPC data or any other interesting details so you don't have to leave the character sheet during gameplay.
+
+## ✏️Frontmatter Details
+*Frontmatter details are provided below. Recent versions support creating/editing all of these values within the UI*
+
+### Basic Character Info
 
 | Frontmatter Value       | Type     | Details                                                                |
 | ----------------------- | -------- | ---------------------------------------------------------------------- |
-| `Level:`                | Number   | Level                                                                  |
 | `STR:`                  | Number   | Strength Score                                                         |
 | `DEX:`                  | Number   | Dexterity Score                                                        |
 | `CON:`                  | Number   | Constitututeion Score                                                  |
@@ -83,7 +194,6 @@ BASE_FOLDER: 3. Mechanics/CLI
 | `weapon_training:`      | String[] | Weapon types allowed for your character                                |
 | `purse:`                | Number   | The amount of gold held                                                |
 ```yaml
-Level: 7
 STR: 9
 DEX: 12
 CON: 14

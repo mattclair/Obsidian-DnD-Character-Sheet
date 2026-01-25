@@ -1267,6 +1267,29 @@
 	margin-top: 1.25rem;
 }
 
+.char-onboarding-modal .onboarding-actions .confirm {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.char-onboarding-modal .onboarding-actions .confirm:hover {
+  opacity: 0.9;
+}
+
+.char-onboarding-modal .onboarding-actions .cancel {
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  border-radius: 6px;
+}
+
+.char-onboarding-modal .onboarding-actions .cancel:hover {
+  color: var(--text-normal);
+}
+
 .char-stats-overlay {
   position: fixed;
   inset: 0;
@@ -1301,6 +1324,28 @@
   flex-wrap: wrap;
 }
 
+.char-stats-modal .actions .confirm {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.char-stats-modal .actions .confirm:hover {
+  opacity: 0.9;
+}
+
+.char-stats-modal .actions .cancel {
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  border-radius: 6px;
+}
+
+.char-stats-modal .actions .cancel:hover {
+  color: var(--text-normal);
+}
 
 /* =========================================================
    Character onboarding modal - feats
@@ -1434,4 +1479,175 @@
   padding: 8px 0;
   border-radius: 8px;
   font-weight: 500;
+}
+
+.char-feats-modal .actions .confirm {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.char-feats-modal .actions .confirm:hover {
+  opacity: 0.9;
+}
+
+
+/* ---------- Add Bonus ---------- */
+/* ============================= */
+/* Stat Bonus Overlay + Modal   */
+/* ============================= */
+
+.char-bonus-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.char-bonus-modal {
+  background: var(--background-primary);
+  color: var(--text-normal);
+  border-radius: 10px;
+  padding: 20px;
+  width: 520px;
+  max-width: 95%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  min-width: 640px;
+}
+
+.char-bonus-modal h2 {
+  margin-top: 0;
+  text-align: center;
+}
+
+/* ============================= */
+/* Help Text                    */
+/* ============================= */
+
+.bonus-help {
+  font-size: 0.9em;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.bonus-help a {
+  color: var(--interactive-accent);
+  text-decoration: none;
+}
+
+.bonus-help a:hover {
+  text-decoration: underline;
+}
+
+/* ============================= */
+/* Bonus Rows                   */
+/* ============================= */
+
+.bonus-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.bonus-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1.4fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.bonus-row select,
+.bonus-row input {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  font-size: 0.9em;
+}
+
+.bonus-row input::placeholder {
+  color: var(--text-faint);
+}
+
+.bonus-row select:focus,
+.bonus-row input:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+}
+
+/* Remove button */
+.bonus-row .remove {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1em;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.bonus-row .remove:hover {
+  color: var(--text-error);
+}
+
+/* ============================= */
+/* Add Bonus Button             */
+/* ============================= */
+
+.char-bonus-modal .add-bonus {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  margin-bottom: 14px;
+
+  background: var(--background-secondary-alt);
+  border: 1px dashed var(--background-modifier-border);
+  border-radius: 6px;
+
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.char-bonus-modal .add-bonus:hover {
+  color: var(--text-normal);
+  border-color: var(--interactive-accent);
+}
+
+/* ============================= */
+/* Actions                      */
+/* ============================= */
+
+.char-bonus-modal .actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.char-bonus-modal .actions button {
+  min-width: 100px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.char-bonus-modal .actions .cancel {
+  background: var(--background-secondary);
+  color: var(--text-muted);
+}
+
+.char-bonus-modal .actions .confirm {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.char-bonus-modal .actions button:hover {
+  opacity: 0.9;
 }

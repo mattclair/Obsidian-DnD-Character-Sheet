@@ -120,8 +120,8 @@ async function commitPendingChanges() {
 		}
 
 		// Persist spells if present in pendingState
-		if (pendingState.spells !== undefined) {
-			fm.Spells = structuredClone(pendingState.spells);
+		if (pendingState.Spells !== undefined) {
+			fm.Spells = structuredClone(pendingState.Spells);
 		}
 
 		// Persist wild-shape options if present in pendingState
@@ -853,7 +853,7 @@ function openCharacterOnboardingModal(character = null) {
 
 				${selectField("Spellcasting_Ability", ["CHA", "INT", "WIS"])}
 				<label>Speed<input data-key="speed" type="number" placeholder="Number" /></label>
-				<label>Base AC<input data-key="Base_AC" type="number" placeholder="Number" /></label>
+				<label>Base AC<input data-key="Base_AC" type="number" placeholder="Number" defaultValue=10 /></label>
 				<fieldset data-key="armor_training">
 					<legend>Armor Training</legend>
 					<label><input type="checkbox" value="Light Armor"> Light Armor</label>
@@ -1457,21 +1457,21 @@ function collectFeatsFromUI(container) {
 }
 
 function ensureAlwaysPreparedSpells() {
-  pendingState.spells ??= {};
+  pendingState.Spells ??= {};
 
   const normalizeBucket = (bucket) => ({
     Cantrips: Array.isArray(bucket?.Cantrips) ? bucket.Cantrips : [],
     Spells: Array.isArray(bucket?.Spells) ? bucket.Spells : []
   });
 
-  pendingState.spells.Prepared =
-    normalizeBucket(pendingState.spells.Prepared);
+  pendingState.Spells.Prepared =
+    normalizeBucket(pendingState.Spells.Prepared);
 
-  pendingState.spells.Known =
-    normalizeBucket(pendingState.spells.Known);
+  pendingState.Spells.Known =
+    normalizeBucket(pendingState.Spells.Known);
 
   pendingState.Spells.Always_Prepared =
-    normalizeBucket(pendingState.spells.Always_Prepared);
+    normalizeBucket(pendingState.Spells.Always_Prepared);
 }
 
 
@@ -1480,8 +1480,8 @@ function addAlwaysPreparedSpell(name, type = "spell") {
 
   const bucket =
     type === "cantrip"
-      ? pendingState.spells.Always_Prepared.Cantrips
-      : pendingState.spells.Always_Prepared.Spells;
+      ? pendingState.Spells.Always_Prepared.Cantrips
+      : pendingState.Spells.Always_Prepared.Spells;
 
   if (!Array.isArray(bucket)) {
     console.warn("Spell bucket was not an array:", bucket);
@@ -1542,7 +1542,7 @@ function applyFeatGrantedSpells(feats) {
 function openCharacterFeatOnboardingModal(character = null) {
   if (document.querySelector(".char-feats-overlay")) return;
 
-  pendingState.spells ??= structuredClone(character?.Spells ?? {
+  pendingState.Spells ??= structuredClone(character?.Spells ?? {
 	Prepared: { Cantrips: [], Spells: [] },
 	Always_Prepared: { Cantrips: [], Spells: [] },
 	Known: { Cantrips: [], Spells: [] }
@@ -1605,10 +1605,144 @@ function openCharacterFeatOnboardingModal(character = null) {
 
 
 // ================ Bonus Onbarding =======================
+const STAT_BONUS_KEYS = [
+  // Ability scores
+  "STR", "DEX", "CON", "INT", "WIS", "CHA",
+
+  // Saves
+  "STR_SAVE", "DEX_SAVE", "CON_SAVE", "INT_SAVE", "WIS_SAVE", "CHA_SAVE",
+
+  // Skills
+  "Acrobatics", "Animal_Handling", "Arcana", "Athletics", "Deception",
+  "History", "Insight", "Intimidation", "Investigation", "Medicine",
+  "Nature", "Perception", "Performance", "Persuasion", "Religion",
+  "Sleight_of_Hand", "Stealth", "Survival",
+
+  // Derived
+  "Initiative",
+  "Armor_Class",
+  "Spell_Attack",
+  "Spell_Save_DC",
+  "Passive_Perception",
+  "Speed"
+];
+
+function createBonusRow(key = "", data = {}) {
+  const row = document.createElement("div");
+  row.className = "bonus-row";
+
+  row.innerHTML = `
+    <select class="bonus-key">
+      <option value="">Select Stat</option>
+      ${STAT_BONUS_KEYS.map(k =>
+        `<option value="${k}" ${k === key ? "selected" : ""}>
+          ${k.replaceAll("_", " ")}
+        </option>`
+      ).join("")}
+    </select>
+
+    <input
+      class="bonus-value"
+      type="text"
+      placeholder="Value (e.g. 1, CHA_MOD, CHA_MOD / 2)"
+      value="${data.value ?? ""}"
+    />
+
+    <input
+      class="bonus-source"
+      type="text"
+      placeholder="Source"
+      value="${data.source ?? ""}"
+    />
+
+    <button class="remove">✕</button>
+  `;
+
+  row.querySelector(".remove").onclick = () => row.remove();
+
+  return row;
+}
+
+function collectBonusesFromUI(container) {
+  const bonuses = {};
+
+  container.querySelectorAll(".bonus-row").forEach(row => {
+    const key = row.querySelector(".bonus-key").value;
+    if (!key) return;
+
+    const value = row.querySelector(".bonus-value").value.trim();
+    const source = row.querySelector(".bonus-source").value.trim();
+
+    if (!value && !source) return;
+
+    bonuses[key] = {
+      value: value || 0,
+      source: source || ""
+    };
+  });
+
+  return bonuses;
+}
+
 
 function openCharacterBonusOnboardingModal(character = null) {
-	console.log("Add Character Bonuses coming soon")
+  if (document.querySelector(".char-bonus-overlay")) return;
+
+  const overlay = document.createElement("div");
+  overlay.className = "char-bonus-overlay";
+  overlay.innerHTML = `
+    <div class="char-bonus-modal">
+      <h2>Stat Bonuses</h2>
+
+      <p class="bonus-help">
+        Bonuses support dynamic expressions.
+        See <a href="[[README#Stat Bonuses|Stat Bonus]]">Stat Bonus</a> for details.
+      </p>
+
+      <div class="bonus-blocks"></div>
+
+      <button class="add-bonus">+ Add Bonus</button>
+
+      <div class="actions">
+        <button class="cancel">Cancel</button>
+        <button class="confirm">Save</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const container = overlay.querySelector(".bonus-blocks");
+
+  // Seed pending state safely
+  pendingState.Stat_Bonus = structuredClone(character?.Stat_Bonus ?? {});
+
+  // Render existing bonuses
+  const entries = Object.entries(pendingState.Stat_Bonus);
+  if (!entries.length) {
+    container.appendChild(createBonusRow());
+  } else {
+    for (const [key, data] of entries) {
+      container.appendChild(createBonusRow(key, data));
+    }
+  }
+
+  overlay.querySelector(".add-bonus").onclick = () => {
+    container.appendChild(createBonusRow());
+  };
+
+  const close = () => overlay.remove();
+  overlay.querySelector(".cancel").onclick = close;
+
+  overlay.querySelector(".confirm").onclick = async () => {
+    pendingState.Stat_Bonus = collectBonusesFromUI(container);
+
+    markDirty();
+    await commitPendingChanges();
+    close();
+  };
 }
+
 // ======================================================================================
 // =================================================================   UI Refresh Helpers
 // ======================================================================================
@@ -4598,12 +4732,12 @@ renderOverviewTab(); // initial render
 		// ==========================
 		// Prepare combined cantrip list
 		// Use in-memory pending state for spells so changes survive reruns
-		pendingState.spells = pendingState.spells || structuredClone(dv.current().Spells ?? {
+		pendingState.Spells = pendingState.Spells || structuredClone(dv.current().Spells ?? {
 			Prepared: { Cantrips: [], Spells: [] },
 			Always_Prepared: { Cantrips: [], Spells: [] },
 			Known: { Cantrips: [], Spells: [] }
 		});
-		const spellLists = pendingState.spells;
+		const spellLists = pendingState.Spells;
 		// Gather all spell names from all lists
 		const allSpells = [
 		  ...(spellLists.Prepared?.Cantrips ?? []),
@@ -4720,9 +4854,9 @@ renderOverviewTab(); // initial render
 		// Update in-memory spell lists (persist to pendingState and mark dirty)
 		async function updateSpellLists(spellsObj) {
 			// store in-memory so UI can be snappy; commitPendingChanges will persist to frontmatter
-			pendingState.spells = structuredClone(spellsObj);
+			pendingState.Spells = structuredClone(spellsObj);
 			markDirty();
-			// Refresh Dataview/UI so the script reruns and reads pendingState.spells
+			// Refresh Dataview/UI so the script reruns and reads pendingState.Spells
 			try { app.commands.executeCommandById("dataview:refresh-views"); } catch {}
 		}
 		
@@ -4893,7 +5027,7 @@ renderOverviewTab(); // initial render
 		    return { allowedCantripCount, allowedSpellCount };
 		}
 		// Get Spells from in-memory pending state
-		const Spells = pendingState.spells;
+		const Spells = pendingState.Spells;
 		const classes = getClassLevels(dv.current().dndClass, dv.current().Level);
 		
 		let totalAllowedCantrips = 0;
@@ -4932,10 +5066,10 @@ renderOverviewTab(); // initial render
 		knownWrapper.id = "knownWrapper";
 		knownWrapper.classList.add("spell-wrapper");
 
-		// Local helper to rebuild prepared/known tables from pendingState.spells
+		// Local helper to rebuild prepared/known tables from pendingState.Spells
 		function rebuildSpellUI() {
 			if (startup.initializing) return;
-			const spellListsLocal = pendingState.spells || structuredClone(dv.current().Spells ?? { Prepared: { Cantrips: [], Spells: [] }, Always_Prepared: { Cantrips: [], Spells: [] }, Known: { Cantrips: [], Spells: [] } });
+			const spellListsLocal = pendingState.Spells || structuredClone(dv.current().Spells ?? { Prepared: { Cantrips: [], Spells: [] }, Always_Prepared: { Cantrips: [], Spells: [] }, Known: { Cantrips: [], Spells: [] } });
 			const preparedLocal = normalizeList(spellListsLocal.Prepared);
 			const alwaysLocal = normalizeList(spellListsLocal.Always_Prepared);
 			const knownLocal = normalizeList(spellListsLocal.Known);
@@ -5553,8 +5687,8 @@ renderOverviewTab(); // initial render
 		async function moveSpell(name, fromKey, toKey) {
 			// moveSpell called (debug suppressed)
 			new Notice(`Moving spell ${name} from ${fromKey}, to ${toKey}`, 5000);
-			pendingState.spells = pendingState.spells || structuredClone(dv.current().Spells ?? { Prepared: { Cantrips: [], Spells: [] }, Always_Prepared: { Cantrips: [], Spells: [] }, Known: { Cantrips: [], Spells: [] } });
-			const spellsObj = pendingState.spells;
+			pendingState.Spells = pendingState.Spells || structuredClone(dv.current().Spells ?? { Prepared: { Cantrips: [], Spells: [] }, Always_Prepared: { Cantrips: [], Spells: [] }, Known: { Cantrips: [], Spells: [] } });
+			const spellsObj = pendingState.Spells;
 		
 		    const mapping = {
 		        Prepared: spellsObj.Prepared,
@@ -5643,8 +5777,8 @@ renderOverviewTab(); // initial render
 			if (!raw) return;
 
 			const formatted = normalizeSpellName(raw);
-			pendingState.spells = pendingState.spells || structuredClone(dv.current().Spells ?? { Prepared: { Cantrips: [], Spells: [] }, Always_Prepared: { Cantrips: [], Spells: [] }, Known: { Cantrips: [], Spells: [] } });
-			const spellsObj = pendingState.spells;
+			pendingState.Spells = pendingState.Spells || structuredClone(dv.current().Spells ?? { Prepared: { Cantrips: [], Spells: [] }, Always_Prepared: { Cantrips: [], Spells: [] }, Known: { Cantrips: [], Spells: [] } });
+			const spellsObj = pendingState.Spells;
 
 			if (alwaysPreparedCheckbox.checked) {
 				if (!spellsObj.Always_Prepared.Spells.some(s => s.toLowerCase() === formatted.toLowerCase())) {
@@ -5673,8 +5807,8 @@ renderOverviewTab(); // initial render
 			if (!raw) return;
 
 			const formatted = normalizeSpellName(raw);
-			pendingState.spells = pendingState.spells || structuredClone(dv.current().Spells ?? { Prepared: { Cantrips: [], Spells: [] }, Always_Prepared: { Cantrips: [], Spells: [] }, Known: { Cantrips: [], Spells: [] } });
-			const spellsObj = pendingState.spells;
+			pendingState.Spells = pendingState.Spells || structuredClone(dv.current().Spells ?? { Prepared: { Cantrips: [], Spells: [] }, Always_Prepared: { Cantrips: [], Spells: [] }, Known: { Cantrips: [], Spells: [] } });
+			const spellsObj = pendingState.Spells;
 
 			// Try removing from Known first
 			const knownList = spellsObj.Known.Spells || [];

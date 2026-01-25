@@ -48,20 +48,20 @@ Proficiencies:
   Perception: 1
   Survival: 2
 Stat_Bonus:
-  Armor_Class:
-    value: 2
-    source: Studded Leather Armor
   Initiative:
     value: WIS_MOD
     source: Dread Ambusher
+  Armor_Class:
+    value: "2"
+    source: Studded Leather Armor
 conditions:
   heroic_inspiration: true
   exhaustion:
     count: 0
     Level: false
 health:
-  max: 35
   current: 35
+  max: 35
   temp: 0
   maxTmp: 0
 Luck:

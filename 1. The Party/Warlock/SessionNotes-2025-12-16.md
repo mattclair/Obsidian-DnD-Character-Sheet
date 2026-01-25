@@ -8,3 +8,5 @@ Talked to Gerome about removing the curse from Varnok's coin
 Cleric talked to Propherious Cordonia and received payment for lib
 
 3. Mechanics/CLI/rules/variant-rules/heroic-inspiration-xphb.md
+
+[[README#Stat Bonuses|Stat Bonus]]

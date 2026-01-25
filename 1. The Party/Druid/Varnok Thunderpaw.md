@@ -48,10 +48,10 @@ Proficiencies:
   Medicine: 1
 Stat_Bonus:
   Arcana:
-    value: 4
+    value: WIS_MOD
     source: "Primal Order: Magician"
   Nature:
-    value: 4
+    value: WIS_MOD
     source: "Primal Order: Magician"
   Armor_Class:
     value: 2 + 2
