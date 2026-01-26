@@ -102,7 +102,7 @@ Character attributes are calculated for the most part, but it is difficult to ac
 Ex: A Druid can add their Wisdom modifier to either Nature or Arcana checks.  
 <img src="z_Assets/Screenshots/Onboarding-BonusExample.png" width="600">
 
-More details on Stat Bonus can be found [[#Stat Bonuses|here]].  
+More details on Stat Bonus see [Stat Bonuses](#Stat Bonuses)
 
 #### 📖Spells
 If your character has a Spellcasting Ability, then the spell tab will populate, allowing you to input spells.  
