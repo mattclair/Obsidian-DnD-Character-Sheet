@@ -1044,6 +1044,48 @@
 }
 
 
+/* ========================================================
+ Eldritch Invocations
+ ========================================================== */
+.eldritch-invocations-wrapper {
+	margin-top: 12px;
+	padding: 8px;
+	border-radius: 8px;
+	background: var(--background-secondary);
+}
+
+.invocation-limit {
+	font-size: 0.85em;
+	color: var(--text-muted);
+	margin-bottom: 6px;
+}
+
+.invocation-list {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 4px 12px;
+}
+
+.invocation-item {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	cursor: pointer;
+	font-size: 0.95em;
+}
+
+.invocation-item input[type="checkbox"] {
+	accent-color: var(--interactive-accent);
+	cursor: pointer;
+}
+
+.invocation-item input[type="checkbox"]:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+
+
 /* =========================================================
    Bastion Tab
    ========================================================= */

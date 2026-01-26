@@ -58,8 +58,8 @@ conditions:
     Level: false
   mage_armor: true
 health:
-  max: 39
   current: 39
+  max: 39
   temp: 0
   maxTmp: 0
 Hit_Dice:
@@ -152,11 +152,11 @@ Spells:
     Cantrips: []
     Spells: []
 Eldritch_Invocations:
-  - Armor of Shadows
   - Agonizing Blast
   - Devil's Sight
   - Repelling Blast
   - Eldritch Mind
+  - Armor of Shadows
 mastery:
 purse: 1897
 Bastion:

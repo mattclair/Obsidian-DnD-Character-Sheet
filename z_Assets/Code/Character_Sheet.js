@@ -373,6 +373,11 @@ async function commitPendingChanges() {
 		if (pendingState.Stat_Bonus !== undefined) {
 			fm.Stat_Bonus = pendingState.Stat_Bonus
 		}
+
+		// Persist Eldritch Invocations if present in pendingState
+		if (pendingState.Eldritch_Invocations !== undefined) {
+			fm.Eldritch_Invocations = pendingState.Eldritch_Invocations
+		}
 	});
 
   /* ---------- POST-SAVE UI SYNC ---------- */
@@ -853,7 +858,7 @@ function openCharacterOnboardingModal(character = null) {
 
 				${selectField("Spellcasting_Ability", ["CHA", "INT", "WIS"])}
 				<label>Speed<input data-key="speed" type="number" placeholder="Number" /></label>
-				<label>Base AC<input data-key="Base_AC" type="number" placeholder="Number" defaultValue=10 /></label>
+				<label>Base AC<input data-key="Base_AC" type="number" placeholder="Number" /></label>
 				<fieldset data-key="armor_training">
 					<legend>Armor Training</legend>
 					<label><input type="checkbox" value="Light Armor"> Light Armor</label>
@@ -4310,6 +4315,100 @@ renderOverviewTab(); // initial render
 			renderWildShapeUI();
 		}
 
+		// ================================
+		// Eldirtch Invocations
+		// ================================
+		if(hasWarlock){
+			const invocationOptions = ["Agonizing Blast", "Armor of Shadows", "Ascendant Step",
+				"Devil's Sight", "Devouring Blade", "Eldritch Mind", "Eldritch Smite", "Eldritch Spear",
+				"Fiendish Vigor", "Gaze of Two Minds", "Gift of the Depths", "Gift of the Protectors",
+				"Investment of the Chain Master", "Lessions of the First Ones", "Lifedrinker",
+				"Mask of Many Faces", "Master of Myriad Forms", "Misty Visions", "One with Shadows",
+				"Otherworldly Leap", "Pacto of the Blade", "Pacto fo the Chain", "Pact of the Tome",
+				"Repelling Blast", "Thirsting Blade", "Visions of Distant Realms", "Whispers of the Grave",
+				"Witch Sight"
+			];
+
+			function invocationFromWarlockLevel() {
+				if (warlockLevel >= 18) {return 10};
+				if (warlockLevel >= 15) {return 9};
+				if (warlockLevel >= 12) {return 8};
+				if (warlockLevel >= 9) {return 7};
+				if (warlockLevel >= 7) {return 6};
+				if (warlockLevel >= 5) {return 5};
+				if (warlockLevel >= 2) {return 3};
+				return 1;
+			}
+
+			const maxInvocations = invocationFromWarlockLevel();
+
+			pendingState.Eldritch_Invocations ??=
+				structuredClone(c.Eldritch_Invocations ?? []);
+
+			const invocationWrapper = spellsPanel.createEl("div", {
+				cls: "eldritch-invocations-wrapper"
+			});
+
+			const heading = invocationWrapper.createEl("h4", {
+				text: "Eldritch Invocations",
+				cls: "phb-heading"
+			});
+
+			const subText = invocationWrapper.createEl("div", {
+				text: `Choose up to ${maxInvocations}`,
+				cls: "invocation-limit"
+			});
+
+			const list = invocationWrapper.createEl("div", {
+				cls: "invocation-list"
+			});
+
+			function updateLimitState() {
+				const selectedCount = pendingState.Eldritch_Invocations.length;
+				list.querySelectorAll("input[type='checkbox']").forEach(cb => {
+					if (!cb.checked) {
+						cb.disabled = selectedCount >= maxInvocations;
+					}
+				});
+			}
+
+			invocationOptions.forEach(name => {
+				const row = list.createEl("label", {
+					cls: "invocation-item"
+				});
+
+				const checkbox = row.createEl("input", {
+					type: "checkbox"
+				});
+
+				checkbox.checked = pendingState.Eldritch_Invocations.includes(name);
+
+				checkbox.addEventListener("change", () => {
+					if (checkbox.checked) {
+						if (pendingState.Eldritch_Invocations.length >= maxInvocations) {
+							checkbox.checked = false;
+							return;
+						}
+						pendingState.Eldritch_Invocations.push(name);
+						markDirty();
+						refreshResourceToggles
+						refreshSpellSlotToggles
+						syncAfterConditionChange
+					} else {
+						pendingState.Eldritch_Invocations =
+							pendingState.Eldritch_Invocations.filter(i => i !== name);
+					}
+
+					updateLimitState();
+				});
+
+				row.createEl("span", { text: name });
+			});
+
+			updateLimitState();
+		}
+		
+		
 
 
 		// ======================================================================================

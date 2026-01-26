@@ -136,7 +136,21 @@ Adding frontmatter to those notes will allow beast images, **AC**, **Speed**, an
 
 
 
-
+**Eldritch Invocations**
+For Warlocks, you can configure your selected Eldritch Invocations at the bottom of the Spell Tab. The system will track the number of allowed invocations. 
+- *If an invocation grants a spell, you can add it in the spell tab. Make sure you select the **Always Prepared** checkbox when doing so.*
+**Invocations that have an impact on spell casting:**
+- Gift of the Depths will add a spell slot toggle representing a free use of Water Breathing
+- Ascendant Step will not consume a spell slot when casting Levitate
+- Fiendish Vigor will not consume a spell slot when casting False Life
+- Mask of Many Faces will not consume a spell slot when casting Disguise Self
+- Master of Myriad Forms will not consume a spell slot when casting Alter Self
+- Misty Visions will not consume a spell slot when casting Silent Image
+- One with Shadows will not consume a spell slot when casting Invisibility
+- Otherworldly Leap will not consume a spell slot when casting Jump
+- Visions of Distant Realms will not consume a spell slot when casting Arcane Eye
+- Whispers of the Grave will not consume a spell slot when casting Speak with Dead
+<img src="z_Assets/Screenshots/Eldritch-Invocations.png" width="900">
 
 #### ⚔️Weapons
 This tab will be empty if you have not yet added any weapons to your inventory
