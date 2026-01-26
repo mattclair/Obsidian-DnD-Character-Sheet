@@ -37,36 +37,33 @@ async function ensureFolder(path) {
 }
 
 async function syncFile(relativePath) {
-  const url = `${REPO_BASE}/${relativePath}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    console.warn("Failed to fetch:", relativePath);
-    return;
-  }
+	const url = `${REPO_BASE}/${relativePath}`;
+	const res = await fetch(url);
+	if (!res.ok) {
+		console.warn("Failed to fetch:", relativePath);
+		return;
+	}
 
-  const content = await res.text();
-  await ensureFolder(relativePath);
+	const content = await res.text();
 
-  const existing = app.vault.getAbstractFileByPath(relativePath);
+	// 🔐 Special handling for .obsidian/*
+	if (relativePath.startsWith(".obsidian/")) {
+		await app.vault.adapter.write(relativePath, content);
+		console.log("Updated (adapter):", relativePath);
+		return;
+	}
 
-  try {
-    if (existing) {
-      if (existing.type === "folder") {
-        console.warn("Path exists as folder, skipping:", relativePath);
-        return;
-      }
+	await ensureFolder(relativePath);
 
-      // Existing file → overwrite safely
-      await app.vault.modify(existing, content);
-      console.log("Updated:", relativePath);
-    } else {
-      // File does not exist → create
-      await app.vault.create(relativePath, content);
-      console.log("Created:", relativePath);
-    }
-  } catch (e) {
-    console.warn("Sync failed for", relativePath, e);
-  }
+	const existing = app.vault.getAbstractFileByPath(relativePath);
+
+	if (existing) {
+		await app.vault.modify(existing, content);
+		console.log("Updated:", relativePath);
+	} else {
+		await app.vault.create(relativePath, content);
+		console.log("Created:", relativePath);
+	}
 }
 
 async function runUpdater() {
@@ -83,13 +80,15 @@ async function runUpdater() {
     console.log(`Updating DnD system ${localVersion} → ${remoteVersion}`);
 
     for (const entry of manifest.files) {
-    if (entry.endsWith("/")) {
-        // Folder entry
-        await ensureFolder(entry + "placeholder.md");
-    } else {
-        await syncFile(entry);
+      if (entry.endsWith("/")) {
+          // Folder entry
+          await ensureFolder(entry + "placeholder.md");
+      } else {
+          await syncFile(entry);
+      }
+    
     }
-}
+    app.customCss?.loadSnippets?.();
 
     localStorage.setItem(VERSION_KEY, remoteVersion);
     new Notice(`DnD system updated to v${remoteVersion}`);
