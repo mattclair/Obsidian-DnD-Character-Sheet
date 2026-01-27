@@ -1346,8 +1346,22 @@
   background: var(--background-primary);
   padding: 20px;
   border-radius: 12px;
-  width: 710px;
+  width: 730px;
+
+  /* 🔑 critical */
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
 }
+
+.char-stats-modal .modal-body {
+  overflow-y: auto;
+  padding-right: 6px;
+  flex: 1;
+  min-height: 0; /* 🔑 THIS is the missing piece */
+}
+
+
 
 .prof-row {
   display: flex;
@@ -1364,6 +1378,8 @@
   gap: 1rem;
   margin-top: 1.5rem;
   flex-wrap: wrap;
+  border-top: 1px solid var(--background-modifier-border);
+  padding-top: 12px;
 }
 
 .char-stats-modal .actions .confirm {

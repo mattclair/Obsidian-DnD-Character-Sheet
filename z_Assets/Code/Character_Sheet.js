@@ -1064,7 +1064,8 @@ function openCharacterStatOnboardingModal(character = null) {
   const overlay = document.createElement("div");
   overlay.className = "char-stats-overlay";
   overlay.innerHTML = `
-    <div class="char-stats-modal">
+  <div class="char-stats-modal">
+    <div class="modal-body">
       <h2>${character ? "Edit Stats" : "Create Stats"}</h2>
 
       <div class="stats-grid">
@@ -1080,13 +1081,14 @@ function openCharacterStatOnboardingModal(character = null) {
       <div class="proficiencies-grid">
         ${renderProficiencies(character)}
       </div>
-
-      <div class="actions">
-        <button class="cancel">Cancel</button>
-        <button class="confirm">${character ? "Save" : "Create"}</button>
-      </div>
     </div>
-  `;
+
+    <div class="actions">
+      <button class="cancel">Cancel</button>
+      <button class="confirm">${character ? "Save" : "Create"}</button>
+    </div>
+  </div>
+`;
 
   document.body.appendChild(overlay);
 
