@@ -4960,6 +4960,37 @@ renderOverviewTab(); // initial render
 			// Refresh Dataview/UI so the script reruns and reads pendingState.Spells
 			try { app.commands.executeCommandById("dataview:refresh-views"); } catch {}
 		}
+
+		function getPreparedHeaderTitle(spellState) {
+			const classes = getClassLevels(dv.current().dndClass, dv.current().Level);
+
+			let totalAllowedCantrips = 0;
+			let totalAllowedSpells = 0;
+
+			for (const c of classes) {
+				const { allowedCantripCount, allowedSpellCount } =
+				getSpellCounts(c.className, c.level);
+				totalAllowedCantrips += allowedCantripCount;
+				totalAllowedSpells += allowedSpellCount;
+			}
+
+			const actualPrepSpells =
+				spellState.Prepared?.Spells?.length ?? 0;
+			const actualPrepCantrips =
+				spellState.Prepared?.Cantrips?.length ?? 0;
+
+			const diffSpellCount = totalAllowedSpells - actualPrepSpells;
+			const diffCantripCount = totalAllowedCantrips - actualPrepCantrips;
+			
+
+			const missing = [];
+			if (diffSpellCount > 0)
+				missing.push(`Prepare ${diffSpellCount} more spell${diffSpellCount === 1 ? "" : "s"}`);
+			if (diffCantripCount > 0)
+				missing.push(`Choose ${diffCantripCount} more cantrip${diffCantripCount === 1 ? "" : "s"}`);
+
+			return missing.length ? missing.join(" / ") : "Prepared Spells";
+		}
 		
 		
 		// ========================= LOAD SPELLS =========================
@@ -5128,7 +5159,13 @@ renderOverviewTab(); // initial render
 		    return { allowedCantripCount, allowedSpellCount };
 		}
 		// Get Spells from in-memory pending state
-		const Spells = pendingState.Spells;
+		const Spells =
+			pendingState.Spells ??
+			structuredClone(dv.current().Spells ?? {
+				Prepared: { Cantrips: [], Spells: [] },
+				Always_Prepared: { Cantrips: [], Spells: [] },
+				Known: { Cantrips: [], Spells: [] }
+		});
 		const classes = getClassLevels(dv.current().dndClass, dv.current().Level);
 		
 		let totalAllowedCantrips = 0;
@@ -5197,7 +5234,8 @@ renderOverviewTab(); // initial render
 			
 			// Clear and repopulate wrappers
 			preparedWrapper.innerHTML = '';
-			preparedWrapper.appendChild(buildPreparedTable('Prepared Spells', combined));
+			const headerTitle = getPreparedHeaderTitle(spellListsLocal);
+			preparedWrapper.appendChild(buildPreparedTable(headerTitle, combined));
 			knownWrapper.innerHTML = '';
 			knownWrapper.appendChild(buildPreparedTable('Known Spells', knownTyped));
 		}
@@ -5782,7 +5820,9 @@ renderOverviewTab(); // initial render
 			}
 		});
 		return wrapper;
-		}  
+		} 
+
+
 		// ==========================
 		// Move spell function
 		async function moveSpell(name, fromKey, toKey) {
@@ -5832,6 +5872,7 @@ renderOverviewTab(); // initial render
 			await updateSpellLists(spellsObj);
 
 			// Update UI immediately from pending state
+			markDirty();
 			rebuildSpellUI();
 		}
 		
@@ -5839,6 +5880,27 @@ renderOverviewTab(); // initial render
 		//-----------------------------------------------------
 		// ADD/REMOVE Spell Interface (below Known Spells table)
 		//-----------------------------------------------------
+		const allSpellNames = spellData
+			.map(s => s.Name)
+			.sort((a, b) => a.localeCompare(b));
+		function getSpellLevelByName(name) {
+			const lower = name.toLowerCase();
+			const match = spellData.find(s => s.Name.toLowerCase() === lower);
+			return match?.LevelNum ?? null; // null = unknown spell
+		}
+		
+		const knownCasters = new Set([
+			"Bard",
+			"Sorcerer",
+			"Warlock",
+			"Eldritch_Knight",
+			"Arcane_Trickster"
+		]);
+
+		const spellClasses = getClassLevels(dv.current().dndClass, dv.current().Level);
+		const isKnownCaster = spellClasses.every(c => knownCasters.has(c.className));
+		const hasFreePreparedSlots = diffSpellCount > 0;
+
 		const spellInputWrapper = document.createElement("div");
 		spellInputWrapper.style.marginTop = "1rem";
 		spellInputWrapper.style.display = "flex";
@@ -5869,6 +5931,47 @@ renderOverviewTab(); // initial render
 		alwaysLabel.appendChild(alwaysPreparedCheckbox);
 		alwaysLabel.appendChild(document.createTextNode("Always Prepared?"));
 
+		// Prepared checkbox
+		const preparedLabel = document.createElement("label");
+		preparedLabel.style.marginRight = "8px";
+		const preparedCheckbox = document.createElement("input");
+		preparedCheckbox.type = "checkbox";
+		preparedCheckbox.style.marginRight = "4px";
+		preparedLabel.appendChild(preparedCheckbox);
+		preparedLabel.appendChild(document.createTextNode("Prepared?"));
+
+
+		// Make sure only Always Prepared? or Prepared? can be checked. Never both
+		alwaysPreparedCheckbox.addEventListener("change", () => {
+			if (alwaysPreparedCheckbox.checked) preparedCheckbox.checked = false;
+		});
+
+		preparedCheckbox.addEventListener("change", () => {
+			if (preparedCheckbox.checked) alwaysPreparedCheckbox.checked = false;
+		});
+
+		// ----------------------------------
+		// Prepared checkbox state control
+		// ----------------------------------
+		if (isKnownCaster) {
+			// Known casters: default ON, never disabled
+			preparedCheckbox.checked = true;
+			preparedCheckbox.disabled = false;
+		} else {
+			// Prepared casters
+			if (hasFreePreparedSlots) {
+				preparedCheckbox.checked = true;
+				preparedCheckbox.disabled = false;
+			} else {
+				preparedCheckbox.checked = false;
+				preparedCheckbox.disabled = true;
+			}
+		}
+
+		if (!isKnownCaster && !hasFreePreparedSlots) {
+			preparedCheckbox.title = "No prepared spell slots remaining";
+		}
+
 		// ADD button
 		const addBtn = document.createElement("button");
 		addBtn.textContent = "Add Spell";
@@ -5878,26 +5981,85 @@ renderOverviewTab(); // initial render
 			if (!raw) return;
 
 			const formatted = normalizeSpellName(raw);
-			pendingState.Spells = pendingState.Spells || structuredClone(dv.current().Spells ?? { Prepared: { Cantrips: [], Spells: [] }, Always_Prepared: { Cantrips: [], Spells: [] }, Known: { Cantrips: [], Spells: [] } });
+
+			pendingState.Spells =
+				pendingState.Spells ||
+				structuredClone(dv.current().Spells ?? {
+					Prepared: { Cantrips: [], Spells: [] },
+					Always_Prepared: { Cantrips: [], Spells: [] },
+					Known: { Cantrips: [], Spells: [] }
+				});
+
 			const spellsObj = pendingState.Spells;
 
+			const lower = formatted.toLowerCase();
+
+			// Utility to check existence anywhere
+			const existsAnywhere = (list) =>
+				list.some(s => s.toLowerCase() === lower);
+
+			// ----------------------------
+			// Always Prepared
+			// ----------------------------
+			// Detect spell level from loaded spellData
+			const levelNum = getSpellLevelByName(formatted);
+
+			if (levelNum == null) {
+				new Notice(`Spell "${formatted}" not found.`);
+				return;
+			}
+
+			const isCantrip = levelNum === 0;
+
+			// Convenience selectors
+			const AP = spellsObj.Always_Prepared;
+			const P  = spellsObj.Prepared;
+			const K  = spellsObj.Known;
+
+			// Pick correct buckets
+			const apList = isCantrip ? AP.Cantrips : AP.Spells;
+			const pList  = isCantrip ? P.Cantrips  : P.Spells;
+			const kList  = isCantrip ? K.Cantrips  : K.Spells;
+
+			// ----------------------------
+			// Always Prepared
+			// ----------------------------
 			if (alwaysPreparedCheckbox.checked) {
-				if (!spellsObj.Always_Prepared.Spells.some(s => s.toLowerCase() === formatted.toLowerCase())) {
-					spellsObj.Always_Prepared.Spells.push(formatted);
-					await updateSpellLists(spellsObj);
-					rebuildSpellUI();
-					spellInput.value = "";
-					alwaysPreparedCheckbox.checked = false;
+				if (!existsAnywhere(apList)) {
+					apList.push(formatted);
 				}
+
+			// ----------------------------
+			// Prepared
+			// ----------------------------
+			} else if (preparedCheckbox.checked) {
+				if (!existsAnywhere(pList)) {
+					pList.push(formatted);
+				}
+
+				// Ensure it exists in Known as well (rules-accurate)
+				if (!existsAnywhere(kList)) {
+					kList.push(formatted);
+				}
+
+			// ----------------------------
+			// Known (default)
+			// ----------------------------
 			} else {
-				if (!spellsObj.Known.Spells.some(s => s.toLowerCase() === formatted.toLowerCase())) {
-					spellsObj.Known.Spells.push(formatted);
-					await updateSpellLists(spellsObj);
-					rebuildSpellUI();
-					spellInput.value = "";
+				if (!existsAnywhere(kList)) {
+					kList.push(formatted);
 				}
 			}
+
+			await updateSpellLists(spellsObj);
+			rebuildSpellUI();
+
+			// Reset UI
+			spellInput.value = "";
+			alwaysPreparedCheckbox.checked = false;
+			preparedCheckbox.checked = false;
 		};
+
 		
 		// REMOVE button
 		const removeBtn = document.createElement("button");
@@ -5934,6 +6096,7 @@ renderOverviewTab(); // initial render
 		};
 		// Ensure the input field is visible before buttons (checkbox first)
 		spellInputWrapper.appendChild(alwaysLabel);
+		spellInputWrapper.appendChild(preparedLabel);
 		spellInputWrapper.appendChild(spellInput);
 		spellInputWrapper.appendChild(addBtn);
 		spellInputWrapper.appendChild(removeBtn);

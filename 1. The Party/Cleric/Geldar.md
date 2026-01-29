@@ -7,8 +7,10 @@ INT: 12
 WIS: 12
 CHA: 12
 name: Geldar
-dndClass: Cleric
-subclass: Knowledge Domain
+dndClass:
+  - Cleric: 5
+subclass:
+  - Knowledge Domain
 background: Wayfarer
 species: Elf
 species_traits:
@@ -18,15 +20,13 @@ species_traits:
   - Fey Ancestry
   - Keen Senses
   - Trance
-alignment: Chaotic-Good
+alignment: ""
 size: Medium
 senses: Darkvision (120ft)
-languages:
-  - Common
+languages: Common
 tools:
 instruments:
-image:
-  - z_Assets/Misc/Geldar.png
+image: z_Assets/Misc/Geldar.png
 Spellcasting_Ability: WIS
 speed: 30
 Base_AC: 10
@@ -63,31 +63,47 @@ spell_slot:
   level_3_2: true
   elf_faerie_fire: true
   elf_darkness: true
+  shadow_touched_message: true
+  shadow_touched_invisibility: true
+  druid: true
 feats:
-  - Magic Initiate:
-      class: Druid
-      spell: Healing Word
-      cantrips:
-        - Message
-        - Light
-  - Shadow Touched:
-      spell: Message
 Spells:
   Prepared:
     Cantrips:
+      - Mending
+      - Resistance
+      - Toll The Dead
+      - Word Of Radiance
     Spells:
+      - Bane
+      - Bless
+      - Healing Word
+      - Inflict Wounds
+      - Sanctuary
+      - Sacred Flame
+      - Light
+      - Command
+      - Daylight
   Always_Prepared:
     Cantrips:
+      - Thaumaturgy
     Spells:
-      - Command
-      - Identity
-      - Augury
-      - Suggestion
-      - Nondetection
-      - Speak with Dead
+      - Magic Weapon
+      - Shield Of Faith
+      - Spiritual Weapon
   Known:
-    Cantrips: []
-    Spells: []
+    Cantrips:
+      - Mending
+      - Resistance
+      - Sacred Flame
+      - Toll The Dead
+      - Light
+      - Word Of Radiance
+    Spells:
+      - Healing Word
+      - Inflict Wounds
+      - Bane
+      - Bless
 Eldritch_Invocations:
 mastery:
 purse: 0
