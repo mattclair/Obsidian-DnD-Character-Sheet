@@ -5694,6 +5694,12 @@ renderOverviewTab(); // initial render
 			header.textContent = title;
 			header.classList.add("phb-heading");
 
+			// Colapsable Header
+			const toggleBtn = document.createElement("button");
+			toggleBtn.textContent = "▼";
+			toggleBtn.classList.add("collapse-toggle");
+			toggleBtn.style.marginRight = "6px";
+
 			// Header row with inline search box
 			const headerRow = document.createElement('div');
 			headerRow.style.display = 'flex';
@@ -5701,6 +5707,10 @@ renderOverviewTab(); // initial render
 			headerRow.style.justifyContent = 'space-between';
 
 			const headerLeft = document.createElement('div');
+			headerLeft.style.display = "flex";
+			headerLeft.style.alignItems = "center";
+
+			headerLeft.appendChild(toggleBtn);
 			headerLeft.appendChild(header);
 
 			const searchInput = document.createElement('input');
@@ -5735,6 +5745,30 @@ renderOverviewTab(); // initial render
 		    
 		
 		    const tbody = document.createElement("tbody");
+
+			let isCollapsed = false;
+
+			const setCollapsed = (collapsed) => {
+				isCollapsed = collapsed;
+				tbody.style.display = collapsed ? "none" : "";
+				toggleBtn.textContent = collapsed ? "▶" : "▼";
+			};
+
+			toggleBtn.onclick = () => {
+				setCollapsed(!isCollapsed);
+			};
+
+			// Auto-collapse large Known spell lists
+			if (title.toLowerCase().includes("known") && rows.length > 20) {
+				setCollapsed(true);
+			}
+
+			const countBadge = document.createElement("span");
+			countBadge.textContent = `(${rows.length})`;
+			countBadge.style.opacity = "0.6";
+			countBadge.style.marginLeft = "6px";
+
+			header.appendChild(countBadge);
 		
 			for (const spell of rows) {
 			const tr = document.createElement("tr");
@@ -5832,7 +5866,7 @@ renderOverviewTab(); // initial render
 			const spellsObj = pendingState.Spells;
 		
 		    const mapping = {
-		        Prepared: spellsObj.Prepared,
+		        Prepared: spellsObj.Prepared, 
 		        Known: spellsObj.Known,
 		        Always_Prepared: spellsObj.Always_Prepared
 		    };
