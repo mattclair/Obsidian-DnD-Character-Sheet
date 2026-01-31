@@ -5692,7 +5692,8 @@ renderOverviewTab(); // initial render
 		
 			const header = document.createElement("h3");
 			header.textContent = title;
-			header.classList.add("phb-heading");
+			header.classList.add("phb-header-row");
+			
 
 			// Colapsable Header
 			const toggleBtn = document.createElement("button");
@@ -5720,6 +5721,7 @@ renderOverviewTab(); // initial render
 			searchInput.style.marginLeft = '8px';
 			searchInput.style.minWidth = '480px';
 			searchInput.style.maxWidth = '820px';
+			headerLeft.style.flex = "1";
 
 			headerRow.appendChild(headerLeft);
 			headerRow.appendChild(searchInput);

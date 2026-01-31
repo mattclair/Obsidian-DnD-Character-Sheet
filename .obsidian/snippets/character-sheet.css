@@ -891,6 +891,26 @@
     border-radius: 2px;
 }
 
+.phb-header-row {
+    position: relative;
+    padding-bottom: 6px;
+    margin-bottom: 0.4rem;
+}
+
+.phb-header-row::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--interactive-accent);
+    opacity: 0.8;
+    border-radius: 2px;
+}
+
+
+
 
 
 
