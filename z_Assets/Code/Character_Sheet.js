@@ -378,6 +378,11 @@ async function commitPendingChanges() {
 		if (pendingState.Eldritch_Invocations !== undefined) {
 			fm.Eldritch_Invocations = pendingState.Eldritch_Invocations
 		}
+
+		// Persist Attuned if present in pendingState
+		if (pendingState.attuned !== undefined) {
+			fm.attuned = pendingState.attuned
+		}
 	});
 
   /* ---------- POST-SAVE UI SYNC ---------- */
@@ -7137,170 +7142,157 @@ console.log("Rendering TAB: Inventory");
 		};
 		
 		//===================================================== Attuned Items
-		// --- Attuned Items ---
-		const attuned = dv.current().attuned ?? [];
 		
-		// container for attuned items
+		function slugifyItemName(name) {
+			return String(name)
+				.toLowerCase()
+				.trim()
+				.replace(/['"]/g, "")
+				.replace(/[^a-z0-9]+/g, "-")
+				.replace(/^-+|-+$/g, "");
+		}
+
 		const attunedWrapper = document.createElement("div");
 		attunedWrapper.style.marginTop = "1.5rem";
-		
-		// title
+
+		// --- Attuned state initialization (SINGLE SOURCE OF TRUTH) ---
+		pendingState.attuned = Array.isArray(pendingState.attuned)
+			? pendingState.attuned
+			: Array.isArray(dv.current().attuned)
+				? [...dv.current().attuned]
+				: [];
+
+		const attuned = pendingState.attuned;
+
+
+		// Title
 		const title = document.createElement("h3");
 		title.textContent = "Attuned Items";
 		attunedWrapper.appendChild(title);
+
+		const listEl = document.createElement("ul");
+		attunedWrapper.appendChild(listEl);
+
 		
-		if (attuned.length === 0) {
-		    const noneText = document.createElement("p");
-		    noneText.textContent = "_No attuned items._";
-		    noneText.style.fontStyle = "italic";
-		    attunedWrapper.appendChild(noneText);
-		
-		} else {
-		    const srdItems = dv.pages(`"${ITEMS_FOLDER}"`);
-		    //console.log(`srdItems = ${srdItems}`)
-		    const listEl = document.createElement("ul");
-		
-		    attuned.forEach(name => {
-		        const li = document.createElement("li");
-		
-		        // Normalized name for comparison
-		        const norm = formatSpellName(name);
-		
-		        // Try to find a matching note
-		        let match = null;
-		        try {
-		            match = srdItems.find(p => formatSpellName(p.file.name) === norm);
-		        } catch (e) {
-		            // If formatSpellName fails, fall back to plain text
-		            match = null;
-		        }
-		
-		        // If a match exists and has a valid path
-		        if (match && match.file && match.file.path) {
-		            const link = document.createElement("a");
-		
-		            try {
-		                link.href = app.vault.getResourcePath(match.file.path);
-		                link.textContent = name;
-		                li.appendChild(link);
-		            } catch (e) {
-		                // Fallback: plain text
-		                li.textContent = name;
-		            }
-		
-		        } else {
-		            // No match → plain text
-		            li.textContent = name;
-		        }
-		
-		        listEl.appendChild(li);
-		    });
-		
-		    attunedWrapper.appendChild(listEl);
+		function rebuildAttunedList() {
+			listEl.innerHTML = "";
+
+			if (attuned.length === 0) {
+				const noneText = document.createElement("p");
+				noneText.textContent = "_No attuned items._";
+				noneText.style.fontStyle = "italic";
+				listEl.appendChild(noneText);
+				return;
+			}
+
+			const srdItems = dv.pages(`"${ITEMS_FOLDER}"`).where(p => p.file?.path);
+
+			attuned.forEach((name, index) => {
+				const li = document.createElement("li");
+				li.style.display = "flex";
+				li.style.alignItems = "center";
+				li.style.gap = "0.5rem";
+
+				// ---------- Item link or text ----------
+				const wantedSlug = slugifyItemName(name);
+				let match = null;
+
+				try {
+					match = srdItems.find(p => {
+						const fileSlug = slugifyItemName(p.file.name);
+						return fileSlug.startsWith(wantedSlug);
+					});
+				} catch {}
+
+				if (match?.file?.path) {
+					try {
+						const link = dv.fileLink(match.file.path, false, name);
+						const span = dv.el("span", link);
+						li.appendChild(span);
+					} catch {
+						const span = document.createElement("span");
+						span.textContent = name;
+						li.appendChild(span);
+					}
+				} else {
+					const span = document.createElement("span");
+					span.textContent = name;
+					li.appendChild(span);
+				}
+
+				// ---------- Remove button ----------
+				const removeBtn = document.createElement("button");
+				removeBtn.textContent = "✕";
+				removeBtn.title = "Remove attunement";
+				removeBtn.style.marginLeft = "auto";
+				removeBtn.style.border = "none";
+				removeBtn.style.background = "transparent";
+				removeBtn.style.cursor = "pointer";
+				removeBtn.style.color = "var(--text-muted)";
+
+				removeBtn.onclick = () => {
+					attuned.splice(index, 1);
+					markDirty();
+					rebuildAttunedList();
+				};
+
+				li.appendChild(removeBtn);
+				listEl.appendChild(li);
+			});
 		}
-		
-		// append to the inventoryWrapper so it appears inside the tab
-		inventoryWrapper.appendChild(attunedWrapper);
-		
+
+		rebuildAttunedList();
+		inventoryWrapper.appendChild(attunedWrapper);	
 		
 		
 		
 		// --- Inventory Items Dropdown + Attune Button ---
 		const inventoryItems = Object.keys(dv.current().inventory ?? {});
 		if (inventoryItems.length > 0) {
-		    const formWrapper = document.createElement("div");
-		    formWrapper.style.display = "flex";
-		    formWrapper.style.alignItems = "center";
-		    formWrapper.style.gap = "0.5rem";
-		    formWrapper.style.marginTop = "0.8rem";
-		
-		    // Dropdown select
-		    const select = document.createElement("select");
-		    inventoryItems.forEach(item => {
-		        const option = document.createElement("option");
-		        option.value = item;
-		        option.textContent = item;
-		        select.appendChild(option);
-		    });
-		    formWrapper.appendChild(select);
-		
-		    // Attune button
-		    async function addAttunedItem(itemName) {
-		    const file = app.vault.getAbstractFileByPath(dv.current().file.path);
-		
-		    if (!file) {
-		        new Notice("❌ Could not find current character file.");
-		        return;
-		    }
-		
-		    const content = await app.vault.read(file);
-		    const yamlRegex = /^---\n([\s\S]*?)\n---/;
-		    const match = content.match(yamlRegex);
-		
-		    if (!match) {
-		        new Notice("❌ No frontmatter found.");
-		        return;
-		    }
-		
-		    let yamlLines = match[1].split("\n");
-		
-		    // Ensure `attuned:` exists
-		    let attunedStart = yamlLines.findIndex(line => line.trim() === "attuned:");
-		    if (attunedStart === -1) {
-		        yamlLines.push("attuned:");
-		        attunedStart = yamlLines.length - 1;
-		    }
-		
-		    // Check if already attuned (case insensitive match)
-		    let exists = false;
-		    yamlLines.forEach(line => {
-		        if (line.trim() === `- ${itemName}`) exists = true;
-		    });
-		
-		    if (exists) {
-		        new Notice(`⚠️ ${itemName} is already attuned.`);
-		        return;
-		    }
-		
-		    // Always wrap in double quotes, escape any internal quotes
-			const safeItem = itemName.replace(/"/g, '\\"');
-			yamlLines.splice(attunedStart + 1, 0, `  - "${safeItem}"`);
-		
-		    const newYaml = yamlLines.join("\n");
-		    const updatedContent = content.replace(yamlRegex, `---\n${newYaml}\n---`);
-		
-		    await app.vault.modify(file, updatedContent);
-		
-		    new Notice(`✅ ${itemName} is now attuned.`);
-			}
-		
-		    
-		    const attuneButton = document.createElement("button");
-		    attuneButton.textContent = "Attune Item";
-		    attuneButton.style.padding = "6px 12px";
-		    attuneButton.style.borderRadius = "6px";
-		    attuneButton.style.cursor = "pointer";
-		    attuneButton.style.border = "none";
-		    attuneButton.style.backgroundColor = "var(--interactive-accent)";
-		    attuneButton.style.color = "var(--text-on-accent)";
-		    attuneButton.style.fontWeight = "500";
-		
-		    formWrapper.appendChild(attuneButton);
-		    attunedWrapper.appendChild(formWrapper);
-		
-		    // --- Button Behavior ---
-		    attuneButton.onclick = async () => {
-		    const selected = select.value;
-		    if (!selected) return;
-		
-		    await addAttunedItem(selected);
-		
-		    // Immediately update visual list
-		    const li = document.createElement("li");
-		    li.textContent = selected;
-		    listEl.appendChild(li);
+			const formWrapper = document.createElement("div");
+			formWrapper.style.display = "flex";
+			formWrapper.style.alignItems = "center";
+			formWrapper.style.gap = "0.5rem";
+			formWrapper.style.marginTop = "0.8rem";
+
+			const select = document.createElement("select");
+			inventoryItems.forEach(item => {
+				const option = document.createElement("option");
+				option.value = item;
+				option.textContent = item;
+				select.appendChild(option);
+			});
+
+			formWrapper.appendChild(select);
+
+			const attuneButton = document.createElement("button");
+			attuneButton.textContent = "Attune Item";
+			attuneButton.style.padding = "6px 12px";
+			attuneButton.style.borderRadius = "6px";
+			attuneButton.style.border = "none";
+			attuneButton.style.cursor = "pointer";
+			attuneButton.style.background = "var(--interactive-accent)";
+			attuneButton.style.color = "var(--text-on-accent)";
+			attuneButton.style.fontWeight = "500";
+
+			attuneButton.onclick = () => {
+				const selected = select.value;
+				if (!selected) return;
+
+				if (attuned.includes(selected)) {
+					new Notice(`⚠️ ${selected} is already attuned.`);
+					return;
+				}
+
+				attuned.push(selected);
+				markDirty();
+				rebuildAttunedList();
 			};
+
+			formWrapper.appendChild(attuneButton);
+			attunedWrapper.appendChild(formWrapper);
 		}
+
 		
 		
 		

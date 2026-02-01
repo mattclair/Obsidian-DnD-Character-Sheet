@@ -61,8 +61,8 @@ conditions:
     count: 0
     Level: false
 health:
-  max: 57
   current: 57
+  max: 57
   temp: 0
   maxTmp: 0
 Hit_Dice:
@@ -93,6 +93,8 @@ inventory:
   Tent: 1
   Shovel: 1
 attuned:
+  - GreatAxe (+1)
+  - Shovel
 spell_slot: {}
 feats:
   - Alert
