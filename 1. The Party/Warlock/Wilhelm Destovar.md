@@ -160,6 +160,37 @@ mastery:
 purse: 1897
 BASE_FOLDER: 3. Mechanics/CLI
 weapon_mastery: {}
+Bastion:
+  name: Ivy Lane
+  current_day: 0
+  defenders: 0
+  facilities:
+    - name: Bedroom
+      type: basic
+      size: cramped
+      status: operational
+      hirelings: 0
+    - name: Storage
+      type: basic
+      size: roomy
+      status: operational
+      hirelings: 0
+    - name: Arcane Study
+      type: special
+      size: roomy
+      hirelings: 1
+      order: None
+      status: operational
+    - name: Library
+      type: special
+      size: roomy
+      hirelings: 1
+      order: "Research: Topical Lore"
+      status: operational
+      order_started_day: 0
+      order_duration: 7
+      order_result: Valuable information is uncovered within the library.
+Channel_Divinity: {}
 ---
 ```dataviewjs
 // Load full cahracter sheet

@@ -6048,6 +6048,23 @@ renderOverviewTab(); // initial render
 
 			const spellsObj = pendingState.Spells;
 
+			// Return if formatted spell is already in pendingState.Spells
+			if (spellsObj.Prepared.Cantrips.some(s => s.toLowerCase() === formatted.toLowerCase()) ||
+				spellsObj.Prepared.Spells.some(s => s.toLowerCase() === formatted.toLowerCase()) ||
+				spellsObj.Always_Prepared.Cantrips.some(s => s.toLowerCase() === formatted.toLowerCase()) ||
+				spellsObj.Always_Prepared.Spells.some(s => s.toLowerCase() === formatted.toLowerCase()) ||
+				spellsObj.Known.Cantrips.some(s => s.toLowerCase() === formatted.toLowerCase()) ||
+				spellsObj.Known.Spells.some(s => s.toLowerCase() === formatted.toLowerCase())) {
+				new Notice(`Spell "${formatted}" is already in your spell lists.`);
+				return;
+			}
+
+			// Retrun if spell not found in spellData (prevents typos and ensures correct formatting)
+			if (!spellData.some(s => s.Name.toLowerCase() === formatted.toLowerCase())) {
+				new Notice(`Spell "${formatted}" not found in spell database.`);
+				return;
+			}
+
 			const lower = formatted.toLowerCase();
 
 			// Utility to check existence anywhere
