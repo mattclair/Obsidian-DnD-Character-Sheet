@@ -10,6 +10,9 @@ if (!dv.current()?.BASE_FOLDER) {
 
 const c = dv.current(); // your character note
 
+const VERSION_KEY = "dndSystemVersion";
+const systemVersion = localStorage.getItem(VERSION_KEY) || "0.0.0";
+
 // =====================
 // =====================
 // FILE LOCATIONS
@@ -2104,6 +2107,9 @@ const menuHtml = `
 	<button class="char-menu-btn bonus-btn" enabled>
       💫 Edit Bonuses
     </button>
+	<div class="char-menu-version">
+      v${systemVersion}
+    </div>
   </div>
 </div>
 `;

@@ -385,6 +385,15 @@
   place-items: center;
 }
 
+.char-menu-version {
+  margin-top: 12px;
+  font-size: 0.75rem;
+  opacity: 0.6;
+  text-align: center;
+  border-top: 1px solid var(--background-modifier-border);
+  padding-top: 8px;
+}
+
 
 /* ======= Callout Styling ======= */
 
