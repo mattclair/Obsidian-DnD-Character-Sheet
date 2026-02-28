@@ -2295,6 +2295,7 @@ try {
 const bottomBar = root.createEl("div", { cls: "char-header-bottom" });
 
 /* ===== Heroic Inspiration ===== */
+pendingState.heroic_inspiration = structuredClone(c.heroic_inspiration ?? {});
 addResourceToggles({
   parent: bottomBar,
   label: "Heroic Inspiration",
@@ -2305,6 +2306,7 @@ addResourceToggles({
 
 // Only display Luck Points if character has the Lucky feat
 if (feats.includes("Lucky")) {
+	pendingState.Luck = structuredClone(c.Luck ?? {});
     addResourceToggles({
 	  parent: bottomBar,
 	  label: "Luck:",
@@ -2317,6 +2319,7 @@ if (feats.includes("Lucky")) {
 
 // Only display Guarded Mind if character has the Mage Slayer feat
 if (feats.includes("Mage Slayer")) {
+	pendingState.Mage_Slayer = structuredClone(c.Mage_Slayer ?? {});
     addResourceToggles({
 	  parent: bottomBar,
 	  label: "Mage Slayer:",
@@ -2329,6 +2332,7 @@ if (feats.includes("Mage Slayer")) {
 
 // Only display Quick Ritual if character has the Ritual Caster feat
 if (feats.includes("Ritual Caster")) {
+	pendingState.Ritual_Caster = structuredClone(c.Ritual_Caster ?? {});
     addResourceToggles({
 	  parent: bottomBar,
 	  label: "Quick Ritual:",
@@ -2345,6 +2349,7 @@ if (feats.includes("Ritual Caster")) {
 
 // Only display Rage Points if character is a Barbarian
 if (hasBarbarian) {
+	pendingState.Rage = structuredClone(c.Rage ?? {});
   function rageFromLevel(lvl) {
 	  if (lvl >= 17) return 6;
 	  if (lvl >= 11) return 5;
@@ -2366,7 +2371,7 @@ if (hasBarbarian) {
 
 // Only display Bardic Inspiration if character is a Bard
 if (hasBard) {
-
+	pendingState.Bardic_Inspiration = structuredClone(c.Bardic_Inspiration ?? {});
   let biUses = Math.max(1, CHA_MOD);
 
   function bardicDieFromLevel(lvl) {
@@ -2400,8 +2405,8 @@ if (hasBard) {
 
 // Only display Wild Shape if character is a Druid
 if (hasDruid) {
-
-  function wsFromLevel(lvl) {
+	pendingState.Wild_Shape = structuredClone(c.Wild_Shape ?? {});
+	function wsFromLevel(lvl) {
     if (lvl >= 17) return 4;
     if (lvl >= 7) return 3;
     if (lvl >= 2) return 2;
@@ -2420,7 +2425,8 @@ if (hasDruid) {
 
 // Only display Second Wind if character is a Fighter
 if (hasFighter) {
-
+	pendingState.Second_Wind = structuredClone(c.WiSecond_Windd_Shape ?? {});
+	pendingState.Action_Surge = structuredClone(c.Action_Surge ?? {});
   function swFromLevel(lvl) {
     if (lvl >= 10) return 4;
     if (lvl >= 4) return 3;
@@ -2453,7 +2459,7 @@ if (hasFighter) {
 
 // Only Superiority Dice if character is a Battle Master Fighter
 if (subclass.includes("Battle Master")) {
-
+	pendingState.Superiority_dice = structuredClone(c.Superiority_dice ?? {});
   function supDieFromLevel(lvl) {
     if (lvl >= 15) return [7, "d8"];
     if (lvl >= 7)  return [5, "d8"];
@@ -2479,7 +2485,7 @@ if (subclass.includes("Battle Master")) {
 
 // Only display Energy Dice if character is a Psi Warrior Fighter
 if (subclass.includes("Psi Warrior")) {
-
+	pendingState.PSIenergy_dice = structuredClone(c.PSIenergy_dice ?? {});
   function pwenergyDieFromLevel(lvl) {
     if (lvl >= 17) return [12, "d12"];
     if (lvl >= 13) return [10, "d10"];
@@ -2511,7 +2517,7 @@ if (subclass.includes("Psi Warrior")) {
 
 // Only display Focus Points if character is a Monk
 if (hasMonk) {
-
+	pendingState.Focus_Points = structuredClone(c.Focus_Points ?? {});
   function fpFromLevel(lvl) {
     // monk gives 1 focus point per monk level starting level 2
     if (lvl >= 2) return monkLevel;
@@ -2530,6 +2536,7 @@ if (hasMonk) {
 
 // Combined Channel Divinity for Cleric and Paladin
 function addChannelDivinityToggles({ parent, clericLevel, paladinLevel, hasCleric, hasPaladin }) {
+	pendingState.Channel_Divinity = structuredClone(c.Channel_Divinity ?? {});
   // Determine total CD uses
   function clericCD(lvl) {
     if (lvl >= 17) return 4;
@@ -2577,7 +2584,7 @@ addChannelDivinityToggles({
 
 // Only  Display Dreadful Strike if character is a Gloom Stalker Ranger
 if (subclass.includes("Gloom Stalker" )) {
-  
+  pendingState.Dreadful_Strike = structuredClone(c.Dreadful_Strike ?? {});
   addResourceToggles({
 	  parent: bottomBar,
 	  label: "Dreadful Strike:",
@@ -2590,6 +2597,7 @@ if (subclass.includes("Gloom Stalker" )) {
 
 // Only display Energy Dice if character is a Soul Knife Rogue
 if (subclass.includes("Soulknife")) {
+	pendingState.Energy_Dice = structuredClone(c.Energy_Dice ?? {});
 
   function energyDieFromLevel(lvl) {
     if (lvl >= 17) return [12, "d12"];
@@ -2622,7 +2630,7 @@ if (subclass.includes("Soulknife")) {
 
 // Only display Sorcery Points if character is a Sorcerer
 if (hasSorcerer) {
-
+	pendingState.Sorcery_Points = structuredClone(c.Sorcery_Points ?? {});
   function spFromLevel(lvl) {
     // sorcerer gives 1 sorcery point per level starting level 2
     if (lvl >= 2) return sorcererLevel;
@@ -2641,7 +2649,7 @@ if (hasSorcerer) {
 
 // Only display Magical Cunning if character is a Warlock
 if (hasWarlock) {
-
+	pendingState.Magical_Cunning = structuredClone(c.Magical_Cunning ?? {});
   addResourceToggles({
 	  parent: bottomBar,
 	  label: "Magical Cunning:",
@@ -2657,7 +2665,8 @@ if (hasWarlock) {
 
 // Only display for Orc's (Relentless Endurance)
 if (c.species === "Orc") {
-
+	pendingState.Adrenaline_Rush = structuredClone(c.Adrenaline_Rush ?? {});
+	pendingState.Relentless_Endurance = structuredClone(c.Relentless_Endurance ?? {});
   addResourceToggles({
 	  parent: bottomBar,
 	  label: "Adrenaline Rush:",

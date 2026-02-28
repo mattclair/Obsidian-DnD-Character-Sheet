@@ -56,7 +56,6 @@ conditions:
   exhaustion:
     count: 0
     Level: false
-  mage_armor: true
 health:
   current: 39
   max: 39
@@ -68,13 +67,13 @@ Hit_Dice:
   Warlock_d8-3: true
   Warlock_d8-4: true
   Warlock_d8-5: true
-  Warlock_d8-6: false
+  Warlock_d8-6: true
 Luck:
-  luck_point_1: false
-  luck_point_2: false
-  luck_point_3: false
+  luck_point_1: true
+  luck_point_2: true
+  luck_point_3: true
 Magical_Cunning:
-  magical_cunning-1: false
+  magical_cunning-1: true
 inventory:
   Holy Scroll Text: 1
   Silver Neclace with Holy Symbol of Torm: 1

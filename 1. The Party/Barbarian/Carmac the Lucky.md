@@ -73,9 +73,9 @@ Hit_Dice:
   Barbarian_d12-5: true
   Bard_d8-1: true
   Bard_d8-2: true
-  Fighter_d10-1: false
-  Fighter_d10-2: false
-  Fighter_d10-3: false
+  Fighter_d10-1: true
+  Fighter_d10-2: true
+  Fighter_d10-3: true
 inventory:
   HandAxe: 1
   Javelin: 4
@@ -115,9 +115,9 @@ mastery:
   Javelin: Slow
   Light Crossbow: Slow
 Rage:
-  rage-1: false
-  rage-2: false
-  rage-3: false
+  rage-1: true
+  rage-2: true
+  rage-3: true
 purse: 156
 BASE_FOLDER: 3. Mechanics/CLI
 weapon_mastery: {}
@@ -129,11 +129,12 @@ Bastion:
 Bardic_Inspiration:
   bardic_insp_1: true
 Second_Wind:
-  second_wind-1: false
-  second_wind-2: false
+  second_wind-1: true
+  second_wind-2: true
 Action_Surge:
-  action_surge-1: false
-  action_surge-2: false
+  action_surge-1: true
+  action_surge-2: true
+Channel_Divinity: {}
 ---
 ```dataviewjs
 // Load full cahracter sheet

@@ -48,7 +48,7 @@ Hit_Dice:
   Cleric_d8-4: true
   Cleric_d8-5: true
 inventory: {}
-attuned:
+attuned: []
 spell_slot:
   level1_2: true
   level1_1: true
@@ -115,8 +115,8 @@ Bastion:
   defenders: 0
   facilities: []
 Channel_Divinity:
-  divinity-1: false
-  divinity-2: false
+  divinity-1: true
+  divinity-2: true
 Wild_Shape: {}
 Second_Wind: {}
 Action_Surge: {}

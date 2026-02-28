@@ -65,8 +65,8 @@ resistances:
   - Advantage when rolling saving throws against the Charmed condition
   - Immune to Sleep
 health:
-  max: 34
   current: 34
+  max: 34
   temp: 0
   maxTmp: 0
 Luck: {}
@@ -122,35 +122,23 @@ feats:
   - Alert
   - Speedy
 Energy_Dice:
-  energy_die_1: false
-  energy_die_2: false
-  energy_die_3: false
-  energy_die_4: false
-  energy_die_5: false
-  energy_die_6: false
+  energy_die_1: true
+  energy_die_2: true
+  energy_die_3: true
+  energy_die_4: true
+  energy_die_5: true
+  energy_die_6: true
 purse: 990.8
 spell_slot:
   elf_faerie_fire: true
   elf_darkness: true
 BASE_FOLDER: 3. Mechanics/CLI
-weapon_mastery:
-  "1":
-    weapon: Shortbow
-    mastery: Vex
-  "2":
-    weapon: Dagger
-    mastery: Nick
+weapon_mastery: {}
 Bastion:
   name: ""
   current_day: 0
   defenders: 0
   facilities: []
-Sorcery_Points:
-  sorcery_points-1: false
-  sorcery_points-2: false
-  sorcery_points-3: false
-  sorcery_points-4: false
-  sorcery_points-5: false
 Wild_Shape: {}
 Channel_Divinity: {}
 Second_Wind: {}

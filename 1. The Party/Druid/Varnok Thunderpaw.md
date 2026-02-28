@@ -58,13 +58,12 @@ Stat_Bonus:
     source: Shield and Studded Leather Armor
 conditions:
   exhaustion:
-    count: 1
-    Level: true
+    count: 0
+    Level: false
   heroic_inspiration: false
-  paralyzed: true
 health:
-  max: 35
   current: 35
+  max: 35
   temp: 0
   maxTmp: 0
 Luck: {}
@@ -102,11 +101,11 @@ spell_slot:
   level_3_2: true
   level_3_1: true
   level_2_3: true
-  level_2_2: false
+  level_2_2: true
   level_2_1: true
-  level_1_1: false
-  level_1_2: false
-  level_1_3: false
+  level_1_1: true
+  level_1_2: true
+  level_1_3: true
   level_1_4: true
 feats:
   - Shadow Touched:
@@ -200,13 +199,10 @@ Spells:
       - DoomTide
       - Elementalism
 Wild_Shape:
-  wild_shape-1: false
-  wild_shape-2: false
+  wild_shape-1: true
+  wild_shape-2: true
 mastery:
-wild-shape-options:
-  - Cat
-  - Draft Horse
-  - Dire Wolf
+wild-shape-options: []
 purse: 1615.5
 BASE_FOLDER: 3. Mechanics/CLI
 weapon_mastery: {}
@@ -215,6 +211,7 @@ Bastion:
   current_day: 0
   defenders: 0
   facilities: []
+Channel_Divinity: {}
 ---
 ```dataviewjs
 // Load full cahracter sheet
