@@ -138,7 +138,29 @@ Bastion:
   name: ""
   current_day: 0
   defenders: 0
-  facilities: []
+  facilities:
+    - name: Bedroom
+      type: basic
+      size: cramped
+      status: operational
+      hirelings: 0
+    - name: Dining Room
+      type: basic
+      size: roomy
+      status: operational
+      hirelings: 0
+    - name: Library
+      type: special
+      size: roomy
+      hirelings: 1
+      order: None
+      status: operational
+    - name: Arcane Study
+      type: special
+      size: roomy
+      hirelings: 1
+      order: None
+      status: operational
 Wild_Shape: {}
 Channel_Divinity: {}
 Second_Wind: {}

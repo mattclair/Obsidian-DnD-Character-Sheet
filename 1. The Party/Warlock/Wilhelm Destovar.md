@@ -158,38 +158,6 @@ Eldritch_Invocations:
   - Armor of Shadows
 mastery:
 purse: 1897
-Bastion:
-  name: Ivy Lane
-  current_day: 1
-  defenders: 0
-  facilities:
-    - name: Bedroom
-      type: basic
-      size: cramped
-      hirelings: 0
-      order: None
-      status: operational
-    - name: Storage
-      type: basic
-      size: roomy
-      hirelings: 0
-      order: None
-      status: operational
-    - name: Library
-      type: special
-      size: roomy
-      hirelings: 1
-      order: None
-      status: operational
-    - name: Arcane Study
-      type: special
-      size: roomy
-      hirelings: 1
-      order: "Craft: Blank Book"
-      status: operational
-      order_started_day: 1
-      order_duration: 7
-      order_result: A blank book is carefully prepared and ready for use.
 BASE_FOLDER: 3. Mechanics/CLI
 weapon_mastery: {}
 ---

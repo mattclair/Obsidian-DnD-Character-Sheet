@@ -325,9 +325,9 @@ async function commitPendingChanges() {
 		}
 
 		// Persist Level if present in pendingState
-		if (pendingState.Level !== undefined) {
-			fm.Level = pendingState.Level;
-		}
+		//if (pendingState.Level !== undefined) {
+		//	fm.Level = pendingState.Level;
+		//}
 
 		// Persist STR if present in pendingState
 		if (pendingState.STR !== undefined) {
@@ -7834,7 +7834,7 @@ function syncAfterConditionChange() {
 
 
 // ======================================================================================
-//==============================================================   Bastions Container Tab
+//===============================================================   Bastion Container Tab
 // ======================================================================================
 
 console.log("Rendering TAB: Bastions");
@@ -8596,7 +8596,7 @@ console.log("Rendering TAB: Bastions");
 		}
 	};
 
-	const characterLevel = page.Level ?? 0;
+	const characterLevel = getClassLevels(dv.current().dndClass);
 		const existing = new Set((bastion.facilities ?? []).map(f => f.name));
 
 		const availableSpecialFacilities = Object.entries(SPECIAL_FACILITIES)
@@ -8661,10 +8661,10 @@ console.log("Rendering TAB: Bastions");
 		return (facility.order_started_day + facility.order_duration) - currentDay;
 	}
 
-	function isOrderComplete(facility, currentDay) {
-		const remaining = getRemainingDays(facility, currentDay);
-		return remaining !== null && remaining <= 0;
-	}
+	// function isOrderComplete(facility, currentDay) {
+	// 	const remaining = getRemainingDays(facility, currentDay);
+	// 	return remaining !== null && remaining <= 0;
+	// }
 
 
 	function facilityToNotePath(name) {
@@ -8791,7 +8791,7 @@ console.log("Rendering TAB: Bastions");
 			text: "Create Bastion"
 		});
 
-		if ((page.Level ?? 0) < 5) {
+		if ((characterLevel ?? 0) < 5) {
 			btn.disabled = true;
 			btn.title = "Requires level 5";
 		} else {
